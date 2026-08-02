@@ -3,6 +3,7 @@ export * from './data/units.js';
 export * from './lib/objects.js';
 export * from './logic/combat.js';
 export * from './logic/formulas.js';
+export * from './logic/relations.js';
 export * from './logic/rng.js';
 export * from './logic/travel.js';
 export * from './schema/api.js';
@@ -38,6 +39,7 @@ export const STARTING_BUILDINGS = {
     barracks: 0,
     stable: 0,
     wall: 0,
+    market: 0,
     academy: 0,
 } as const;
 

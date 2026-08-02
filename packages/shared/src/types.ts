@@ -8,7 +8,8 @@ export type BuildingType =
     | 'barracks'
     | 'stable'
     | 'wall'
-    | 'academy';
+    | 'academy'
+    | 'market';
 
 export type UnitType =
     | 'spear'
@@ -76,12 +77,18 @@ export interface UnitSpec {
     isCavalry: boolean;
 }
 
-export type MovementKind = 'attack' | 'support' | 'return';
+export type MovementKind =
+    | 'attack'
+    | 'support'
+    | 'return'
+    /** Rohstofflieferung; Händler kehren danach als `return` zurück. */
+    | 'trade';
 
 export const MOVEMENT_KINDS = [
     'attack',
     'support',
     'return',
+    'trade',
 ] as const satisfies readonly MovementKind[];
 
 export interface WorldSettings {

@@ -22,6 +22,7 @@ import iconReturn from './sprites/icons/return.png';
 import iconSoundOff from './sprites/icons/sound-off.png';
 import iconSoundOn from './sprites/icons/sound-on.png';
 import iconSupport from './sprites/icons/support.png';
+import iconTrade from './sprites/icons/trade.png';
 import iconVictory from './sprites/icons/victory.png';
 import iconVillage from './sprites/icons/village.png';
 import iconWarning from './sprites/icons/warning.png';
@@ -32,6 +33,7 @@ import buildingClay_pit from './sprites/buildings/clay_pit.png';
 import buildingFarm from './sprites/buildings/farm.png';
 import buildingHeadquarters from './sprites/buildings/headquarters.png';
 import buildingIron_mine from './sprites/buildings/iron_mine.png';
+import buildingMarket from './sprites/buildings/market.png';
 import buildingStable from './sprites/buildings/stable.png';
 import buildingTimber_camp from './sprites/buildings/timber_camp.png';
 import buildingWall from './sprites/buildings/wall.png';
@@ -62,6 +64,7 @@ export const SPRITES = {
     'icon.sound.off': iconSoundOff,
     'icon.sound.on': iconSoundOn,
     'icon.support': iconSupport,
+    'icon.trade': iconTrade,
     'icon.victory': iconVictory,
     'icon.village': iconVillage,
     'icon.warning': iconWarning,
@@ -72,6 +75,7 @@ export const SPRITES = {
     'building.farm': buildingFarm,
     'building.headquarters': buildingHeadquarters,
     'building.iron_mine': buildingIron_mine,
+    'building.market': buildingMarket,
     'building.stable': buildingStable,
     'building.timber_camp': buildingTimber_camp,
     'building.wall': buildingWall,

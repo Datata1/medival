@@ -1,6 +1,63 @@
 # Plan 16: Ansehen und Handel — Bots, die dich mögen oder nicht
 
-**Status:** ⬜ offen · **Voraussetzung:** [Plan 15](15-bot-grundgeruest.md)
+**Status:** ✅ erledigt (2026-08-02) · **Voraussetzung:** [Plan 15](15-bot-grundgeruest.md)
+
+> **Ergebnis:** Bots haben eine Meinung über einen, und Handel ist der Hebel dafür. Neue
+> Tabelle `relations` (asymmetrisch), neues Gebäude `market`, neue Bewegungsart `trade`.
+> Das Ansehen klingt **faul** ab — `settleStanding` steht jetzt als drittes Glied neben
+> `settleResources` und `settleLoyalty`, ohne einen einzigen Tick.
+>
+> **Die Entfernungsanforderung ist eine Multiplikation geworden.** Die Vorgabe lautete
+> *„je weiter weg desto weniger hat der effekt und geht ins neutrale über"*. Der zweite
+> Halbsatz ist der anspruchsvollere: Ein ferner Spieler soll nicht nur langsamer
+> freundlich werden, sondern **neutral bleiben**. Beides fällt aus
+> `einfluss(d) = 1/(1+(d/15)²)` heraus, weil jeder Anstoß mit der Entfernung schrumpft,
+> der Zerfall aber nicht. Das Gleichgewicht ist damit entfernungsabhängig — ein Ausdruck,
+> keine Fallunterscheidung.
+>
+> **Gemessen** (Gleichgewicht bei 3000 Rohstoffen alle 4 Stunden):
+>
+> | Entfernung | Einfluss | Gleichgewicht | Haltung |
+> |---|---|---|---|
+> | 3 Felder | 0,96 | 55,9 | freundlich |
+> | 15 Felder (`RELATION_RANGE`) | 0,50 | 29,1 | freundlich |
+> | 45 Felder | 0,10 | 5,8 | **neutral** |
+> | 150 Felder | 0,01 | 0,6 | **neutral** |
+>
+> Bemerkenswert daran ist die dritte Zeile: Ab dem Dreifachen der Reichweite bleibt ein
+> Partner **neutral, egal wie lange man liefert**. Nicht „langsamer freundlich" — er kommt
+> dort nie an. Ein Test hält die geschlossene Formel gegen 400 tatsächlich ausgeführte
+> Lieferungen, damit Balancing und Anzeige nicht auseinanderdriften.
+>
+> **19 reine Beziehungstests, 19 Handelstests in der Engine, 6 von 6 im Browser.** Der
+> Abnahmetest lief über die Oberfläche: 8000 Rohstoffe an einen Bot bei 9,0 Feldern und
+> dieselbe Menge an einen bei 48,3 Feldern. Ergebnis **2,9 gegen 0,4** — Faktor 7 allein
+> durch die Entfernung, ablesbar im Spielerprofil.
+>
+> **Eine Eigenschaft, die erst im Browser sichtbar wurde:** Die Zahlen sind klein, weil
+> das Ansehen nur zählt, was **tatsächlich im Lager ankommt**. Ein frischer Bot hat einen
+> Speicher der Stufe 1 (Kapazität 1000), von 8000 verschickten Rohstoffen verpuffen also
+> 7000 am vollen Lager — und dafür gibt es zu Recht keine Dankbarkeit. Das ist kein
+> Fehler, sondern das gewollte Verhalten des Deckels; es bedeutet aber, dass Großzügigkeit
+> gegenüber unterentwickelten Nachbarn früh im Spiel wenig bringt. Wer sich Freunde kaufen
+> will, sollte häufiger und kleiner liefern.
+>
+> **Der geplante Stolperstein hat sich bestätigt.** `travelTime` leitet die Geschwindigkeit
+> vom langsamsten Mitglied der Gruppe ab — und eine Lieferung hat keine Einheiten dabei.
+> Ohne `merchantTravelTime` wäre jede Lieferung quer über die Karte **sofort** angekommen.
+> Ein Test hält das ausdrücklich fest (*„kommt NICHT sofort an"*).
+>
+> **Was der Compiler erzwungen hat:** Die vollständigen Literale aus früheren Plänen
+> (`EMPTY_BUILDING_LEVELS`, `BUILD_WEIGHTS` in `decide/barbarian.ts`, `BUILDING_CATEGORY`
+> in `personalities.ts`, `KIND_ICONS` in `MovementsPanel.tsx`) haben beim Hinzufügen von
+> `market` und `trade` allesamt einen Fehler geworfen und eine Entscheidung verlangt —
+> genau wofür sie gedacht waren. Barbaren bekommen Gewicht 0 (sie handeln nicht), der
+> Marktplatz zählt zur Kategorie `economy`.
+>
+> **Abweichung von der Planung:** Kein `settleStanding`-Aufruf beim Spielerprofil eines
+> Barbaren — herrenlose Dörfer haben keinen Besitzer und damit keine Meinung. Lieferungen
+> an sie werden mit `target_is_barbarian` abgelehnt, statt Rohstoffe ins Nichts zu
+> schicken.
 
 ## Kontext
 
@@ -165,11 +222,12 @@ ist der Kreislauf beidseitig — Freundschaft ist nichts, was man nur kauft.
 | `shared/src/data/buildings.ts` | `market` in `BUILDINGS`, `BUILDING_ORDER`, `EMPTY_BUILDING_LEVELS`; `merchantCapacity(level)` |
 | `shared/src/types.ts` | `'market'` in `BuildingType`, `'trade'` in `MovementKind`/`MOVEMENT_KINDS` |
 | `shared/src/logic/travel.ts` | `merchantTravelTime` |
-| `shared/src/logic/relations.ts` | **neu** — pur: `decayStanding`, `distanceInfluence`, `attitudeOf`, `applyEvent` |
+| `shared/src/logic/relations.ts` | **neu** — pur: `decayStanding`, `distanceInfluence`, `attitudeOf`, `relationDelta`, `applyRelationEvent`, `standingEquilibrium` |
 | `shared/src/schema/api.ts` | Lieferungs-Anfrage, Haltung im Profil |
 | `server/src/db/schema.ts` · `ddl.ts` · `worldManager.migrateWorldDb` | Tabelle `relations` — **alle drei**, sonst brechen bestehende Spielstände |
 | `server/src/engine/world.ts` | `settleStanding` neben `settleResources`/`settleLoyalty` |
-| `server/src/engine/military.ts` | Lieferung senden, Ankunft behandeln, Ansehen bei Angriff/Unterstützung |
+| `server/src/engine/trade.ts` | **neu** — Lieferung senden, Ankunft, Händlerkapazität |
+| `server/src/engine/military.ts` | `trade`-Zweig in `handleArrival`, Ansehen bei Angriff und Unterstützung |
 | `server/src/ai/decide/trade.ts` | **neu** — pure Lieferentscheidung |
 | `server/src/api/routes.ts` | Lieferungs-Endpunkt, Haltung im Spielerprofil |
 | `client/src/features/map/*` · `village/*` · `player/*` · `i18n/de.ts` | Lieferformular, Marktplatz, Haltung im Profil |

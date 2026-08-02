@@ -37,6 +37,7 @@ function village(
         capacity: 1000,
         popInUse: 20,
         queueLength: 0,
+        merchantsFree: 0,
         ...patch,
     };
     // Ohne eigene Angabe entspricht die geplante Sicht der gebauten.
@@ -332,6 +333,7 @@ describe('planBot', () => {
         difficulty: 'normal' as const,
         state: { savingFor: {} },
         villages,
+        partners: [],
     });
 
     it('erzeugt einen Bau-Intent, wenn bezahlbar', () => {

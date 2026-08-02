@@ -14,7 +14,7 @@ aber als stark beschleunigte **Singleplayer**-Version, in der die Karte von Bots
 |---|---|---|
 | M1 | Weltverwaltung, Spielzeit-Uhr/Pause, Event-Scheduler, Ökonomie, Bau-Queue, Dorf-UI | ✅ fertig |
 | M2 | Karte (Canvas), Rekrutierung, Truppenbewegungen, Kampf, Beute, Eroberung, Berichte | ✅ fertig |
-| M3 | Barbarendörfer ✅ · Bot-Grundgerüst ✅ · Ansehen & Handel, Stämme | 🔨 |
+| M3 | Barbarendörfer ✅ · Bot-Grundgerüst ✅ · Ansehen & Handel ✅ · Stämme & Krieg | 🔨 |
 | M4 | Siegbedingung, Balancing, Docker-Release | ⬜ |
 
 ## Entwicklung
@@ -61,6 +61,11 @@ packages/
              components/ · features/{lobby,world,village,map,reports,player} ·
              i18n/ · lib/
 ```
+
+**Faule Auswertung.** Drei Größen werden nicht getickt, sondern beim Zugriff hochgerechnet
+und zurückgeschrieben: Ressourcen (`settleResources`), Loyalität (`settleLoyalty`) und das
+Ansehen zwischen Spielern (`settleStanding`). Was niemand abfragt, kostet nichts — bei 31
+Spielern wären es sonst bis zu 930 Beziehungspaare pro Tick.
 
 **Zeit.** Jede Welt hat eine eigene Spielzeit-Uhr (persistiert in `data/worlds.sqlite`,
 intern monoton via `performance.now`). Alle Events tragen Spielzeit-Stempel — dadurch sind

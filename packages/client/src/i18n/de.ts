@@ -52,6 +52,7 @@ const de = {
         clay: 'Lehm',
         iron: 'Eisen',
         population: 'Bevölkerung',
+        merchants: 'Freie Händlerkapazität',
         storage: 'Speicher: {{amount}}',
         nameAndPoints: '{{name}} ({{x}}|{{y}}) · {{points}} Punkte',
         buildQueue: 'Bauschleife',
@@ -90,6 +91,12 @@ const de = {
         travelTime: 'Laufzeit: {{duration}} (einfach)',
         attack: 'Angreifen',
         support: 'Unterstützen',
+        ship: 'Liefern',
+        shipTitle: 'Rohstoffe liefern',
+        marketMissing: 'Ohne Marktplatz lässt sich nichts verschicken.',
+        merchants: 'Händler: {{free}} von {{capacity}} frei',
+        tooManyGoods:
+            'Mehr als {{free}} können deine Händler nicht tragen.',
         movements: 'Bewegungen',
         incoming: 'Eingehend',
         outgoing: 'Ausgehend',
@@ -134,6 +141,14 @@ const de = {
         colPoints: 'Punkte',
         backToMap: '← Zurück zur Karte',
         profileLink: 'Profil ansehen',
+        attitudeLabel: 'Haltung dir gegenüber:',
+        attitude: {
+            hostile: 'feindlich',
+            wary: 'misstrauisch',
+            neutral: 'neutral',
+            friendly: 'freundlich',
+            allied: 'verbündet',
+        },
         personality: {
             turtle: 'Verteidiger',
             raider: 'Plünderer',
@@ -151,6 +166,7 @@ const de = {
         barracks: 'Kaserne',
         stable: 'Stall',
         wall: 'Wall',
+        market: 'Marktplatz',
         academy: 'Adelshof',
     },
     units: {
@@ -182,6 +198,12 @@ const de = {
         target_is_origin: 'Ziel ist das eigene Dorf',
         support_own_only: 'Unterstützung nur für eigene Dörfer',
         own_village_attack: 'Eigene Dörfer kann man nicht angreifen',
+        no_resources_selected: 'Keine Rohstoffe ausgewählt',
+        market_missing: 'Dieses Dorf hat keinen Marktplatz',
+        not_enough_merchants:
+            'So viel können deine Händler nicht tragen',
+        target_is_barbarian:
+            'An Barbarendörfer lässt sich nichts liefern',
         not_enough_units: 'Nicht genug Einheiten im Dorf',
         not_found: 'Nicht gefunden',
         internal: 'Interner Fehler',

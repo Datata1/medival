@@ -55,6 +55,28 @@ export const PlayerProfileView = observer(function PlayerProfileView({
                         })}
                     </span>
                 </div>
+                {profile.attitude && (
+                    <p>
+                        {/*
+                          Asymmetrisch: seine Sicht auf uns, nicht unsere auf
+                          ihn (plans/16-ansehen-und-handel.md).
+                        */}
+                        {t('player.attitudeLabel')}{' '}
+                        <strong
+                            className={
+                                profile.standing !== null &&
+                                profile.standing < 0
+                                    ? 'text-seal'
+                                    : 'text-moss'
+                            }
+                        >
+                            {t(`player.attitude.${profile.attitude}`)}
+                        </strong>{' '}
+                        <span className="text-ink-light tabular-nums">
+                            ({Math.round(profile.standing ?? 0)})
+                        </span>
+                    </p>
+                )}
             </Card>
 
             <Card>

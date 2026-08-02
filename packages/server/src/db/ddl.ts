@@ -84,6 +84,14 @@ CREATE TABLE IF NOT EXISTS recruit_queue (
   per_unit_ms INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_recruit_queue_village ON recruit_queue(village_id);
+CREATE TABLE IF NOT EXISTS relations (
+  player_id INTEGER NOT NULL,
+  other_player_id INTEGER NOT NULL,
+  standing REAL NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(player_id, other_player_id)
+);
+CREATE INDEX IF NOT EXISTS idx_relations_player ON relations(player_id);
 CREATE TABLE IF NOT EXISTS reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   player_id INTEGER NOT NULL,

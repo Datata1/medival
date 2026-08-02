@@ -87,6 +87,7 @@ export const BUILDING_CATEGORY = {
     stable: 'military',
     wall: 'defense',
     warehouse: 'economy',
+    market: 'economy',
     farm: 'economy',
     timber_camp: 'economy',
     clay_pit: 'economy',

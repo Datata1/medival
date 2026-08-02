@@ -50,8 +50,9 @@ export type BarbarianAction =
  * Entscheidung hier, statt es still auf 0 zu lassen — dasselbe Muster wie
  * `EMPTY_BUILDING_LEVELS` in `shared/src/data/buildings.ts`.
  *
- * Stall und Adelshof stehen deshalb ausdrücklich mit 0 da: Ein Barbarendorf
- * stellt keine Kavallerie auf und bekommt nie einen Adligen.
+ * Stall, Adelshof und Marktplatz stehen deshalb ausdrücklich mit 0 da: Ein
+ * Barbarendorf stellt keine Kavallerie auf, bekommt nie einen Adligen und
+ * handelt mit niemandem.
  */
 const BUILD_WEIGHTS: Record<BuildingType, number> = {
     timber_camp: 10,
@@ -64,6 +65,8 @@ const BUILD_WEIGHTS: Record<BuildingType, number> = {
     wall: 1,
     stable: 0,
     academy: 0,
+    // Barbaren handeln nicht — ein Marktplatz wäre nutzloser Ballast.
+    market: 0,
 };
 
 /** Womit sich ein Barbarendorf verteidigt — Infanterie, sonst nichts. */

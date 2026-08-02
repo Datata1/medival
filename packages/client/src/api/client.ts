@@ -6,6 +6,7 @@ import {
     OkResponseSchema,
     PlayerProfileSchema,
     ReportListSchema,
+    type Resources,
     SendUnitsResponseSchema,
     type Units,
     type UnitType,
@@ -121,6 +122,17 @@ export const api = {
             `/api/worlds/${worldId}/villages/${villageId}/send`,
             SendUnitsResponseSchema,
             postJson({ target, kind, units }),
+        ),
+    ship: (
+        worldId: number,
+        villageId: number,
+        target: number,
+        resources: Resources,
+    ) =>
+        request(
+            `/api/worlds/${worldId}/villages/${villageId}/ship`,
+            SendUnitsResponseSchema,
+            postJson({ target, resources }),
         ),
     getPlayerProfile: (worldId: number, playerId: number) =>
         request(

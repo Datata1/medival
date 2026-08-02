@@ -2,6 +2,7 @@ import {
     CarriedResourcesSchema,
     canAfford,
     carryCapacity,
+    distance,
     entriesOf,
     farmCapacity,
     GameTime,
@@ -35,6 +36,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { GameError } from './errors.js';
+import { handleTradeArrival } from './trade.js';
 import type { World } from './world.js';
 
 const CONQUEST_LOYALTY_RESET = 25;
@@ -238,6 +240,35 @@ export function handleRecruitTick(
         world.broadcast({ type: 'village_updated', villageId });
 }
 
+/**
+ * Ansehen für erhaltene Unterstützung (plans/16-ansehen-und-handel.md).
+ *
+ * Bewertet wird der Verteidigungswert der geschickten Truppen, nicht ihre
+ * Anzahl — zehn Speerträger sind weniger wert als zehn Schwertkämpfer.
+ */
+function creditSupport(
+    world: World,
+    originId: number,
+    targetId: number,
+    sent: Units,
+): void {
+    const origin = world.getVillageRow(originId);
+    const target = world.getVillageRow(targetId);
+    if (origin.playerId === target.playerId) return; // eigene Dörfer zählen nicht
+    let value = 0;
+    for (const [type, n] of entriesOf(sent)) {
+        value +=
+            ((UNITS[type].defense + UNITS[type].defenseCavalry) / 2) *
+            n;
+    }
+    world.adjustStanding(
+        target.playerId,
+        origin.playerId,
+        { kind: 'support', value },
+        distance(origin.x, origin.y, target.x, target.y),
+    );
+}
+
 // ── movements ────────────────────────────────────────────────────────
 
 export function sendUnits(
@@ -340,7 +371,26 @@ export function handleArrival(
         switch (m.kind) {
             case 'support': {
                 world.addUnits(m.targetVillageId, units);
+                // Unterstützung wiegt schwerer als eine Lieferung: Wer
+                // Verteidiger schickt, riskiert sie auch.
+                creditSupport(
+                    world,
+                    m.originVillageId,
+                    m.targetVillageId,
+                    units,
+                );
                 affected.push(m.targetVillageId);
+                break;
+            }
+            case 'trade': {
+                handleTradeArrival(
+                    world,
+                    m.originVillageId,
+                    m.targetVillageId,
+                    carries,
+                    GameTime.of(m.arrivalGameTime),
+                );
+                affected.push(m.originVillageId, m.targetVillageId);
                 break;
             }
             case 'return': {
@@ -556,6 +606,39 @@ function resolveAttackArrival(
         loot,
         conquered,
     };
+    /*
+     * Ansehen: Der Verteidiger denkt schlechter über den Angreifer. Bewertet
+     * werden die *eigenen* Verluste — ein abgewehrter Späherangriff wiegt
+     * weniger als eine niedergewalzte Garnison. Ein verlorenes Dorf zählt
+     * gesondert und ohne Entfernungsdämpfung: Wer einem ein Dorf nimmt, war
+     * per Definition nah genug.
+     */
+    let defenderLossValue = 0;
+    for (const [type, n] of entriesOf(result.defenderLosses)) {
+        defenderLossValue +=
+            ((UNITS[type].defense + UNITS[type].defenseCavalry) / 2) *
+            n;
+    }
+    const dist = distance(origin.x, origin.y, target.x, target.y);
+    if (defenderLossValue > 0) {
+        world.adjustStanding(
+            target.playerId,
+            origin.playerId,
+            { kind: 'attacked', losses: defenderLossValue },
+            dist,
+            now,
+        );
+    }
+    if (conquered) {
+        world.adjustStanding(
+            target.playerId,
+            origin.playerId,
+            { kind: 'villageLost' },
+            dist,
+            now,
+        );
+    }
+
     writeReport(world, origin.playerId, 'attack', reportPayload);
     writeReport(world, target.playerId, 'defense', reportPayload);
 }

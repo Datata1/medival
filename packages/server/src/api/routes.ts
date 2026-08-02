@@ -1,10 +1,12 @@
 import type { WebSocket } from '@fastify/websocket';
 import {
+    attitudeOf,
     BattleReportPayloadSchema,
     BuildRequestSchema,
     CreateWorldRequestSchema,
     NumericIdSchema,
     RecruitRequestSchema,
+    SendResourcesRequestSchema,
     SendUnitsRequestSchema,
     UnitsSchema,
 } from '@medival/shared';
@@ -18,6 +20,7 @@ import {
 import { movements, players, reports, villages } from '../db/schema.js';
 import { PLAYER_ID } from '../engine/mapgen.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
+import { sendResources } from '../engine/trade.js';
 import { GameError, type World } from '../engine/world.js';
 import type { WorldManager } from '../engine/worldManager.js';
 
@@ -164,6 +167,13 @@ export function registerRoutes(
                 (points) => points > totalPoints,
             ).length;
 
+            // Asymmetrisch: die Sicht *dieses* Spielers auf uns, nicht
+            // umgekehrt (plans/16-ansehen-und-handel.md).
+            const standing =
+                playerId === PLAYER_ID
+                    ? null
+                    : world.settleStanding(playerId, PLAYER_ID);
+
             return {
                 id: player.id,
                 name: player.name,
@@ -173,7 +183,32 @@ export function registerRoutes(
                 totalPoints,
                 rank: ahead + 1,
                 villages: owned,
+                standing,
+                attitude:
+                    standing === null ? null : attitudeOf(standing),
             };
+        },
+    );
+
+    app.post<{ Params: { id: string; vid: string } }>(
+        '/api/worlds/:id/villages/:vid/ship',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            const villageId = parseInput(
+                NumericIdSchema,
+                req.params.vid,
+            );
+            const body = parseInput(
+                SendResourcesRequestSchema,
+                req.body,
+            );
+            const result = sendResources(
+                world,
+                villageId,
+                body.target,
+                body.resources,
+            );
+            return { ...result, gameTime: world.now() };
         },
     );
 

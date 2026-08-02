@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ATTITUDES } from '../logic/relations.js';
 import {
     BuildingLevelsSchema,
     BuildingTypeSchema,
@@ -44,6 +45,12 @@ export const SendUnitsRequestSchema = z.object({
     target: z.number().int().positive(),
     kind: z.enum(['attack', 'support']),
     units: UnitsSchema.default({}),
+});
+
+/** Rohstofflieferung an ein fremdes Dorf (plans/16-ansehen-und-handel.md). */
+export const SendResourcesRequestSchema = z.object({
+    target: z.number().int().positive(),
+    resources: ResourcesSchema,
 });
 
 /** Pfadparameter kommen als Strings; hier werden sie zu Zahlen geparst. */
@@ -108,6 +115,10 @@ export const VillageViewSchema = z.object({
     units: UnitsSchema,
     popUsed: z.number(),
     popMax: z.number(),
+    /** Gesamte Transportkapazität des Marktplatzes. */
+    merchantCapacity: z.number(),
+    /** Davon gerade frei — unterwegs gebundene Händler zählen nicht. */
+    merchantsFree: z.number(),
 });
 
 export const MapVillageSchema = z.object({
@@ -172,6 +183,12 @@ export const PlayerProfileSchema = z.object({
     /** Platz in der Punkterangliste, 1 = führend. */
     rank: z.number().int().positive(),
     villages: z.array(villageRef.extend({ points: z.number().int() })),
+    /**
+     * Wie dieser Spieler zum menschlichen Spieler steht — asymmetrisch, also
+     * seine Sicht auf uns, nicht unsere auf ihn. `null` beim eigenen Profil.
+     */
+    standing: z.number().nullable(),
+    attitude: z.enum(ATTITUDES).nullable(),
 });
 
 export const SendUnitsResponseSchema = z.object({

@@ -1,3 +1,4 @@
+import { MERCHANT_MIN_PER_FIELD } from '../data/buildings.js';
 import { UNITS } from '../data/units.js';
 import { entriesOf } from '../lib/objects.js';
 import { Duration } from '../time.js';
@@ -37,6 +38,32 @@ export function travelTime(
     return Duration.atLeast(
         Duration.scale(
             Duration.minutes(dist * minPerField),
+            1 / unitSpeed,
+        ),
+        Duration.seconds(1),
+    );
+}
+
+/**
+ * Laufzeit einer Rohstofflieferung.
+ *
+ * Braucht eine eigene Funktion, weil `travelTime` die Geschwindigkeit vom
+ * langsamsten Mitglied der Gruppe ableitet — und eine Lieferung hat gar keine
+ * Einheiten dabei. `slowestSpeed({})` ist 0, `travelTime` gäbe also
+ * `Duration.zero` zurück: Die Lieferung käme quer über die Karte **sofort**
+ * an (siehe plans/16-ansehen-und-handel.md).
+ */
+export function merchantTravelTime(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    unitSpeed: number,
+): Duration {
+    const dist = distance(x1, y1, x2, y2);
+    return Duration.atLeast(
+        Duration.scale(
+            Duration.minutes(dist * MERCHANT_MIN_PER_FIELD),
             1 / unitSpeed,
         ),
         Duration.seconds(1),
