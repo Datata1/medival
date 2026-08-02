@@ -9,13 +9,14 @@
         "test": "pnpm -r test",
         "build": "pnpm -r build",
         "typecheck": "pnpm -r typecheck",
-        "lint": "biome check . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs",
+        "lint": "biome check . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs && node scripts/check-ai-purity.mjs",
         "lint:fix": "biome check --write . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs",
         "format": "biome format --write .",
         "check:casts": "node scripts/check-no-casts.mjs --self-test && node scripts/check-no-casts.mjs",
         "check:layering": "node scripts/check-layering.mjs --self-test && node scripts/check-layering.mjs",
         "check:contrast": "node scripts/check-contrast.mjs --self-test && node scripts/check-contrast.mjs --verbose",
         "check:assets": "node scripts/check-assets.mjs --self-test && node scripts/check-assets.mjs",
+        "check:ai-purity": "node scripts/check-ai-purity.mjs --self-test && node scripts/check-ai-purity.mjs",
         "assets:generate": "node scripts/generate-placeholder-assets.mjs"
     },
     "devDependencies": {

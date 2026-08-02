@@ -31,6 +31,7 @@ import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, asc, eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { handleBarbarianTick } from '../ai/barbarian.js';
+import { handleBotTick } from '../ai/bot.js';
 import {
     firstOrThrow,
     parseJsonColumn,
@@ -513,6 +514,16 @@ export class World {
                         EVENT_SCHEMAS.barbarian_tick,
                         ev.payload,
                         'event.barbarian_tick',
+                    ),
+                );
+                break;
+            case 'bot_tick':
+                handleBotTick(
+                    this,
+                    parseRow(
+                        EVENT_SCHEMAS.bot_tick,
+                        ev.payload,
+                        'event.bot_tick',
                     ),
                 );
                 break;

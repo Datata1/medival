@@ -37,12 +37,18 @@ export const BarbarianTickPayloadSchema = z.object({
     villageId,
 });
 
+/** Ein Bot denkt nach (plans/15-bot-grundgeruest.md). */
+export const BotTickPayloadSchema = z.object({
+    playerId: z.number().int().positive(),
+});
+
 /** Alle bekannten Event-Typen mit ihren Payloads. */
 export const EVENT_SCHEMAS = {
     build_complete: BuildCompletePayloadSchema,
     recruit_tick: RecruitTickPayloadSchema,
     arrival: ArrivalPayloadSchema,
     barbarian_tick: BarbarianTickPayloadSchema,
+    bot_tick: BotTickPayloadSchema,
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
@@ -59,3 +65,4 @@ export type ArrivalPayload = z.infer<typeof ArrivalPayloadSchema>;
 export type BarbarianTickPayload = z.infer<
     typeof BarbarianTickPayloadSchema
 >;
+export type BotTickPayload = z.infer<typeof BotTickPayloadSchema>;

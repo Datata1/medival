@@ -25,11 +25,10 @@ function smallWorld(): World {
         speed: 100,
         unitSpeed: 100,
         mapSize: 40,
-        botCount: 3,
+        // Weder Bots noch Barbaren: Diese Tests prüfen die Warteschlange
+        // selbst, und beide würden sie dauerhaft gefüllt halten.
+        botCount: 0,
         barbarianCount: 8,
-        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
-        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
-        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
         barbarianAttemptsPerHour: 0,
         seed: 4242,
     });
