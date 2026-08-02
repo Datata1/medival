@@ -27,6 +27,10 @@ function smallWorld(): World {
         mapSize: 40,
         botCount: 3,
         barbarianCount: 8,
+        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+        barbarianAttemptsPerHour: 0,
         seed: 4242,
     });
 }

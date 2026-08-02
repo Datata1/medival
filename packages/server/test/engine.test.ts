@@ -28,6 +28,10 @@ function createSmallWorld() {
         mapSize: 40,
         botCount: 5,
         barbarianCount: 10,
+        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+        barbarianAttemptsPerHour: 0,
         seed: 12345,
     });
 }
@@ -54,6 +58,7 @@ describe('world creation', () => {
             botCount: 5,
             barbarianCount: 10,
             seed: 12345,
+            barbarianAttemptsPerHour: 0,
         });
         const rowsA = a.sqlite
             .prepare('SELECT x, y FROM villages ORDER BY id')

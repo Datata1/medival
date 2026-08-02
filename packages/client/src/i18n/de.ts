@@ -24,6 +24,10 @@ const de = {
         statusPaused: 'pausiert',
         presetRelaxed: 'Gemütlich (100x)',
         presetFast: 'Schnell (200x)',
+        barbarians: 'Barbarendörfer',
+        barbariansStill: 'Barbaren: statisch',
+        barbariansCalm: 'Barbaren: träge',
+        barbariansLively: 'Barbaren: lebhaft',
         presetBlitz: 'Blitz (500x)',
     },
     world: {

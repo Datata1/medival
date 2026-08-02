@@ -16,12 +16,28 @@ const SPEED_PRESETS = {
     blitz: { labelKey: 'lobby.presetBlitz', speed: 500, unitSpeed: 50 },
 } as const;
 
+/**
+ * Wie lebhaft Barbarendörfer wachsen (plans/14-barbarendoerfer.md). Angegeben
+ * als mittlere Handlungsversuche je Spielstunde; 0 hält sie statisch.
+ */
+const BARBARIAN_PRESETS = {
+    still: { labelKey: 'lobby.barbariansStill', rate: 0 },
+    calm: { labelKey: 'lobby.barbariansCalm', rate: 1 },
+    lively: { labelKey: 'lobby.barbariansLively', rate: 3 },
+} as const;
+
 type PresetKey = keyof typeof SPEED_PRESETS;
+type BarbarianKey = keyof typeof BARBARIAN_PRESETS;
 const PRESET_KEYS = keysOf(SPEED_PRESETS);
+const BARBARIAN_KEYS = keysOf(BARBARIAN_PRESETS);
 
 /** Der Wert eines <select> ist ein String — hier wird er geprüft, nicht behauptet. */
 function parsePresetKey(value: string): PresetKey {
     return PRESET_KEYS.find((key) => key === value) ?? 'fast';
+}
+
+function parseBarbarianKey(value: string): BarbarianKey {
+    return BARBARIAN_KEYS.find((key) => key === value) ?? 'calm';
 }
 
 export const CreateWorldForm = observer(function CreateWorldForm({
@@ -33,6 +49,7 @@ export const CreateWorldForm = observer(function CreateWorldForm({
     const { lobby } = useStores();
     const [name, setName] = useState('');
     const [preset, setPreset] = useState<PresetKey>('fast');
+    const [barbarians, setBarbarians] = useState<BarbarianKey>('calm');
 
     const submit = async () => {
         const chosen = SPEED_PRESETS[preset];
@@ -41,6 +58,8 @@ export const CreateWorldForm = observer(function CreateWorldForm({
             {
                 speed: chosen.speed,
                 unitSpeed: chosen.unitSpeed,
+                barbarianAttemptsPerHour:
+                    BARBARIAN_PRESETS[barbarians].rate,
             },
         );
         if (id !== null) onCreated(id);
@@ -64,6 +83,20 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                     {PRESET_KEYS.map((key) => (
                         <option key={key} value={key}>
                             {t(SPEED_PRESETS[key].labelKey)}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    value={barbarians}
+                    onChange={(e) =>
+                        setBarbarians(parseBarbarianKey(e.target.value))
+                    }
+                    title={t('lobby.barbarians')}
+                    aria-label={t('lobby.barbarians')}
+                >
+                    {BARBARIAN_KEYS.map((key) => (
+                        <option key={key} value={key}>
+                            {t(BARBARIAN_PRESETS[key].labelKey)}
                         </option>
                     ))}
                 </select>

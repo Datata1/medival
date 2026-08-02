@@ -81,6 +81,14 @@ export interface WorldSettings {
     mapSize: number;
     botCount: number;
     barbarianCount: number;
+    /**
+     * Mittlere Handlungsversuche eines Barbarendorfs pro Stunde **bei
+     * Weltgeschwindigkeit 1**; wird wie die Produktion mit `speed`
+     * multipliziert. 0 hält Barbaren statisch (Verhalten vor Plan 14).
+     */
+    barbarianAttemptsPerHour: number;
+    /** Punktedeckel, ab dem ein Barbarendorf nicht mehr ausbaut. */
+    barbarianMaxPoints: number;
     /** Fraction of all villages the player must own to win, 0..1 */
     victoryVillageShare: number;
     seed: number;
