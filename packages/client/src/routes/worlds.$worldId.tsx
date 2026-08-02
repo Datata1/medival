@@ -85,6 +85,17 @@ const WorldLayout = observer(function WorldLayout() {
                         </span>
                     )}
                 </Button>
+                <Button
+                    variant="tab"
+                    onClick={() =>
+                        void navigate(
+                            tabLink('/worlds/$worldId/diplomacy'),
+                        )
+                    }
+                    active={location.pathname.endsWith('/diplomacy')}
+                >
+                    <Icon name="icon.tribe" /> {t('world.tabDiplomacy')}
+                </Button>
             </nav>
 
             <Outlet />

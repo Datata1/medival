@@ -1,5 +1,5 @@
 import { GameError } from '../engine/errors.js';
-import { recruitUnits } from '../engine/military.js';
+import { recruitUnits, sendUnits } from '../engine/military.js';
 import { sendResources } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
 import type { Intent } from './intents.js';
@@ -70,8 +70,13 @@ function runIntent(world: World, intent: Intent): void {
             );
             break;
         case 'send':
-            // Kommt in Plan 17. Der Typ kennt den Fall schon, damit diese
-            // Stelle später erweitert und nicht umgebaut wird.
-            throw new GameError('not_implemented');
+            sendUnits(
+                world,
+                intent.originVillageId,
+                intent.targetVillageId,
+                intent.movement,
+                intent.units,
+            );
+            break;
     }
 }

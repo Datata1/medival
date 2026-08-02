@@ -4,13 +4,28 @@ import {
     projectResources,
     RELATION_RANGE,
     resourceRatePerHour,
+    type Units,
     warehouseCapacity,
 } from '@medival/shared';
 import { eq } from 'drizzle-orm';
-import { buildQueue, players, villages } from '../db/schema.js';
+import {
+    buildQueue,
+    movements,
+    players,
+    recruitQueue,
+    tribeInvitations,
+    tribes,
+    villages,
+} from '../db/schema.js';
 import { freeMerchantCapacity } from '../engine/trade.js';
+import { pruneInvitations, tribeOf } from '../engine/tribes.js';
 import type { World } from '../engine/world.js';
 import type { VillageSnapshot } from './decide/build.js';
+import type {
+    FoundingCandidate,
+    Invitation,
+} from './decide/diplomacy.js';
+import type { AttackTarget, DistressCall } from './decide/military.js';
 import type { TradePartner } from './decide/trade.js';
 import {
     type BotState,
@@ -45,6 +60,17 @@ export interface BotSnapshot {
      * Liste soll nicht mit Aussichtslosem gefüllt werden.
      */
     partners: TradePartner[];
+    /** Feindliche Nachbardörfer in Reichweite (Plan 17). */
+    targets: AttackTarget[];
+    /** Bedrängte Stammesmitglieder (Plan 17). */
+    distressCalls: DistressCall[];
+    /** Offene Einladungen an diesen Bot. */
+    invitations: Invitation[];
+    /** Mögliche Mitgründer eines Stammes. */
+    foundingCandidates: FoundingCandidate[];
+    tribeId: number | null;
+    gameTime: number;
+    unitSpeed: number;
 }
 
 /**
@@ -52,6 +78,9 @@ export interface BotSnapshot {
  * liegt der Einfluss bei 6 % — darüber lohnt sich keine Fahrt mehr.
  */
 const PARTNER_RANGE = RELATION_RANGE * 4;
+
+/** Wie weit ein Bot für Angriffe schaut — Marschzeit begrenzt den Rest. */
+const ATTACK_RANGE = RELATION_RANGE * 2;
 
 export function perceiveBot(
     world: World,
@@ -92,6 +121,9 @@ export function perceiveBot(
         }
         return {
             id: v.id,
+            x: v.x,
+            y: v.y,
+            units: world.getUnits(v.id),
             levels,
             plannedLevels,
             // Nicht `settleResources`: Wahrnehmung liest, sie schreibt nicht.
@@ -112,6 +144,12 @@ export function perceiveBot(
             popInUse: world.popInUse(v.id, levels),
             queueLength: queue.length,
             merchantsFree: freeMerchantCapacity(world, v.id),
+            recruiting:
+                world.db
+                    .select({ id: recruitQueue.id })
+                    .from(recruitQueue)
+                    .where(eq(recruitQueue.villageId, v.id))
+                    .all().length > 0,
         };
     });
 
@@ -122,7 +160,212 @@ export function perceiveBot(
         state: readBotState(player.aiState),
         villages: snapshots,
         partners: perceivePartners(world, playerId, owned, now),
+        targets: perceiveTargets(world, playerId, owned, now),
+        distressCalls: perceiveDistress(world, playerId, now),
+        invitations: perceiveInvitations(world, playerId, now),
+        foundingCandidates: perceiveFounding(
+            world,
+            playerId,
+            owned,
+            now,
+        ),
+        tribeId: tribeOf(world, playerId),
+        gameTime: now,
+        unitSpeed: world.settings.unitSpeed,
     };
+}
+
+/**
+ * Feindliche Dörfer in Reichweite.
+ *
+ * Die Verteidigung wird **geschätzt**, nicht abgelesen: Der Bot leitet sie aus
+ * den Punkten des Ziels ab. Ein Bot mit Röntgenblick trifft perfekte
+ * Entscheidungen und ist als Gegner uninteressant (plans/17).
+ */
+function perceiveTargets(
+    world: World,
+    playerId: number,
+    owned: { x: number; y: number }[],
+    now: GameTime,
+): AttackTarget[] {
+    const out: AttackTarget[] = [];
+    const rows = world.db
+        .select({
+            id: villages.id,
+            playerId: villages.playerId,
+            x: villages.x,
+            y: villages.y,
+            points: villages.points,
+        })
+        .from(villages)
+        .all();
+
+    for (const v of rows) {
+        // Barbarendörfer bleiben drin: Sie sind folgenlose Ziele und der
+        // Grund, warum in einer friedlichen Welt überhaupt gekämpft wird.
+        if (v.playerId === playerId) continue;
+        let dist = Number.POSITIVE_INFINITY;
+        for (const home of owned)
+            dist = Math.min(dist, distance(home.x, home.y, v.x, v.y));
+        if (dist > ATTACK_RANGE) continue;
+        out.push({
+            villageId: v.id,
+            ownerId: v.playerId,
+            x: v.x,
+            y: v.y,
+            points: v.points,
+            // Barbarendörfer haben keinen Besitzer und damit keine Haltung.
+            standing:
+                v.playerId === null
+                    ? 0
+                    : world.effectiveStanding(
+                          playerId,
+                          v.playerId,
+                          now,
+                      ),
+            ...estimateDefense(v.points),
+        });
+    }
+    return out;
+}
+
+/**
+ * Grobe Verteidigungsschätzung allein aus den Punkten eines Dorfes — das ist
+ * alles, was ein Bot von außen sehen kann.
+ */
+function estimateDefense(points: number): {
+    estimatedDefense: Units;
+    estimatedWall: number;
+} {
+    const scale = Math.max(0, points) / 100;
+    return {
+        estimatedDefense: {
+            spear: Math.round(scale * 12),
+            sword: Math.round(scale * 8),
+        },
+        estimatedWall: Math.min(20, Math.floor(scale)),
+    };
+}
+
+/** Stammesmitglieder mit eingehendem Angriff. */
+function perceiveDistress(
+    world: World,
+    playerId: number,
+    now: GameTime,
+): DistressCall[] {
+    const tribeId = tribeOf(world, playerId);
+    if (tribeId === null) return [];
+
+    const mates = world.db
+        .select({ id: players.id })
+        .from(players)
+        .where(eq(players.tribeId, tribeId))
+        .all()
+        .filter((p) => p.id !== playerId)
+        .map((p) => p.id);
+    if (mates.length === 0) return [];
+
+    const out: DistressCall[] = [];
+    for (const m of world.db.select().from(movements).all()) {
+        if (m.kind !== 'attack') continue;
+        if (m.arrivalGameTime <= now) continue;
+        const target = world.db
+            .select({
+                id: villages.id,
+                playerId: villages.playerId,
+                x: villages.x,
+                y: villages.y,
+            })
+            .from(villages)
+            .where(eq(villages.id, m.targetVillageId))
+            .all()[0];
+        if (!target || target.playerId === null) continue;
+        if (!mates.includes(target.playerId)) continue;
+        out.push({
+            villageId: target.id,
+            x: target.x,
+            y: target.y,
+            arrivalGameTime: m.arrivalGameTime,
+        });
+    }
+    return out;
+}
+
+function perceiveInvitations(
+    world: World,
+    playerId: number,
+    now: GameTime,
+): Invitation[] {
+    pruneInvitations(world);
+    return world.db
+        .select()
+        .from(tribeInvitations)
+        .where(eq(tribeInvitations.playerId, playerId))
+        .all()
+        .map((row) => {
+            const founder = world.db
+                .select({ founderId: tribes.founderId })
+                .from(tribes)
+                .where(eq(tribes.id, row.tribeId))
+                .all()[0];
+            const inviterId = founder?.founderId ?? 0;
+            return {
+                tribeId: row.tribeId,
+                inviterId,
+                standing:
+                    inviterId > 0
+                        ? world.effectiveStanding(
+                              playerId,
+                              inviterId,
+                              now,
+                          )
+                        : 0,
+            };
+        });
+}
+
+/** Wer als Mitgründer eines Stammes in Frage kommt. */
+function perceiveFounding(
+    world: World,
+    playerId: number,
+    owned: { x: number; y: number }[],
+    now: GameTime,
+): FoundingCandidate[] {
+    const out: FoundingCandidate[] = [];
+    const others = world.db
+        .select({ id: players.id, tribeId: players.tribeId })
+        .from(players)
+        .all()
+        .filter((p) => p.id !== playerId);
+
+    for (const other of others) {
+        const theirVillages = world.db
+            .select({ x: villages.x, y: villages.y })
+            .from(villages)
+            .where(eq(villages.playerId, other.id))
+            .all();
+        if (theirVillages.length === 0) continue;
+        let dist = Number.POSITIVE_INFINITY;
+        for (const home of owned)
+            for (const v of theirVillages)
+                dist = Math.min(
+                    dist,
+                    distance(home.x, home.y, v.x, v.y),
+                );
+        if (dist > PARTNER_RANGE) continue;
+        out.push({
+            playerId: other.id,
+            standing: world.effectiveStanding(playerId, other.id, now),
+            theirStanding: world.effectiveStanding(
+                other.id,
+                playerId,
+                now,
+            ),
+            distance: dist,
+            inTribe: other.tribeId !== null,
+        });
+    }
+    return out;
 }
 
 /** Nachbarn anderer Spieler in Reichweite, mit der eigenen Haltung zu ihnen. */

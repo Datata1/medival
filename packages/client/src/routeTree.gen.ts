@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorldsWorldIdRouteImport } from './routes/worlds.$worldId'
 import { Route as WorldsWorldIdIndexRouteImport } from './routes/worlds.$worldId.index'
+import { Route as WorldsWorldIdDiplomacyRouteImport } from './routes/worlds.$worldId.diplomacy'
 import { Route as WorldsWorldIdMapRouteImport } from './routes/worlds.$worldId.map'
 import { Route as WorldsWorldIdReportsRouteImport } from './routes/worlds.$worldId.reports'
 import { Route as WorldsWorldIdPlayersPlayerIdRouteImport } from './routes/worlds.$worldId.players.$playerId'
@@ -30,6 +31,11 @@ const WorldsWorldIdRoute = WorldsWorldIdRouteImport.update({
 const WorldsWorldIdIndexRoute = WorldsWorldIdIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => WorldsWorldIdRoute,
+} as any)
+const WorldsWorldIdDiplomacyRoute = WorldsWorldIdDiplomacyRouteImport.update({
+  id: '/diplomacy',
+  path: '/diplomacy',
   getParentRoute: () => WorldsWorldIdRoute,
 } as any)
 const WorldsWorldIdMapRoute = WorldsWorldIdMapRouteImport.update({
@@ -58,6 +64,7 @@ const WorldsWorldIdVillageVillageIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/worlds/$worldId': typeof WorldsWorldIdRouteWithChildren
+  '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/map': typeof WorldsWorldIdMapRoute
   '/worlds/$worldId/reports': typeof WorldsWorldIdReportsRoute
   '/worlds/$worldId/': typeof WorldsWorldIdIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/map': typeof WorldsWorldIdMapRoute
   '/worlds/$worldId/reports': typeof WorldsWorldIdReportsRoute
   '/worlds/$worldId': typeof WorldsWorldIdIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/worlds/$worldId': typeof WorldsWorldIdRouteWithChildren
+  '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/map': typeof WorldsWorldIdMapRoute
   '/worlds/$worldId/reports': typeof WorldsWorldIdReportsRoute
   '/worlds/$worldId/': typeof WorldsWorldIdIndexRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/worlds/$worldId'
+    | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/map'
     | '/worlds/$worldId/reports'
     | '/worlds/$worldId/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/map'
     | '/worlds/$worldId/reports'
     | '/worlds/$worldId'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/worlds/$worldId'
+    | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/map'
     | '/worlds/$worldId/reports'
     | '/worlds/$worldId/'
@@ -139,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorldsWorldIdIndexRouteImport
       parentRoute: typeof WorldsWorldIdRoute
     }
+    '/worlds/$worldId/diplomacy': {
+      id: '/worlds/$worldId/diplomacy'
+      path: '/diplomacy'
+      fullPath: '/worlds/$worldId/diplomacy'
+      preLoaderRoute: typeof WorldsWorldIdDiplomacyRouteImport
+      parentRoute: typeof WorldsWorldIdRoute
+    }
     '/worlds/$worldId/map': {
       id: '/worlds/$worldId/map'
       path: '/map'
@@ -171,6 +190,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface WorldsWorldIdRouteChildren {
+  WorldsWorldIdDiplomacyRoute: typeof WorldsWorldIdDiplomacyRoute
   WorldsWorldIdMapRoute: typeof WorldsWorldIdMapRoute
   WorldsWorldIdReportsRoute: typeof WorldsWorldIdReportsRoute
   WorldsWorldIdIndexRoute: typeof WorldsWorldIdIndexRoute
@@ -179,6 +199,7 @@ interface WorldsWorldIdRouteChildren {
 }
 
 const WorldsWorldIdRouteChildren: WorldsWorldIdRouteChildren = {
+  WorldsWorldIdDiplomacyRoute: WorldsWorldIdDiplomacyRoute,
   WorldsWorldIdMapRoute: WorldsWorldIdMapRoute,
   WorldsWorldIdReportsRoute: WorldsWorldIdReportsRoute,
   WorldsWorldIdIndexRoute: WorldsWorldIdIndexRoute,

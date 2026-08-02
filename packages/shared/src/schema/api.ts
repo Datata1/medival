@@ -53,6 +53,64 @@ export const SendResourcesRequestSchema = z.object({
     resources: ResourcesSchema,
 });
 
+// ── Stämme (Plan 17) ─────────────────────────────────────────────────
+
+export const FoundTribeRequestSchema = z.object({
+    name: z.string().trim().min(1).max(40),
+    tag: z.string().trim().min(1).max(5),
+});
+
+export const InvitePlayerRequestSchema = z.object({
+    playerId: z.number().int().positive(),
+});
+
+export const AcceptInvitationRequestSchema = z.object({
+    tribeId: z.number().int().positive(),
+});
+
+const tribeMember = z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+    points: z.number().int().nonnegative(),
+    villageCount: z.number().int().nonnegative(),
+});
+
+export const TribeSchema = z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+    tag: z.string(),
+    founderId: z.number().int().positive(),
+    members: z.array(tribeMember),
+});
+
+/** Alles, was die Diplomatie-Ansicht braucht — ein Abruf statt fünf. */
+export const DiplomacyViewSchema = z.object({
+    tribe: TribeSchema.nullable(),
+    /** Bekannte Spieler mit Haltung, ohne Barbaren. */
+    players: z.array(
+        z.object({
+            id: z.number().int().positive(),
+            name: z.string(),
+            isBot: z.boolean(),
+            points: z.number().int().nonnegative(),
+            tribeTag: z.string().nullable(),
+            standing: z.number(),
+            attitude: z.enum(ATTITUDES),
+            distance: z.number(),
+        }),
+    ),
+    /** Offene Einladungen an den Spieler. */
+    invitations: z.array(
+        z.object({
+            tribeId: z.number().int().positive(),
+            tribeName: z.string(),
+            tribeTag: z.string(),
+            expiresGameTime: GameTimeSchema,
+        }),
+    ),
+    gameTime: GameTimeSchema,
+});
+
 /** Pfadparameter kommen als Strings; hier werden sie zu Zahlen geparst. */
 export const NumericIdSchema = z.coerce.number().int().positive();
 
@@ -189,6 +247,8 @@ export const PlayerProfileSchema = z.object({
      */
     standing: z.number().nullable(),
     attitude: z.enum(ATTITUDES).nullable(),
+    /** Stammeskürzel, falls Mitglied. */
+    tribeTag: z.string().nullable(),
 });
 
 export const SendUnitsResponseSchema = z.object({
@@ -218,6 +278,7 @@ export const WorldMessageSchema = z.discriminatedUnion('type', [
         targetVillageId: z.number().int(),
     }),
     z.object({ type: z.literal('report'), playerId: z.number().int() }),
+    z.object({ type: z.literal('tribe'), tribeId: z.number().int() }),
     z.object({
         type: z.literal('world_status'),
         status: WorldStatusSchema,
@@ -240,4 +301,6 @@ export type BattleReportPayload = z.infer<
 >;
 export type Report = z.infer<typeof ReportSchema>;
 export type WorldMessage = z.infer<typeof WorldMessageSchema>;
+export type Tribe = z.infer<typeof TribeSchema>;
+export type DiplomacyView = z.infer<typeof DiplomacyViewSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;

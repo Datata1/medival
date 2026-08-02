@@ -318,19 +318,37 @@ describe('Bot-Handelsentscheidung (pure)', () => {
         expect(total).toBeLessThanOrEqual(250);
     });
 
-    it('liefert nur an Freundliche', () => {
+    it('liefert an Neutrale und Freundliche, nie an Feinde', () => {
         const resources = { wood: 1000, clay: 1000, iron: 1000 };
+        // Feindlich und misstrauisch bekommen nichts.
         expect(
             decideShipment(resources, 1000, 5000, [
-                { playerId: 2, villageId: 5, standing: 0, distance: 3 },
                 {
                     playerId: 3,
                     villageId: 6,
                     standing: -50,
                     distance: 2,
                 },
+                {
+                    playerId: 4,
+                    villageId: 7,
+                    standing: -20,
+                    distance: 2,
+                },
             ]),
         ).toBeNull();
+
+        /*
+         * Neutrale bekommen etwas — und das ist Absicht: Liefern ist der
+         * einzige Weg, freundlich zu werden. Ohne diesen ersten Schritt aus
+         * dem Nichts hätte das Beziehungssystem zwischen Bots keinen Anfang,
+         * und in einer ganzen Spielwoche entstünde kein einziger Stamm.
+         */
+        expect(
+            decideShipment(resources, 1000, 5000, [
+                { playerId: 2, villageId: 5, standing: 0, distance: 3 },
+            ])?.partner.playerId,
+        ).toBe(2);
 
         const friendly = decideShipment(resources, 1000, 5000, [
             { playerId: 2, villageId: 5, standing: 40, distance: 3 },

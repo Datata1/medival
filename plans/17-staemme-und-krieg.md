@@ -1,6 +1,62 @@
 # Plan 17: Stämme und Krieg — wenn Haltung Folgen hat
 
-**Status:** ⬜ offen · **Voraussetzung:** [Plan 16](16-ansehen-und-handel.md)
+**Status:** ✅ erledigt (2026-08-02) · **Voraussetzung:** [Plan 16](16-ansehen-und-handel.md)
+
+> **Ergebnis:** Haltung hat Folgen. Stämme mit Einladungen und Ablauf, Bots die beitreten
+> und untereinander gründen, Angriffe gegen Feinde und Barbaren, Unterstützung für
+> Stammesmitglieder — und eine Diplomatie-Ansicht, die alles zeigt. Damit ist Meilenstein 3
+> abgeschlossen: Die Karte lebt.
+>
+> **36 Server-Tests für Plan 17, 7 von 7 im Browser.** Die vollständige Kette von Hand
+> durchgespielt: Stamm gründen → befreundeten Bot einladen → er nimmt beim nächsten Tick an
+> → sein Kürzel steht in der Liste → das Ansehen steigt vom Stammes-Sockel (55 → 75).
+>
+> **Drei Fehler, die erst die simulierte Spielwoche gezeigt hat.** Alle drei waren
+> Sackgassen, in denen das System technisch fehlerfrei lief und trotzdem nichts passierte —
+> genau die Sorte, die Tests einzelner Funktionen niemals finden:
+>
+> 1. **Niemand baute je einen Marktplatz.** Er war als `economy` eingestuft, aber
+>    `bestEconomyChoice` kennt nur Holz, Lehm und Eisen, und `personalityChoice` überspringt
+>    `economy` — er fiel durch beide Raster. Ohne Marktplatz kein Handel, ohne Handel kein
+>    Ansehen, ohne Ansehen kein Stamm. Er hat jetzt eine eigene Kategorie `trade` mit
+>    eigenen Gewichten je Persönlichkeit.
+> 2. **Zwischen Bots entstand nie eine Beziehung.** Bots lieferten nur an `freundlich`, und
+>    Liefern ist der *einzige* Weg, freundlich zu werden — ein Henne-Ei-Problem. Jetzt
+>    liefern sie auch an Neutrale; Feindliche und Misstrauische bekommen weiterhin nichts.
+> 3. **Bots hatten reine Verteidigungsheere.** Die Truppenwahl war eine Prioritätenliste,
+>    und weil der Speerträger überall vorn stand, hob *jeder* Bot ausschließlich
+>    Speerträger aus — nach einer Spielwoche 0 Angriffe bei 2062 Truppen. Jetzt eine
+>    **Zielzusammensetzung** je Persönlichkeit: rekrutiert wird, was am weitesten unter
+>    seinem Anteil liegt. Deterministisch, ohne Zufall.
+>
+> Danach: `turtle` Speer 522 / Schwert 219 und **keine Offensive** (er kann gar nicht
+> angreifen — genau das ist ein Igel), `expander` Speer 402 / Axt 169, `balanced`
+> ausgeglichen. Fünf Angriffe unterwegs, vier Stämme, acht Marktplätze.
+>
+> **Was zusätzlich gebaut werden musste:** Plan 15 hatte Bots das Bauen beigebracht, aber
+> **nie das Rekrutieren**. Ohne Truppen gibt es keinen Krieg — `ai/decide/recruit.ts` kam
+> deshalb in diesem Plan dazu, obwohl er dort nicht vorgesehen war.
+>
+> **Eine Entwurfsentscheidung, die den Krieg überhaupt möglich macht:** Bots greifen
+> **Barbarendörfer** an. Zwischen Spielern entsteht Feindschaft nur durch Angriffe, und den
+> ersten würde niemand führen — eine friedliche Welt bliebe für immer friedlich. Barbaren
+> haben keinen Besitzer und damit keine Haltung; sie zu plündern ist folgenlos und genau
+> das, was ein Spieler auch tut. Feinde wiegen bei der Zielwahl trotzdem 2,5-mal schwerer:
+> Krieg hat Vorrang vor dem Abfarmen.
+>
+> **Ein Nebenbefund aus der Ausführung:** Intents werden gegen *einen* Snapshot geplant,
+> aber nacheinander ausgeführt — jeder ändert den Zustand für den nächsten. Bots schlugen
+> deshalb Lieferungen vor, die der eigene Bau soeben unbezahlbar gemacht hatte
+> (`not_enough_resources` im Protokoll). `planBot` führt jetzt Buch über das, was nach dem
+> Bauen übrig bleibt.
+>
+> **Toter Code entfernt:** `features/world/WorldView.tsx` war seit Plan 10 unerreichbar —
+> das echte Layout liegt in `routes/worlds.$worldId.tsx`. Es wurde von niemandem importiert
+> und hätte beim nächsten Umbau Verwirrung gestiftet.
+>
+> **Der Preis:** Bots liegen jetzt bei Faktor **2,3** gegenüber Barbaren statt 2,8. Sie
+> geben Rohstoffe für Marktplätze und Truppen aus, statt alles in Punkte zu stecken — kein
+> Rückschritt, sondern der Unterschied zwischen einem Punktezähler und einem Mitspieler.
 
 ## Kontext
 
@@ -65,9 +121,14 @@ selbst, ohne dass es dafür eine eigene Mechanik braucht.
 
 Drei Bedingungen, alle drei müssen erfüllt sein:
 
-1. **Haltung ist `feindlich`** (< −40). Ein neutraler Nachbar wird nie angegriffen. Das
-   macht das Verhalten für den Spieler vorhersehbar: Wer nicht provoziert und handelt, wird
-   in Ruhe gelassen.
+1. **Das Ziel ist feindlich (< −40) oder herrenlos.** Ein neutraler *Spieler* wird nie
+   angegriffen — wer nicht provoziert und handelt, wird in Ruhe gelassen. Barbarendörfer
+   haben dagegen keinen Besitzer und damit keine Haltung; sie zu plündern ist folgenlos.
+
+   Diese Ergänzung ist nicht Bequemlichkeit, sondern Voraussetzung: Feindschaft zwischen
+   Spielern entsteht nur durch Angriffe, und den ersten würde niemand führen. Ohne
+   Barbaren bliebe eine friedliche Welt für immer friedlich — in der ersten simulierten
+   Spielwoche stand genau deshalb kein einziger Angriff in den Bewegungen.
 2. **Übermacht ist wahrscheinlich.** Der Ausgang wird vorab mit `resolveBattle` aus
    `shared/src/logic/combat.ts` geschätzt — derselben Funktion, die den echten Kampf
    entscheidet. Kein zweites, vereinfachtes Kampfmodell für Bots; ein solches wäre nach der
@@ -117,12 +178,17 @@ den Stamm im Spiel sichtbar macht.
 | `shared/src/logic/relations.ts` | Stammes-Bonus/-Malus in `applyEvent` |
 | `shared/src/schema/api.ts` | Stamm gründen, einladen, annehmen, austreten |
 | `server/src/ai/decide/military.ts` | **neu** — pur: Angriff und Unterstützung |
+| `server/src/ai/decide/recruit.ts` | **neu** — pur: Truppenaushebung nach Zielzusammensetzung (nicht geplant, aber ohne Truppen kein Krieg) |
+| `shared/src/logic/combat.ts` | `estimateBattle`, `attackMargin` — dieselbe Kampffunktion, nur ohne Glück |
+| `shared/src/logic/relations.ts` | `tribeModifier`, `effectiveStanding` |
 | `server/src/ai/decide/diplomacy.ts` | **neu** — pur: Einladung annehmen, Stamm gründen |
 | `server/src/engine/tribes.ts` | **neu** — Kommandos, für Spieler und Bots dieselben |
 | `server/src/api/routes.ts` | Stammes-Endpunkte |
 | `client/src/routes/worlds.$worldId.diplomacy.tsx` | **neu** |
 | `client/src/stores/TribeStore.ts` | **neu** (Plan 09: Stores holen Daten, React zeigt sie an) |
-| `client/src/features/map/*` · `player/*` · `i18n/de.ts` | Kürzel, Haltung, Übersetzungen |
+| `client/src/features/tribe/DiplomacyView.tsx` | **neu** |
+| `client/src/features/player/*` · `routes/worlds.$worldId.tsx` · `i18n/de.ts` | Kürzel, Haltung, Reiter, Übersetzungen |
+| `client/src/features/world/WorldView.tsx` | **gelöscht** — seit Plan 10 toter Code |
 
 ---
 

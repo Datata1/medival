@@ -1,6 +1,7 @@
 import {
     type BuildingType,
     DeletedResponseSchema,
+    DiplomacyViewSchema,
     MapSchema,
     MovementsResponseSchema,
     OkResponseSchema,
@@ -133,6 +134,35 @@ export const api = {
             `/api/worlds/${worldId}/villages/${villageId}/ship`,
             SendUnitsResponseSchema,
             postJson({ target, resources }),
+        ),
+    getDiplomacy: (worldId: number) =>
+        request(
+            `/api/worlds/${worldId}/diplomacy`,
+            DiplomacyViewSchema,
+        ),
+    foundTribe: (worldId: number, name: string, tag: string) =>
+        request(
+            `/api/worlds/${worldId}/tribe`,
+            OkResponseSchema,
+            postJson({ name, tag }),
+        ),
+    invitePlayer: (worldId: number, playerId: number) =>
+        request(
+            `/api/worlds/${worldId}/tribe/invite`,
+            OkResponseSchema,
+            postJson({ playerId }),
+        ),
+    acceptInvitation: (worldId: number, tribeId: number) =>
+        request(
+            `/api/worlds/${worldId}/tribe/accept`,
+            OkResponseSchema,
+            postJson({ tribeId }),
+        ),
+    leaveTribe: (worldId: number) =>
+        request(
+            `/api/worlds/${worldId}/tribe/leave`,
+            OkResponseSchema,
+            postJson({}),
         ),
     getPlayerProfile: (worldId: number, playerId: number) =>
         request(

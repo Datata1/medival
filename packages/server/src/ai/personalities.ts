@@ -36,6 +36,8 @@ export interface PersonalityWeights {
     readonly defense: number;
     readonly economy: number;
     readonly expansion: number;
+    /** Marktplatz — Handel und damit Diplomatie (Plan 16/17). */
+    readonly trade: number;
     /** Wie weit ein Bot über die Grundversorgung hinaus vorausplant. */
     readonly aggression: number;
 }
@@ -46,6 +48,7 @@ export const PERSONALITY_WEIGHTS = {
         defense: 3.0,
         economy: 1.4,
         expansion: 0.4,
+        trade: 1.6,
         aggression: 0.2,
     },
     raider: {
@@ -53,6 +56,7 @@ export const PERSONALITY_WEIGHTS = {
         defense: 0.5,
         economy: 0.9,
         expansion: 1.0,
+        trade: 0.6,
         aggression: 2.5,
     },
     expander: {
@@ -60,6 +64,7 @@ export const PERSONALITY_WEIGHTS = {
         defense: 0.7,
         economy: 1.6,
         expansion: 3.0,
+        trade: 1.4,
         aggression: 0.9,
     },
     balanced: {
@@ -67,6 +72,7 @@ export const PERSONALITY_WEIGHTS = {
         defense: 1.0,
         economy: 1.0,
         expansion: 1.0,
+        trade: 1.2,
         aggression: 1.0,
     },
 } as const satisfies Record<Personality, PersonalityWeights>;
@@ -87,7 +93,14 @@ export const BUILDING_CATEGORY = {
     stable: 'military',
     wall: 'defense',
     warehouse: 'economy',
-    market: 'economy',
+    /*
+     * Eigene Kategorie, nicht `economy`: Wirtschaftsgebäude werden über
+     * `bestEconomyChoice` nach Ertrag je Kosten gewählt, und dort kommen nur
+     * Holz, Lehm und Eisen vor. Als `economy` eingestuft hätte den Marktplatz
+     * **niemand** gebaut — beim ersten Lauf entstand deshalb in einer ganzen
+     * Spielwoche kein einziger Stamm (Plan 17).
+     */
+    market: 'trade',
     farm: 'economy',
     timber_camp: 'economy',
     clay_pit: 'economy',

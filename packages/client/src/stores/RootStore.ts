@@ -13,6 +13,7 @@ import {
     type WorldSocket,
 } from './SocketConnection.js';
 import { ArrivalWatcher, SoundStore } from './SoundStore.js';
+import { TribeStore } from './TribeStore.js';
 import { VillageStore } from './VillageStore.js';
 import { WorldStore } from './WorldStore.js';
 
@@ -31,6 +32,7 @@ export class RootStore {
     readonly movements = new MovementsStore();
     readonly reports = new ReportsStore();
     readonly player = new PlayerStore();
+    readonly tribe = new TribeStore();
     readonly sound: SoundStore;
 
     /** Merkt sich, was beim Öffnen schon da war — sonst tönt es beim Betreten. */
@@ -106,6 +108,7 @@ export class RootStore {
         this.movements.stop();
         this.reports.stop();
         this.player.clear();
+        this.tribe.clear();
         this.map.clear();
         this.village.clear();
         this.world.close();
@@ -155,6 +158,9 @@ export class RootStore {
                 void this.reports
                     .reload()
                     .then(() => this.announceReports());
+                break;
+            case 'tribe':
+                void this.tribe.reload();
                 break;
             case 'world_status':
                 void this.world.reload();

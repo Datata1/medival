@@ -19,8 +19,25 @@ CREATE TABLE IF NOT EXISTS players (
   is_bot INTEGER NOT NULL DEFAULT 1,
   personality TEXT,
   difficulty TEXT,
-  ai_state_json TEXT NOT NULL DEFAULT '{}'
+  ai_state_json TEXT NOT NULL DEFAULT '{}',
+  tribe_id INTEGER
 );
+CREATE TABLE IF NOT EXISTS tribes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  tag TEXT NOT NULL,
+  founder_id INTEGER NOT NULL,
+  created_game_time INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS tribe_invitations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tribe_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  created_game_time INTEGER NOT NULL,
+  expires_game_time INTEGER NOT NULL,
+  UNIQUE(tribe_id, player_id)
+);
+CREATE INDEX IF NOT EXISTS idx_invitations_player ON tribe_invitations(player_id);
 CREATE TABLE IF NOT EXISTS villages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   player_id INTEGER,

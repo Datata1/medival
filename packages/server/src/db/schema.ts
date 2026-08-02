@@ -23,7 +23,43 @@ export const players = sqliteTable('players', {
     personality: text('personality'),
     difficulty: text('difficulty'),
     aiState: text('ai_state_json').notNull().default('{}'),
+    tribeId: integer('tribe_id'),
 });
+
+/**
+ * Stämme (plans/17-staemme-und-krieg.md). Die Mitgliedschaft steht als Spalte
+ * in `players`, nicht in einer eigenen Tabelle: Ein Spieler kann in genau
+ * einem Stamm sein, und diese Regel gehört ins Datenmodell statt in die
+ * Anwendungslogik.
+ */
+export const tribes = sqliteTable('tribes', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    /** Kürzel für Karte und Profil — ohne das sieht man nie, wer zu wem gehört. */
+    tag: text('tag').notNull(),
+    founderId: integer('founder_id').notNull(),
+    createdGameTime: integer('created_game_time').notNull().default(0),
+});
+
+/**
+ * Offene Einladungen. Mit Ablauf, denn ohne ihn tritt ein Bot, der vor drei
+ * Spielwochen freundlich war, plötzlich einem Stamm bei, den er inzwischen
+ * bekämpft.
+ */
+export const tribeInvitations = sqliteTable(
+    'tribe_invitations',
+    {
+        id: integer('id').primaryKey({ autoIncrement: true }),
+        tribeId: integer('tribe_id').notNull(),
+        playerId: integer('player_id').notNull(),
+        createdGameTime: integer('created_game_time').notNull(),
+        expiresGameTime: integer('expires_game_time').notNull(),
+    },
+    (t) => [
+        unique().on(t.tribeId, t.playerId),
+        index('idx_invitations_player').on(t.playerId),
+    ],
+);
 
 export const villages = sqliteTable(
     'villages',

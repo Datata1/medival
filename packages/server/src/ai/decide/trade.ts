@@ -34,8 +34,29 @@ export interface ShipDecision {
     resources: Resources;
 }
 
-/** Ab dieser Haltung wird geliefert. */
-const GIVING_ATTITUDES: readonly Attitude[] = ['friendly', 'allied'];
+/**
+ * Ab dieser Haltung wird geliefert.
+ *
+ * `neutral` ist ausdrücklich dabei, und das ist keine Nachlässigkeit: Ohne
+ * einen ersten Schritt aus dem Nichts hätte das Beziehungssystem zwischen
+ * Bots **keinen Anfang**. Liefern ist der einzige Weg, freundlich zu werden —
+ * und wenn nur an Freunde geliefert würde, bliebe für immer alles neutral.
+ * Genau das ist beim ersten Lauf passiert: eine ganze Spielwoche, kein
+ * einziger Stamm.
+ *
+ * Feindliche und misstrauische Nachbarn bekommen weiterhin nichts.
+ */
+const GIVING_ATTITUDES: readonly Attitude[] = [
+    'neutral',
+    'friendly',
+    'allied',
+];
+
+/**
+ * Sockel für die Auswahl unter Neutralen. Ohne ihn wäre die Bewertung bei
+ * Ansehen 0 durchweg 0, und die Nähe entschiede nichts mehr.
+ */
+const GOODWILL_BASE = 20;
 
 /**
  * Was ein Bot als Überschuss ansieht. Unterhalb dieses Füllstands liefert er
@@ -99,7 +120,8 @@ export function decideShipment(
         if (!GIVING_ATTITUDES.includes(attitudeOf(partner.standing)))
             continue;
         const score =
-            partner.standing * distanceInfluence(partner.distance);
+            (partner.standing + GOODWILL_BASE) *
+            distanceInfluence(partner.distance);
         if (!best || score > best.score) best = { partner, score };
     }
     if (!best) return null;
