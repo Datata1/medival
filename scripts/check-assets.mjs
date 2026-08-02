@@ -23,8 +23,19 @@ const ASSETS = join(ROOT, 'packages/client/src/assets');
 const SPRITES = join(ASSETS, 'sprites');
 const REGISTRY = join(ASSETS, 'registry.ts');
 
-/** Erwartete Kantenlänge je Gruppe. */
-const EXPECTED_SIZE = { icons: 16, buildings: 16, units: 16, map: 32 };
+/**
+ * Erwartete Kantenlänge je Gruppe. `yard` sind die Gebäude auf dem Dorfplatz
+ * (Plan 18-2) — dieselben Silhouetten wie `buildings`, aber doppelt so groß.
+ * Das Hintergrundbild des Dorfplatzes liegt bewusst nicht unter `sprites/`:
+ * Es ist kein Sprite und nimmt an der Registry-Bijektion nicht teil.
+ */
+const EXPECTED_SIZE = {
+    icons: 16,
+    buildings: 16,
+    units: 16,
+    map: 32,
+    yard: 32,
+};
 
 /** Liest Breite und Höhe aus dem IHDR-Block eines PNG. */
 function pngSize(file) {

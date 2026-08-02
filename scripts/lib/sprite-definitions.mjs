@@ -539,21 +539,27 @@ export const MAP_SPRITES_16 = {
 
 /** Gebäude-Icons für die Bautabelle: 16×16, klar unterscheidbare Silhouetten. */
 export const BUILDING_ICONS_16 = {
+    /*
+     * Die Burg trug zuerst dieselben Steintöne wie ihr Untergrund und war auf
+     * dem Dorfplatz nicht auszumachen. Jetzt hat sie einen dunklen Umriss,
+     * rote Turmdächer und ein schwarzes Tor — drei Kanten, an denen das Auge
+     * sie findet, ohne dass sie aus der Palette fällt.
+     */
     'building.headquarters': [
         '................',
-        '....y.....y.....',
-        '...ttt...ttt....',
-        '...tTt...tTt....',
-        '...ttt...ttt....',
-        '..ttttttttttt...',
-        '..tTtttttttTt...',
-        '..ttttttttttt...',
-        '..tTt.ttt.tTt...',
-        '..ttt.tot.ttt...',
-        '..tTt.tot.tTt...',
-        '..ttt.tot.ttt...',
-        '..ttttttttttt...',
-        '................',
+        '...y......y.....',
+        '..rrr....rrr....',
+        '.rRRRr..rRRRr...',
+        '.otttto.otttto..',
+        '.otTtto.otTtto..',
+        '.otttto.otttto..',
+        '.ooooooooooooo..',
+        '.ottttttttttto..',
+        '.otTtttttttTto..',
+        '.ottttttttttto..',
+        '.ottttoootttto..',
+        '.ottttoootttto..',
+        '.ooooooooooooo..',
         '................',
         '................',
     ],
@@ -719,20 +725,48 @@ export const BUILDING_ICONS_16 = {
         '................',
         '................',
     ],
+    /*
+     * Der Adelshof kostet 15.000 Holz und bildet Adelsgeschlechter aus — er
+     * darf aussehen wie ein Palast und nicht wie ein zweiter Speicher. Goldene
+     * Kuppel, rote Türmchen, Goldband über der Fassade, rotes Tor.
+     */
     'building.academy': [
+        '.......y........',
+        '......yyy.......',
+        '.....ooyoo......',
+        '...rr.....rr....',
+        '..rRRr...rRRr...',
+        '.orrrro.orrrro..',
+        'oooooooooooooooo',
+        'oyyyyyyyyyyyyyyo',
+        'otttttttttttttto',
+        'ottoottoottootto',
+        'ottoottoottootto',
+        'otttttttttttttto',
+        'ottttteeetttttto',
+        'oooooeeeoooooooo',
         '................',
-        '.......y........',
-        '......yey.......',
-        '.......y........',
-        '.....tttttt.....',
-        '....tTttttTt....',
-        '...tttttttttt...',
-        '...tTtppppttT...',
-        '...tttpiipttt...',
-        '...tTtppppttT...',
-        '...tttttttttt...',
-        '...tTt.tt.tTt...',
-        '...tttttttttt...',
+        '................',
+    ],
+    /*
+     * Der Versammlungsplatz ist kein Gebäude, hat aber eine eigene Seite und
+     * steht auf dem Dorfplatz: ein Banner auf dem Podest, um das sich die
+     * Truppen sammeln (plans/18-ux/18-2-dorfuebersicht.md).
+     */
+    'building.rally': [
+        '................',
+        '......o.........',
+        '......oeeeee....',
+        '......oeyeye....',
+        '......oeeeee....',
+        '......oeeee.....',
+        '......o.........',
+        '......o.........',
+        '......o.........',
+        '.owwwwwwwwwwo...',
+        '.oWWWWWWWWWWo...',
+        '..o........o....',
+        '..W........W....',
         '................',
         '................',
         '................',

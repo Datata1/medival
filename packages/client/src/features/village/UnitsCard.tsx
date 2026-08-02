@@ -7,19 +7,27 @@ export function UnitsCard({ units }: { units: Units }) {
     const { t } = useTranslation();
     const list = entriesOf(units).filter(([, n]) => n > 0);
     return (
-        <Card>
+        <Card tight>
             <h2>{t('village.unitsHome')}</h2>
             {list.length === 0 ? (
-                <p className="text-ink-light">{t('village.noUnits')}</p>
+                <p className="m-0 text-ink-light">
+                    {t('village.noUnits')}
+                </p>
             ) : (
-                <ul className="m-0 flex list-none flex-wrap gap-5 p-0">
+                // Eine Zeile je Einheit statt einer umbrechenden Reihe: In der
+                // schmalen Spalte der Übersicht brach ohnehin jede Angabe um,
+                // nur mit dem großen Abstand einer Reihe dazwischen.
+                <ul className="m-0 list-none p-0">
                     {list.map(([type, n]) => (
                         <li
                             key={type}
-                            className="inline-flex items-center gap-1.5"
+                            className="flex justify-between py-0.5 tabular-nums"
                         >
-                            <Icon name={`unit.${type}`} />
-                            {t(`units.${type}`)}: <strong>{n}</strong>
+                            <span className="inline-flex items-center gap-1.5">
+                                <Icon name={`unit.${type}`} />
+                                {t(`units.${type}`)}
+                            </span>
+                            <strong>{n}</strong>
                         </li>
                     ))}
                 </ul>

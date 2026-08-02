@@ -185,7 +185,60 @@ const de = {
         recruiting: 'Rekrutierung läuft',
         waiting: 'wartet',
         recruit: 'Rekrutieren',
-        needBarracks: 'Baue eine Kaserne, um Truppen zu rekrutieren.',
+        /** Das Dashboard (plans/18-ux/18-2-dorfuebersicht.md). */
+        overview: {
+            production: 'Produktion',
+            perHour: '{{amount}}/h',
+            movements: 'Bewegungen',
+            nothingIncoming: 'Nichts unterwegs.',
+            outgoingCount: '{{count}} ausgehend',
+            toRally: 'Zum Versammlungsplatz →',
+            more: '… und {{count}} weitere',
+            atLevel: '{{building}}, Stufe {{level}}',
+            buildSite: '{{building}} — freier Bauplatz',
+            underConstruction: 'im Bau → Stufe {{level}}',
+        },
+        /** Der Versammlungsplatz: alle Bewegungen dieses Dorfes. */
+        rally: {
+            intro: 'Alles, was dieses Dorf verlässt oder auf es zuhält.',
+            incoming: 'Eingehend',
+            outgoing: 'Ausgehend',
+            nothing: 'Zurzeit ist nichts unterwegs.',
+            colKind: 'Art',
+            colWhere: 'Von / nach',
+            colUnits: 'Truppen',
+            colArrival: 'Ankunft',
+            kind: {
+                attack: 'Angriff',
+                support: 'Unterstützung',
+                return: 'Rückkehr',
+                trade: 'Lieferung',
+            },
+        },
+        /** Die Gebäudeseiten. */
+        building: {
+            level: 'Stufe {{level}}',
+            notBuilt: 'noch nicht gebaut',
+            requires: 'Braucht {{list}}',
+            target: 'Ziel',
+            targetHint:
+                'Koordinaten des Ziels — ein Klick auf der Karte trägt sie hier ein.',
+            targetMissing: 'Kein Dorf bei ({{x}}|{{y}}).',
+            targetIsHome: 'Das ist dieses Dorf.',
+            effect: {
+                headquarters: 'Bauzeiten −{{percent}} %',
+                timber_camp: '{{amount}} Holz je Stunde',
+                clay_pit: '{{amount}} Lehm je Stunde',
+                iron_mine: '{{amount}} Eisen je Stunde',
+                warehouse: '{{amount}} je Rohstoff',
+                farm: '{{amount}} Bauernhofplätze',
+                barracks: 'Bildet Fußtruppen aus',
+                stable: 'Bildet berittene Truppen aus',
+                wall: '+{{percent}} % Verteidigung, +{{flat}} Grundverteidigung',
+                market: '{{merchants}} Händler, {{capacity}} Tragkraft',
+                academy: 'Bildet Adelsgeschlechter aus',
+            },
+        },
     },
     map: {
         title: 'Karte',
@@ -279,6 +332,8 @@ const de = {
         wall: 'Wall',
         market: 'Marktplatz',
         academy: 'Adelshof',
+        /* Kein Gebäude, aber ein Ort mit Namen (Plan 18-2). */
+        rally: 'Versammlungsplatz',
     },
     units: {
         spear: 'Speerträger',

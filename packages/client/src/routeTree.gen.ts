@@ -21,6 +21,8 @@ import { Route as WorldsWorldIdReportsRouteImport } from './routes/worlds.$world
 import { Route as WorldsWorldIdSettingsRouteImport } from './routes/worlds.$worldId.settings'
 import { Route as WorldsWorldIdPlayersPlayerIdRouteImport } from './routes/worlds.$worldId.players.$playerId'
 import { Route as WorldsWorldIdVillageVillageIdRouteImport } from './routes/worlds.$worldId.village.$villageId'
+import { Route as WorldsWorldIdVillageVillageIdIndexRouteImport } from './routes/worlds.$worldId.village.$villageId.index'
+import { Route as WorldsWorldIdVillageVillageIdBuildingRouteImport } from './routes/worlds.$worldId.village.$villageId.$building'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -84,6 +86,18 @@ const WorldsWorldIdVillageVillageIdRoute =
     path: '/village/$villageId',
     getParentRoute: () => WorldsWorldIdRoute,
   } as any)
+const WorldsWorldIdVillageVillageIdIndexRoute =
+  WorldsWorldIdVillageVillageIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => WorldsWorldIdVillageVillageIdRoute,
+  } as any)
+const WorldsWorldIdVillageVillageIdBuildingRoute =
+  WorldsWorldIdVillageVillageIdBuildingRouteImport.update({
+    id: '/$building',
+    path: '/$building',
+    getParentRoute: () => WorldsWorldIdVillageVillageIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,7 +111,9 @@ export interface FileRoutesByFullPath {
   '/worlds/$worldId/settings': typeof WorldsWorldIdSettingsRoute
   '/worlds/$worldId/': typeof WorldsWorldIdIndexRoute
   '/worlds/$worldId/players/$playerId': typeof WorldsWorldIdPlayersPlayerIdRoute
-  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdRoute
+  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdRouteWithChildren
+  '/worlds/$worldId/village/$villageId/$building': typeof WorldsWorldIdVillageVillageIdBuildingRoute
+  '/worlds/$worldId/village/$villageId/': typeof WorldsWorldIdVillageVillageIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,7 +126,8 @@ export interface FileRoutesByTo {
   '/worlds/$worldId/settings': typeof WorldsWorldIdSettingsRoute
   '/worlds/$worldId': typeof WorldsWorldIdIndexRoute
   '/worlds/$worldId/players/$playerId': typeof WorldsWorldIdPlayersPlayerIdRoute
-  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdRoute
+  '/worlds/$worldId/village/$villageId/$building': typeof WorldsWorldIdVillageVillageIdBuildingRoute
+  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,7 +142,9 @@ export interface FileRoutesById {
   '/worlds/$worldId/settings': typeof WorldsWorldIdSettingsRoute
   '/worlds/$worldId/': typeof WorldsWorldIdIndexRoute
   '/worlds/$worldId/players/$playerId': typeof WorldsWorldIdPlayersPlayerIdRoute
-  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdRoute
+  '/worlds/$worldId/village/$villageId': typeof WorldsWorldIdVillageVillageIdRouteWithChildren
+  '/worlds/$worldId/village/$villageId/$building': typeof WorldsWorldIdVillageVillageIdBuildingRoute
+  '/worlds/$worldId/village/$villageId/': typeof WorldsWorldIdVillageVillageIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,6 +161,8 @@ export interface FileRouteTypes {
     | '/worlds/$worldId/'
     | '/worlds/$worldId/players/$playerId'
     | '/worlds/$worldId/village/$villageId'
+    | '/worlds/$worldId/village/$villageId/$building'
+    | '/worlds/$worldId/village/$villageId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -154,6 +175,7 @@ export interface FileRouteTypes {
     | '/worlds/$worldId/settings'
     | '/worlds/$worldId'
     | '/worlds/$worldId/players/$playerId'
+    | '/worlds/$worldId/village/$villageId/$building'
     | '/worlds/$worldId/village/$villageId'
   id:
     | '__root__'
@@ -169,6 +191,8 @@ export interface FileRouteTypes {
     | '/worlds/$worldId/'
     | '/worlds/$worldId/players/$playerId'
     | '/worlds/$worldId/village/$villageId'
+    | '/worlds/$worldId/village/$villageId/$building'
+    | '/worlds/$worldId/village/$villageId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,8 +286,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorldsWorldIdVillageVillageIdRouteImport
       parentRoute: typeof WorldsWorldIdRoute
     }
+    '/worlds/$worldId/village/$villageId/': {
+      id: '/worlds/$worldId/village/$villageId/'
+      path: '/'
+      fullPath: '/worlds/$worldId/village/$villageId/'
+      preLoaderRoute: typeof WorldsWorldIdVillageVillageIdIndexRouteImport
+      parentRoute: typeof WorldsWorldIdVillageVillageIdRoute
+    }
+    '/worlds/$worldId/village/$villageId/$building': {
+      id: '/worlds/$worldId/village/$villageId/$building'
+      path: '/$building'
+      fullPath: '/worlds/$worldId/village/$villageId/$building'
+      preLoaderRoute: typeof WorldsWorldIdVillageVillageIdBuildingRouteImport
+      parentRoute: typeof WorldsWorldIdVillageVillageIdRoute
+    }
   }
 }
+
+interface WorldsWorldIdVillageVillageIdRouteChildren {
+  WorldsWorldIdVillageVillageIdBuildingRoute: typeof WorldsWorldIdVillageVillageIdBuildingRoute
+  WorldsWorldIdVillageVillageIdIndexRoute: typeof WorldsWorldIdVillageVillageIdIndexRoute
+}
+
+const WorldsWorldIdVillageVillageIdRouteChildren: WorldsWorldIdVillageVillageIdRouteChildren =
+  {
+    WorldsWorldIdVillageVillageIdBuildingRoute:
+      WorldsWorldIdVillageVillageIdBuildingRoute,
+    WorldsWorldIdVillageVillageIdIndexRoute:
+      WorldsWorldIdVillageVillageIdIndexRoute,
+  }
+
+const WorldsWorldIdVillageVillageIdRouteWithChildren =
+  WorldsWorldIdVillageVillageIdRoute._addFileChildren(
+    WorldsWorldIdVillageVillageIdRouteChildren,
+  )
 
 interface WorldsWorldIdRouteChildren {
   WorldsWorldIdDiplomacyRoute: typeof WorldsWorldIdDiplomacyRoute
@@ -275,7 +331,7 @@ interface WorldsWorldIdRouteChildren {
   WorldsWorldIdSettingsRoute: typeof WorldsWorldIdSettingsRoute
   WorldsWorldIdIndexRoute: typeof WorldsWorldIdIndexRoute
   WorldsWorldIdPlayersPlayerIdRoute: typeof WorldsWorldIdPlayersPlayerIdRoute
-  WorldsWorldIdVillageVillageIdRoute: typeof WorldsWorldIdVillageVillageIdRoute
+  WorldsWorldIdVillageVillageIdRoute: typeof WorldsWorldIdVillageVillageIdRouteWithChildren
 }
 
 const WorldsWorldIdRouteChildren: WorldsWorldIdRouteChildren = {
@@ -288,7 +344,8 @@ const WorldsWorldIdRouteChildren: WorldsWorldIdRouteChildren = {
   WorldsWorldIdSettingsRoute: WorldsWorldIdSettingsRoute,
   WorldsWorldIdIndexRoute: WorldsWorldIdIndexRoute,
   WorldsWorldIdPlayersPlayerIdRoute: WorldsWorldIdPlayersPlayerIdRoute,
-  WorldsWorldIdVillageVillageIdRoute: WorldsWorldIdVillageVillageIdRoute,
+  WorldsWorldIdVillageVillageIdRoute:
+    WorldsWorldIdVillageVillageIdRouteWithChildren,
 }
 
 const WorldsWorldIdRouteWithChildren = WorldsWorldIdRoute._addFileChildren(

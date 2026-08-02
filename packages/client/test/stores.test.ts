@@ -385,3 +385,68 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
         expect(root.reports.list).toEqual([]);
     });
 });
+
+describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
+    /**
+     * Eltern- und Kindroute laden gleichzeitig. Gewinnt `openWorld` das
+     * Rennen, zeigt ein Neuladen von `/village/103` das erste Dorf, während
+     * die Adresszeile 103 nennt (Plan 18-2).
+     */
+    it('überschreibt eine bereits getroffene Dorfwahl nicht', async () => {
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({
+                playerVillages: [
+                    {
+                        id: 7,
+                        name: 'Heimatdorf',
+                        x: 20,
+                        y: 20,
+                        points: 26,
+                    },
+                    {
+                        id: 103,
+                        name: 'Zweitdorf',
+                        x: 21,
+                        y: 20,
+                        points: 9,
+                    },
+                ],
+            }),
+        );
+        mocked.getVillage.mockResolvedValue(villageView());
+        mocked.getMap.mockResolvedValue([]);
+        mocked.getMovements.mockResolvedValue({
+            gameTime: 0,
+            incoming: [],
+            outgoing: [],
+        } as never);
+        mocked.getReports.mockResolvedValue([]);
+
+        const root = new RootStore(new FakeSocket());
+        // Der Loader der Dorfroute läuft parallel — hier: währenddessen.
+        const opening = root.openWorld(1);
+        await root.village.select(1, 103);
+        await opening;
+
+        expect(root.village.villageId).toBe(103);
+        root.closeWorld();
+    });
+
+    it('wählt ohne Wahl weiterhin das erste eigene Dorf', async () => {
+        mocked.getWorld.mockResolvedValue(worldSummary());
+        mocked.getVillage.mockResolvedValue(villageView());
+        mocked.getMap.mockResolvedValue([]);
+        mocked.getMovements.mockResolvedValue({
+            gameTime: 0,
+            incoming: [],
+            outgoing: [],
+        } as never);
+        mocked.getReports.mockResolvedValue([]);
+
+        const root = new RootStore(new FakeSocket());
+        await root.openWorld(1);
+
+        expect(root.village.villageId).toBe(7);
+        root.closeWorld();
+    });
+});

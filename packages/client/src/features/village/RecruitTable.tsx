@@ -1,4 +1,4 @@
-import type { VillageView } from '@medival/shared';
+import type { UnitSpec, VillageView } from '@medival/shared';
 import {
     type Resources,
     UNIT_ORDER,
@@ -11,7 +11,13 @@ import { Table, Th } from '../../components/Table.js';
 import { maxRecruitable } from './derive.js';
 import { RecruitRow } from './RecruitRow.js';
 
+/**
+ * Die Ausbildung — seit Plan 18-2 auf der Seite des ausbildenden Gebäudes
+ * statt einmal für alles auf der Dorfübersicht. Der Aufbau der Tabelle ist
+ * derselbe geblieben, nur der Ort hat gewechselt.
+ */
 export function RecruitTable({
+    building,
     village,
     live,
     speed,
@@ -19,6 +25,8 @@ export function RecruitTable({
     error,
     onRecruit,
 }: {
+    /** Zeigt nur die Einheiten, die hier ausgebildet werden. */
+    building: UnitSpec['recruitedAt'];
     village: VillageView;
     live: Resources;
     speed: number;
@@ -29,7 +37,7 @@ export function RecruitTable({
     const { t } = useTranslation();
     const popFree = village.popMax - village.popUsed;
     const available = UNIT_ORDER.filter(
-        (type) => village.buildings[UNITS[type].recruitedAt] >= 1,
+        (type) => UNITS[type].recruitedAt === building,
     );
 
     return (
@@ -65,11 +73,6 @@ export function RecruitTable({
                         ))}
                     </tbody>
                 </Table>
-            )}
-            {village.buildings.barracks < 1 && (
-                <p className="text-ink-light">
-                    {t('village.needBarracks')}
-                </p>
             )}
             {error && <p className="text-seal">{error}</p>}
         </Card>

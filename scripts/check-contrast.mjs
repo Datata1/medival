@@ -119,6 +119,14 @@ const COMBINATIONS = [
         what: 'Fokusring auf Pergament',
         min: 3,
     },
+    // Plan 18-2: die Stufenplakette am Gebäude auf dem Dorfplatz. Sie steht
+    // auf dem Hintergrundbild, also auf keiner der Theme-Flächen — geprüft
+    // wird deshalb die Plakette selbst, nicht ihr Untergrund.
+    {
+        fg: 'parchment',
+        bg: 'moss',
+        what: 'Stufenplakette auf dem Dorfplatz',
+    },
 ];
 
 function check(palette) {

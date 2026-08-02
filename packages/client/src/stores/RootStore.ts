@@ -96,9 +96,17 @@ export class RootStore {
         );
         this.reportWatcher.countNew(this.reports.list.map((r) => r.id));
 
-        // Ohne ausdrückliche Wahl das erste eigene Dorf zeigen.
+        /*
+         * Ohne ausdrückliche Wahl das erste eigene Dorf zeigen — aber nur
+         * dann. Der Loader der Dorfroute läuft **parallel** zu diesem hier
+         * (TanStack lädt Eltern und Kind gleichzeitig, solange das Kind keine
+         * Elterndaten anfordert). Ohne diese Prüfung gewann das Ende dieser
+         * Methode das Rennen, und `/worlds/2/village/103` zeigte nach einem
+         * Neuladen das erste Dorf, während die Adresszeile auf 103 stand.
+         */
         const first = this.world.playerVillages[0];
-        if (first) await this.village.select(worldId, first.id);
+        if (first && this.village.villageId === null)
+            await this.village.select(worldId, first.id);
     }
 
     closeWorld(): void {

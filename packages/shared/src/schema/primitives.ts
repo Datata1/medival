@@ -26,6 +26,28 @@ import {
 export const BuildingTypeSchema = z.enum(
     BUILDING_ORDER,
 ) satisfies z.ZodType<BuildingType>;
+
+/**
+ * Der Versammlungsplatz (plans/18-ux/18-2-dorfuebersicht.md).
+ *
+ * Er ist **kein Gebäude**: Er kostet nichts, wird nie ausgebaut, belegt keine
+ * Bauernhofplätze und zählt keine Punkte — er ist von der ersten Sekunde an da
+ * und bleibt auf Stufe 1. In `BUILDINGS` aufgenommen müsste jede Rechnung über
+ * Kosten, Punkte und Bevölkerung ihn wieder ausnehmen, und jede bestehende Welt
+ * bekäme ihn als fehlende Zeile mit Stufe 0.
+ *
+ * Er ist eine **Unterseite des Dorfes** neben den Gebäudeseiten: der Ort, an
+ * dem alle Bewegungen dieses Dorfes zusammenlaufen.
+ */
+export const RALLY_POINT = 'rally';
+
+/** Alles, was hinter `/village/$villageId/` stehen darf. */
+export const VillagePageSchema = z.enum([
+    ...BUILDING_ORDER,
+    RALLY_POINT,
+]);
+
+export type VillagePage = z.infer<typeof VillagePageSchema>;
 export const UnitTypeSchema = z.enum(
     UNIT_ORDER,
 ) satisfies z.ZodType<UnitType>;

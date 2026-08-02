@@ -13,7 +13,7 @@ export function RecruitQueueCard({
     const { t } = useTranslation();
     if (queue.length === 0) return null;
     return (
-        <Card>
+        <Card tight>
             <h2>{t('village.recruiting')}</h2>
             <ul className="m-0 list-none p-0">
                 {queue.map((q) => (

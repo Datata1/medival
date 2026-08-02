@@ -40,6 +40,7 @@ import buildingFarm from './sprites/buildings/farm.png';
 import buildingHeadquarters from './sprites/buildings/headquarters.png';
 import buildingIron_mine from './sprites/buildings/iron_mine.png';
 import buildingMarket from './sprites/buildings/market.png';
+import buildingRally from './sprites/buildings/rally.png';
 import buildingStable from './sprites/buildings/stable.png';
 import buildingTimber_camp from './sprites/buildings/timber_camp.png';
 import buildingWall from './sprites/buildings/wall.png';
@@ -54,6 +55,18 @@ import unitSword from './sprites/units/sword.png';
 import mapVillageBarbarian from './sprites/map/village-barbarian.png';
 import mapVillageBot from './sprites/map/village-bot.png';
 import mapVillagePlayer from './sprites/map/village-player.png';
+import yardAcademy from './sprites/yard/academy.png';
+import yardBarracks from './sprites/yard/barracks.png';
+import yardClay_pit from './sprites/yard/clay_pit.png';
+import yardFarm from './sprites/yard/farm.png';
+import yardHeadquarters from './sprites/yard/headquarters.png';
+import yardIron_mine from './sprites/yard/iron_mine.png';
+import yardMarket from './sprites/yard/market.png';
+import yardRally from './sprites/yard/rally.png';
+import yardStable from './sprites/yard/stable.png';
+import yardTimber_camp from './sprites/yard/timber_camp.png';
+import yardWall from './sprites/yard/wall.png';
+import yardWarehouse from './sprites/yard/warehouse.png';
 
 export const SPRITES = {
     'icon.attack': iconAttack,
@@ -88,6 +101,7 @@ export const SPRITES = {
     'building.headquarters': buildingHeadquarters,
     'building.iron_mine': buildingIron_mine,
     'building.market': buildingMarket,
+    'building.rally': buildingRally,
     'building.stable': buildingStable,
     'building.timber_camp': buildingTimber_camp,
     'building.wall': buildingWall,
@@ -102,6 +116,19 @@ export const SPRITES = {
     'map.village.barbarian': mapVillageBarbarian,
     'map.village.bot': mapVillageBot,
     'map.village.player': mapVillagePlayer,
+    // Die Gebäude auf dem Dorfplatz, 32×32 (plans/18-ux/18-2-dorfuebersicht.md).
+    'yard.academy': yardAcademy,
+    'yard.barracks': yardBarracks,
+    'yard.clay_pit': yardClay_pit,
+    'yard.farm': yardFarm,
+    'yard.headquarters': yardHeadquarters,
+    'yard.iron_mine': yardIron_mine,
+    'yard.market': yardMarket,
+    'yard.rally': yardRally,
+    'yard.stable': yardStable,
+    'yard.timber_camp': yardTimber_camp,
+    'yard.wall': yardWall,
+    'yard.warehouse': yardWarehouse,
 } as const;
 
 export type SpriteId = keyof typeof SPRITES;

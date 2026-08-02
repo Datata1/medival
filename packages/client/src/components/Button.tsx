@@ -32,6 +32,20 @@ const TAB_ACTIVE = `${BASE} border-oak border-b-parchment bg-parchment text-ink 
  */
 export const NAV_LINK_CLASS = `${VARIANTS.nav} data-[status=active]:bg-seal data-[status=active]:hover:bg-seal`;
 
+/**
+ * Dasselbe für die Unternavigation innerhalb einer Seite (Plan 18-2: die
+ * Gebäude eines Dorfes). Auch hier sind es `<Link>`, damit Mittelklick und
+ * Ankersemantik erhalten bleiben; den aktiven Reiter erkennt der Router.
+ *
+ * Der aktive Zustand unterscheidet sich vom Ruhezustand nur durch die hellere
+ * Fläche und die Goldkante oben — dieselbe Optik wie `TAB_ACTIVE` unten.
+ *
+ * `inline-flex`, weil ein Reiter Symbol und Beschriftung nebeneinander trägt;
+ * als Anker wäre er sonst eine Zeile Text mit einem Bild darin.
+ */
+export const TAB_LINK_CLASS =
+    'inline-flex items-center gap-1.5 whitespace-nowrap rounded-xs border-2 border-oak border-b-parchment bg-parchment-dark px-3 py-1 font-display font-semibold text-ink text-sm tracking-wide transition-[background-color,box-shadow] active:translate-y-px hover:bg-parchment data-[status=active]:bg-parchment data-[status=active]:shadow-[inset_0_2px_0_var(--color-gold-leaf)]';
+
 export interface ButtonProps
     extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: Variant;
