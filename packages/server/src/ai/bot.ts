@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { events } from '../db/schema.js';
 import type { World } from '../engine/world.js';
 import { decideBuild } from './decide/build.js';
+import { decideShipment } from './decide/trade.js';
 import { executeIntents } from './execute.js';
 import type { BotState, Intent } from './intents.js';
 import {
@@ -74,6 +75,28 @@ export function planBot(snapshot: BotSnapshot): {
         if (choice.waitFor !== null && choice.waitFor < soonest) {
             soonest = choice.waitFor;
         }
+    }
+
+    /*
+     * Liefern, was übrig ist (Plan 16). Bewusst *nach* dem Bauen: Ein Bot
+     * verschenkt nur, was er für sein eigenes Ziel nicht braucht — deshalb
+     * zählt hier der Überschuss über der Schwelle, nicht das ganze Lager.
+     */
+    for (const village of snapshot.villages) {
+        if (village.merchantsFree <= 0) continue;
+        const shipment = decideShipment(
+            village.resources,
+            village.capacity,
+            village.merchantsFree,
+            snapshot.partners,
+        );
+        if (!shipment) continue;
+        intents.push({
+            kind: 'ship',
+            originVillageId: village.id,
+            targetVillageId: shipment.partner.villageId,
+            resources: shipment.resources,
+        });
     }
 
     const factor = DIFFICULTY_THINK_FACTOR[snapshot.difficulty];

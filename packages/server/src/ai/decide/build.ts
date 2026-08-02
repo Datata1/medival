@@ -50,6 +50,8 @@ export interface VillageSnapshot {
     popInUse: number;
     /** Steht schon etwas in der Bauschleife? */
     queueLength: number;
+    /** Freie Transportkapazität des Marktplatzes (Plan 16). */
+    merchantsFree: number;
 }
 
 export interface BuildChoice {

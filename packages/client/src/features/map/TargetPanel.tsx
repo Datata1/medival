@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
+import { SendResourcesForm } from './SendResourcesForm.js';
 import { SendUnitsForm } from './SendUnitsForm.js';
 
 const PLAYER_ID = 1;
@@ -56,12 +57,24 @@ export const TargetPanel = observer(function TargetPanel({
                     {t('map.isActiveVillage')}
                 </p>
             ) : (
-                <SendUnitsForm
-                    originVillageId={activeVillageId}
-                    home={home}
-                    target={target}
-                    targetIsOwn={isOwn}
-                />
+                <>
+                    <SendUnitsForm
+                        originVillageId={activeVillageId}
+                        home={home}
+                        target={target}
+                        targetIsOwn={isOwn}
+                    />
+                    {target.playerId !== null && (
+                        <>
+                            <h3>{t('map.shipTitle')}</h3>
+                            <SendResourcesForm
+                                originVillageId={activeVillageId}
+                                home={home}
+                                target={target}
+                            />
+                        </>
+                    )}
+                </>
             )}
         </Card>
     );

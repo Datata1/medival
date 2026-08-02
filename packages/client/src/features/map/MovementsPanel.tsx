@@ -16,6 +16,7 @@ const KIND_ICONS = {
     attack: 'icon.attack',
     support: 'icon.support',
     return: 'icon.return',
+    trade: 'icon.trade',
 } as const satisfies Record<MovementInfo['kind'], SpriteId>;
 
 function MovementRow({

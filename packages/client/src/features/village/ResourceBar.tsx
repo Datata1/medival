@@ -44,6 +44,15 @@ export function ResourceBar({
                 <Icon name="icon.population" /> {village.popUsed}/
                 {village.popMax}
             </span>
+            {village.merchantCapacity > 0 && (
+                <span
+                    className="inline-flex items-center gap-1.5"
+                    title={t('village.merchants')}
+                >
+                    <Icon name="icon.trade" /> {village.merchantsFree}/
+                    {village.merchantCapacity}
+                </span>
+            )}
             <span className="text-ink-light">
                 {t('village.nameAndPoints', {
                     name: village.name,

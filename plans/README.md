@@ -21,7 +21,7 @@ stellen die Weichen für Aussehen, Assets und Klang, **14–17** erwecken die Ka
 | 13 | [Klang: Benachrichtigungen & Rückmeldung](13-sounds.md) | client | ✅ erledigt |
 | 14 | [Barbarendörfer: zufälliges Wachstum](14-barbarendoerfer.md) | server + shared | ✅ erledigt |
 | 15 | [Bot-Grundgerüst: Wahrnehmung → Entscheidung → Ausführung](15-bot-grundgeruest.md) | server + shared | ✅ erledigt |
-| 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ⬜ offen |
+| 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ✅ erledigt |
 | 17 | [Stämme & Krieg](17-staemme-und-krieg.md) | server + shared + client | ⬜ offen |
 
 **Warum diese Reihenfolge?**

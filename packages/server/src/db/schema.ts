@@ -124,6 +124,27 @@ export const recruitQueue = sqliteTable(
     (t) => [index('idx_recruit_queue_village').on(t.villageId)],
 );
 
+/**
+ * Ansehen zwischen zwei Spielern (plans/16-ansehen-und-handel.md).
+ *
+ * **Asymmetrisch**: eine Zeile je *geordnetem* Paar. Was A von B hält, ist
+ * ausdrücklich nicht, was B von A hält — ein Bot, den man beschenkt und danach
+ * überfällt, mag einen weniger, als man ihn mag.
+ */
+export const relations = sqliteTable(
+    'relations',
+    {
+        playerId: integer('player_id').notNull(),
+        otherPlayerId: integer('other_player_id').notNull(),
+        standing: real('standing').notNull().default(0),
+        updatedAt: integer('updated_at').notNull().default(0),
+    },
+    (t) => [
+        unique().on(t.playerId, t.otherPlayerId),
+        index('idx_relations_player').on(t.playerId),
+    ],
+);
+
 export const reports = sqliteTable(
     'reports',
     {

@@ -1,5 +1,6 @@
 import { GameError } from '../engine/errors.js';
 import { recruitUnits } from '../engine/military.js';
+import { sendResources } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
 import type { Intent } from './intents.js';
 
@@ -60,10 +61,17 @@ function runIntent(world: World, intent: Intent): void {
                 intent.count,
             );
             break;
-        case 'send':
         case 'ship':
-            // Kommt in den Plänen 16 und 17. Der Typ kennt sie schon, damit
-            // diese Stelle später erweitert und nicht umgebaut wird.
+            sendResources(
+                world,
+                intent.originVillageId,
+                intent.targetVillageId,
+                intent.resources,
+            );
+            break;
+        case 'send':
+            // Kommt in Plan 17. Der Typ kennt den Fall schon, damit diese
+            // Stelle später erweitert und nicht umgebaut wird.
             throw new GameError('not_implemented');
     }
 }

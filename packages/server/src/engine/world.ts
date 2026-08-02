@@ -1,5 +1,6 @@
 import {
     amountAtRate,
+    applyRelationEvent,
     BUILDINGS,
     type BuildingLevels,
     type BuildingType,
@@ -8,12 +9,16 @@ import {
     buildTime,
     canAfford,
     createStatefulRng,
+    Duration,
+    decayStanding,
     EVENT_SCHEMAS,
     entriesOf,
     farmCapacity,
     GameTime,
     LOYALTY_REGEN_PER_HOUR,
+    marketCapacity,
     projectResources,
+    type RelationEvent,
     type Resources,
     requirementsMet,
     resourceRatePerHour,
@@ -42,6 +47,7 @@ import {
     buildQueue,
     movements,
     recruitQueue,
+    relations,
     units,
     villages,
 } from '../db/schema.js';
@@ -49,6 +55,7 @@ import { GameClock } from './clock.js';
 import { GameError } from './errors.js';
 import { handleArrival, handleRecruitTick } from './military.js';
 import { type GameEvent, Scheduler } from './scheduler.js';
+import { freeMerchantCapacity } from './trade.js';
 
 export { GameError } from './errors.js';
 
@@ -251,6 +258,96 @@ export class World {
     }
 
     /**
+     * Ansehen faul abrechnen — das dritte Glied neben `settleResources` und
+     * `settleLoyalty` (plans/16-ansehen-und-handel.md).
+     *
+     * Kein Tick: Bei 31 Spielern gäbe es bis zu 930 Paare, die regelmäßig
+     * gegen null gezogen werden müssten. Stattdessen wird beim Zugriff
+     * gerechnet. Eine Beziehung, die niemand abfragt, kostet nichts.
+     */
+    settleStanding(
+        playerId: number,
+        otherPlayerId: number,
+        now = this.now(),
+    ): number {
+        if (playerId === otherPlayerId) return 0;
+        const row = this.db
+            .select()
+            .from(relations)
+            .where(
+                and(
+                    eq(relations.playerId, playerId),
+                    eq(relations.otherPlayerId, otherPlayerId),
+                ),
+            )
+            .all()[0];
+        if (!row) return 0; // keine Zeile heißt: neutral
+
+        const standing = decayStanding(
+            row.standing,
+            GameTime.between(row.updatedAt, now),
+        );
+        this.db
+            .update(relations)
+            .set({
+                standing,
+                updatedAt: GameTime.max(
+                    now,
+                    GameTime.of(row.updatedAt),
+                ),
+            })
+            .where(
+                and(
+                    eq(relations.playerId, playerId),
+                    eq(relations.otherPlayerId, otherPlayerId),
+                ),
+            )
+            .run();
+        return standing;
+    }
+
+    /**
+     * Verschiebt das Ansehen, das `playerId` gegenüber `otherPlayerId` hat.
+     *
+     * Barbaren (`playerId === null`) haben keine Meinung — Aufrufe mit `null`
+     * verpuffen, statt eine Zeile für einen nicht existierenden Spieler
+     * anzulegen.
+     */
+    adjustStanding(
+        playerId: number | null,
+        otherPlayerId: number | null,
+        event: RelationEvent,
+        distance: number,
+        now = this.now(),
+    ): void {
+        if (
+            playerId === null ||
+            otherPlayerId === null ||
+            playerId === otherPlayerId
+        )
+            return;
+        const current = this.settleStanding(
+            playerId,
+            otherPlayerId,
+            now,
+        );
+        const next = applyRelationEvent(
+            current,
+            Duration.zero, // schon abgerechnet
+            event,
+            distance,
+        );
+        this.sqlite
+            .prepare(
+                `INSERT INTO relations (player_id, other_player_id, standing, updated_at)
+                 VALUES (?, ?, ?, ?)
+                 ON CONFLICT(player_id, other_player_id)
+                 DO UPDATE SET standing = excluded.standing, updated_at = excluded.updated_at`,
+            )
+            .run(playerId, otherPlayerId, next, now);
+    }
+
+    /**
      * Settle lazy resources: project stored values to `now` and write back.
      * Returns current resources. Call before any read or spend.
      */
@@ -345,6 +442,8 @@ export class World {
             units: unitCounts,
             popUsed: this.popInUse(villageId, levels),
             popMax: farmCapacity(levels.farm),
+            merchantCapacity: marketCapacity(levels.market),
+            merchantsFree: freeMerchantCapacity(this, villageId),
         };
     }
 

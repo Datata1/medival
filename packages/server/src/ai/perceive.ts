@@ -1,13 +1,17 @@
 import {
+    distance,
     GameTime,
     projectResources,
+    RELATION_RANGE,
     resourceRatePerHour,
     warehouseCapacity,
 } from '@medival/shared';
 import { eq } from 'drizzle-orm';
 import { buildQueue, players, villages } from '../db/schema.js';
+import { freeMerchantCapacity } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
 import type { VillageSnapshot } from './decide/build.js';
+import type { TradePartner } from './decide/trade.js';
 import {
     type BotState,
     BotStateSchema,
@@ -34,7 +38,20 @@ export interface BotSnapshot {
     difficulty: Difficulty;
     state: BotState;
     villages: VillageSnapshot[];
+    /**
+     * Mögliche Handelspartner in Reichweite, samt eigener Haltung zu ihnen
+     * (plans/16-ansehen-und-handel.md). Ferne Spieler fehlen bewusst: Die
+     * Entfernungsdämpfung macht eine Lieferung dorthin wirkungslos, und die
+     * Liste soll nicht mit Aussichtslosem gefüllt werden.
+     */
+    partners: TradePartner[];
 }
+
+/**
+ * Wie weit ein Bot für Handel schaut. Beim Vierfachen von `RELATION_RANGE`
+ * liegt der Einfluss bei 6 % — darüber lohnt sich keine Fahrt mehr.
+ */
+const PARTNER_RANGE = RELATION_RANGE * 4;
 
 export function perceiveBot(
     world: World,
@@ -94,6 +111,7 @@ export function perceiveBot(
             capacity,
             popInUse: world.popInUse(v.id, levels),
             queueLength: queue.length,
+            merchantsFree: freeMerchantCapacity(world, v.id),
         };
     });
 
@@ -103,7 +121,48 @@ export function perceiveBot(
         difficulty: DifficultySchema.parse(player.difficulty),
         state: readBotState(player.aiState),
         villages: snapshots,
+        partners: perceivePartners(world, playerId, owned, now),
     };
+}
+
+/** Nachbarn anderer Spieler in Reichweite, mit der eigenen Haltung zu ihnen. */
+function perceivePartners(
+    world: World,
+    playerId: number,
+    owned: { x: number; y: number }[],
+    now: GameTime,
+): TradePartner[] {
+    const others = world.db
+        .select({
+            id: villages.id,
+            playerId: villages.playerId,
+            x: villages.x,
+            y: villages.y,
+        })
+        .from(villages)
+        .all()
+        .filter((v) => v.playerId !== null && v.playerId !== playerId);
+
+    // Je Spieler nur das nächstgelegene Dorf — mehr braucht die Entscheidung
+    // nicht, und die Liste bleibt kurz.
+    const nearest = new Map<number, TradePartner>();
+    for (const v of others) {
+        if (v.playerId === null) continue;
+        let best = Number.POSITIVE_INFINITY;
+        for (const home of owned) {
+            best = Math.min(best, distance(home.x, home.y, v.x, v.y));
+        }
+        if (best > PARTNER_RANGE) continue;
+        const known = nearest.get(v.playerId);
+        if (known && known.distance <= best) continue;
+        nearest.set(v.playerId, {
+            playerId: v.playerId,
+            villageId: v.id,
+            standing: world.settleStanding(playerId, v.playerId, now),
+            distance: best,
+        });
+    }
+    return [...nearest.values()];
 }
 
 /**

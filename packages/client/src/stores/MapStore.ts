@@ -1,4 +1,4 @@
-import type { MapVillage, Units } from '@medival/shared';
+import type { MapVillage, Resources, Units } from '@medival/shared';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { api } from '../api/client.js';
 import { apiErrorMessage } from '../lib/errors.js';
@@ -55,6 +55,35 @@ export class MapStore {
      * Der Store selbst kennt keine Audioausgabe (plans/13-sounds.md).
      */
     onActionResult: ((ok: boolean) => void) | null = null;
+
+    /** Schickt Rohstoffe; liefert true bei Erfolg (plans/16-ansehen-und-handel.md). */
+    async sendResources(
+        originVillageId: number,
+        target: number,
+        resources: Resources,
+    ): Promise<boolean> {
+        const worldId = this.worldId;
+        if (worldId === null) return false;
+        runInAction(() => {
+            this.isSending = true;
+            this.sendError = null;
+        });
+        try {
+            await api.ship(worldId, originVillageId, target, resources);
+            this.onActionResult?.(true);
+            return true;
+        } catch (cause) {
+            runInAction(() => {
+                this.sendError = apiErrorMessage(cause);
+            });
+            this.onActionResult?.(false);
+            return false;
+        } finally {
+            runInAction(() => {
+                this.isSending = false;
+            });
+        }
+    }
 
     /** Schickt Truppen; liefert true bei Erfolg, damit das Formular sich leeren kann. */
     async sendUnits(
