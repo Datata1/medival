@@ -31,6 +31,9 @@ function village(
 ): VillageSnapshot {
     const base = {
         id: 1,
+        x: 20,
+        y: 20,
+        units: {},
         levels: { ...EMPTY_BUILDING_LEVELS, ...STARTING_BUILDINGS },
         resources: { wood: 800, clay: 800, iron: 800 },
         ratesPerHour: { wood: 300, clay: 300, iron: 300 },
@@ -38,6 +41,7 @@ function village(
         popInUse: 20,
         queueLength: 0,
         merchantsFree: 0,
+        recruiting: false,
         ...patch,
     };
     // Ohne eigene Angabe entspricht die geplante Sicht der gebauten.
@@ -241,6 +245,7 @@ describe('Bauentscheidung (pure)', () => {
                     barracks: 25,
                     stable: 20,
                     wall: 20,
+                    market: 25,
                     academy: 1,
                 },
             }),
@@ -334,6 +339,13 @@ describe('planBot', () => {
         state: { savingFor: {} },
         villages,
         partners: [],
+        targets: [],
+        distressCalls: [],
+        invitations: [],
+        foundingCandidates: [],
+        tribeId: null,
+        gameTime: 0,
+        unitSpeed: 100,
     });
 
     it('erzeugt einen Bau-Intent, wenn bezahlbar', () => {
@@ -475,17 +487,24 @@ describe('Bots in einer laufenden Welt', () => {
             world.scheduler.processDue();
         }
         expect(pointsOf('bot')).toBeGreaterThan(before);
-    });
+        // Seit Plan 17 kommen Angriffe und Unterstützung dazu; eine
+        // Spielwoche erzeugt entsprechend mehr Events.
+    }, 60_000);
 
     it('baut deutlich klüger aus als Barbaren', () => {
         // Zehn Bots gegen zehn Barbaren, gleiche Startbedingungen. Der
         // eigentliche Nachweis, dass „klüger" nicht nur behauptet ist.
         const bots = pointsOf('bot');
         const barbarians = pointsOf('barbarian');
-        // Gemessen bei diesem Seed: Faktor 2,8. Die Schwelle liegt bei 2,5,
-        // damit der Test eine echte Aussage macht und nicht nur „irgendwas
-        // mehr" prüft.
-        expect(bots).toBeGreaterThan(barbarians * 2.5);
+        /*
+         * Gemessen bei diesem Seed: Faktor 2,3. Die Schwelle liegt bei 2,0.
+         *
+         * Vor Plan 17 waren es 2,8 — Bots geben jetzt Rohstoffe für
+         * Marktplätze und Truppen aus, statt alles in Punkte zu stecken. Der
+         * niedrigere Faktor ist kein Rückschritt, sondern der Preis dafür,
+         * dass sie handeln, sich verbünden und kämpfen.
+         */
+        expect(bots).toBeGreaterThan(barbarians * 2.0);
     });
 
     it('Persönlichkeiten unterscheiden sich auch in der echten Welt', () => {

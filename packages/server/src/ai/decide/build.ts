@@ -9,6 +9,7 @@ import {
     type Resources,
     requirementsMet,
     timeUntilAffordable,
+    type Units,
 } from '@medival/shared';
 import {
     BUILDING_CATEGORY,
@@ -32,6 +33,10 @@ import {
 /** Ein Dorf, so wie die Entscheidung es sieht. Flach, ohne Verhalten. */
 export interface VillageSnapshot {
     id: number;
+    x: number;
+    y: number;
+    /** Truppen zu Hause — für Angriff und Unterstützung (Plan 17). */
+    units: Units;
     /** Tatsächlich gebaute Stufen — maßgeblich für Produktion und Voraussetzungen. */
     levels: BuildingLevels;
     /**
@@ -52,6 +57,8 @@ export interface VillageSnapshot {
     queueLength: number;
     /** Freie Transportkapazität des Marktplatzes (Plan 16). */
     merchantsFree: number;
+    /** Steht schon etwas in der Rekrutierungsschleife (Plan 17)? */
+    recruiting: boolean;
 }
 
 export interface BuildChoice {

@@ -1,9 +1,13 @@
 import type { WebSocket } from '@fastify/websocket';
 import {
+    AcceptInvitationRequestSchema,
     attitudeOf,
     BattleReportPayloadSchema,
     BuildRequestSchema,
     CreateWorldRequestSchema,
+    distance,
+    FoundTribeRequestSchema,
+    InvitePlayerRequestSchema,
     NumericIdSchema,
     RecruitRequestSchema,
     SendResourcesRequestSchema,
@@ -17,10 +21,27 @@ import {
     parseInput,
     parseJsonColumn,
 } from '../db/parse.js';
-import { movements, players, reports, villages } from '../db/schema.js';
+import {
+    movements,
+    players,
+    reports,
+    tribeInvitations,
+    tribes,
+    villages,
+} from '../db/schema.js';
 import { PLAYER_ID } from '../engine/mapgen.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
 import { sendResources } from '../engine/trade.js';
+import {
+    acceptInvitation,
+    foundTribe,
+    invitePlayer,
+    leaveTribe,
+    pruneInvitations,
+    tribeInfo,
+    tribeOf,
+    tribeTags,
+} from '../engine/tribes.js';
 import { GameError, type World } from '../engine/world.js';
 import type { WorldManager } from '../engine/worldManager.js';
 
@@ -113,6 +134,143 @@ export function registerRoutes(
         },
     );
 
+    // ── Stämme (Plan 17) ──────────────────────────────────────────────
+
+    app.get<{ Params: { id: string } }>(
+        '/api/worlds/:id/diplomacy',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            pruneInvitations(world);
+            const now = world.now();
+            const tags = tribeTags(world);
+
+            const own = tribeOf(world, PLAYER_ID);
+            const homes = world.db
+                .select({ x: villages.x, y: villages.y })
+                .from(villages)
+                .where(eq(villages.playerId, PLAYER_ID))
+                .all();
+            const allVillages = world.db
+                .select({
+                    playerId: villages.playerId,
+                    x: villages.x,
+                    y: villages.y,
+                    points: villages.points,
+                })
+                .from(villages)
+                .all();
+
+            const list = world.db
+                .select()
+                .from(players)
+                .all()
+                .filter((p) => p.id !== PLAYER_ID)
+                .map((p) => {
+                    const mine = allVillages.filter(
+                        (v) => v.playerId === p.id,
+                    );
+                    let dist = Number.POSITIVE_INFINITY;
+                    for (const home of homes)
+                        for (const v of mine)
+                            dist = Math.min(
+                                dist,
+                                distance(home.x, home.y, v.x, v.y),
+                            );
+                    const standing = world.effectiveStanding(
+                        p.id,
+                        PLAYER_ID,
+                        now,
+                    );
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        isBot: p.isBot,
+                        points: mine.reduce((s, v) => s + v.points, 0),
+                        tribeTag: tags.get(p.id) ?? null,
+                        standing,
+                        attitude: attitudeOf(standing),
+                        distance: Number.isFinite(dist)
+                            ? Math.round(dist * 10) / 10
+                            : 0,
+                    };
+                })
+                // Ohne Dörfer ist ein Spieler aus dem Spiel.
+                .filter((p) => p.points > 0 || p.tribeTag !== null)
+                .sort((a, b) => a.distance - b.distance);
+
+            const invitations = world.db
+                .select()
+                .from(tribeInvitations)
+                .where(eq(tribeInvitations.playerId, PLAYER_ID))
+                .all()
+                .map((row) => {
+                    const tribe = world.db
+                        .select()
+                        .from(tribes)
+                        .where(eq(tribes.id, row.tribeId))
+                        .all()[0];
+                    return {
+                        tribeId: row.tribeId,
+                        tribeName: tribe?.name ?? '?',
+                        tribeTag: tribe?.tag ?? '?',
+                        expiresGameTime: row.expiresGameTime,
+                    };
+                });
+
+            return {
+                tribe: own === null ? null : tribeInfo(world, own),
+                players: list,
+                invitations,
+                gameTime: now,
+            };
+        },
+    );
+
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/tribe',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            const body = parseInput(FoundTribeRequestSchema, req.body);
+            foundTribe(world, PLAYER_ID, body.name, body.tag);
+            return { ok: true };
+        },
+    );
+
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/tribe/invite',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            const body = parseInput(
+                InvitePlayerRequestSchema,
+                req.body,
+            );
+            invitePlayer(world, PLAYER_ID, body.playerId);
+            return { ok: true };
+        },
+    );
+
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/tribe/accept',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            const body = parseInput(
+                AcceptInvitationRequestSchema,
+                req.body,
+            );
+            acceptInvitation(world, PLAYER_ID, body.tribeId);
+            return { ok: true };
+        },
+    );
+
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/tribe/leave',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            leaveTribe(world, PLAYER_ID);
+            return { ok: true };
+        },
+    );
+
     app.get<{ Params: { id: string; playerId: string } }>(
         '/api/worlds/:id/players/:playerId',
         (req) => {
@@ -172,7 +330,7 @@ export function registerRoutes(
             const standing =
                 playerId === PLAYER_ID
                     ? null
-                    : world.settleStanding(playerId, PLAYER_ID);
+                    : world.effectiveStanding(playerId, PLAYER_ID);
 
             return {
                 id: player.id,
@@ -186,6 +344,7 @@ export function registerRoutes(
                 standing,
                 attitude:
                     standing === null ? null : attitudeOf(standing),
+                tribeTag: tribeTags(world).get(playerId) ?? null,
             };
         },
     );

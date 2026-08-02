@@ -111,6 +111,39 @@ export type RelationEvent =
     | { kind: 'villageLost' };
 
 /**
+ * Dauerhafter Zuschlag aus der Stammeszugehörigkeit (Plan 17).
+ *
+ * Kein Ereignis, sondern ein Sockel: Er klingt nicht ab, sondern gilt, solange
+ * die Zugehörigkeit besteht. Dadurch verfestigen sich Fronten von selbst —
+ * Stammesbrüder rücken zusammen, fremde Stämme driften auseinander, ohne dass
+ * es dafür eine eigene Mechanik braucht.
+ */
+export const TRIBE_BONUS = 20;
+export const FOREIGN_TRIBE_MALUS = -12;
+
+export function tribeModifier(
+    ownTribe: number | null,
+    otherTribe: number | null,
+): number {
+    if (ownTribe === null || otherTribe === null) return 0;
+    return ownTribe === otherTribe ? TRIBE_BONUS : FOREIGN_TRIBE_MALUS;
+}
+
+/**
+ * Das, was zählt: gespeichertes Ansehen plus Stammes-Sockel.
+ * Haltungen und Entscheidungen arbeiten mit diesem Wert, nicht mit dem rohen.
+ */
+export function effectiveStanding(
+    standing: number,
+    ownTribe: number | null,
+    otherTribe: number | null,
+): number {
+    return clampStanding(
+        standing + tribeModifier(ownTribe, otherTribe),
+    );
+}
+
+/**
  * Grundwerte je Ereignis, vor der Entfernungsdämpfung.
  *
  * Angriffe wiegen schwerer als Lieferungen: Freundschaft soll man sich

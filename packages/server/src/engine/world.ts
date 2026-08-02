@@ -31,6 +31,7 @@ import {
     villagePoints,
     type WorldSettings,
     warehouseCapacity,
+    effectiveStanding as withTribeModifier,
 } from '@medival/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, asc, eq } from 'drizzle-orm';
@@ -56,6 +57,7 @@ import { GameError } from './errors.js';
 import { handleArrival, handleRecruitTick } from './military.js';
 import { type GameEvent, Scheduler } from './scheduler.js';
 import { freeMerchantCapacity } from './trade.js';
+import { tribeOf } from './tribes.js';
 
 export { GameError } from './errors.js';
 
@@ -304,6 +306,23 @@ export class World {
             )
             .run();
         return standing;
+    }
+
+    /**
+     * Das *wirksame* Ansehen: gespeicherter Wert plus Stammes-Sockel
+     * (plans/17-staemme-und-krieg.md). Haltungen und Entscheidungen arbeiten
+     * mit diesem Wert; `settleStanding` liefert den rohen.
+     */
+    effectiveStanding(
+        playerId: number,
+        otherPlayerId: number,
+        now = this.now(),
+    ): number {
+        return withTribeModifier(
+            this.settleStanding(playerId, otherPlayerId, now),
+            tribeOf(this, playerId),
+            tribeOf(this, otherPlayerId),
+        );
     }
 
     /**

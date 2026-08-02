@@ -1,8 +1,28 @@
-import { canAfford, Duration, GameTime, keysOf } from '@medival/shared';
+import {
+    canAfford,
+    Duration,
+    GameTime,
+    keysOf,
+    type Resources,
+    subtractResources,
+    unitCost,
+} from '@medival/shared';
 import { eq } from 'drizzle-orm';
 import { events } from '../db/schema.js';
+import { GameError } from '../engine/errors.js';
+import {
+    acceptInvitation,
+    foundTribe,
+    invitePlayer,
+} from '../engine/tribes.js';
 import type { World } from '../engine/world.js';
 import { decideBuild } from './decide/build.js';
+import {
+    decideFounding,
+    decideInvitation,
+} from './decide/diplomacy.js';
+import { decideAttack, decideSupport } from './decide/military.js';
+import { decideRecruit } from './decide/recruit.js';
 import { decideShipment } from './decide/trade.js';
 import { executeIntents } from './execute.js';
 import type { BotState, Intent } from './intents.js';
@@ -53,6 +73,18 @@ export function planBot(snapshot: BotSnapshot): {
     const intents: Intent[] = [];
     const savingFor: BotState['savingFor'] = {};
     let soonest = MAX_THINK_INTERVAL;
+    /*
+     * Was nach dem Bauen noch im Lager liegt.
+     *
+     * Intents werden gegen *einen* Snapshot geplant, aber nacheinander
+     * ausgeführt — jeder ändert den Zustand für den nächsten. Ohne diese
+     * Buchführung schlägt ein Bot eine Lieferung vor, die der Bau soeben
+     * unbezahlbar gemacht hat, und die Ausführung meldet
+     * `not_enough_resources`.
+     */
+    const leftover = new Map<number, Resources>(
+        snapshot.villages.map((v) => [v.id, { ...v.resources }]),
+    );
 
     for (const village of snapshot.villages) {
         const choice = decideBuild(village, snapshot.personality);
@@ -69,12 +101,38 @@ export function planBot(snapshot: BotSnapshot): {
                 villageId: village.id,
                 building: choice.building,
             });
+            leftover.set(
+                village.id,
+                subtractResources(village.resources, choice.cost),
+            );
             continue;
         }
         // Noch nicht bezahlbar: nachdenken, sobald es so weit ist.
         if (choice.waitFor !== null && choice.waitFor < soonest) {
             soonest = choice.waitFor;
         }
+    }
+
+    // Truppen aus dem, was nach dem Bauen übrig ist (Plan 17).
+    for (const village of snapshot.villages) {
+        const rest = leftover.get(village.id) ?? village.resources;
+        const order = decideRecruit(
+            village,
+            rest,
+            snapshot.personality,
+            village.recruiting,
+        );
+        if (!order) continue;
+        intents.push({
+            kind: 'recruit',
+            villageId: village.id,
+            unit: order.unit,
+            count: order.count,
+        });
+        leftover.set(
+            village.id,
+            subtractResources(rest, unitCost(order.unit, order.count)),
+        );
     }
 
     /*
@@ -85,7 +143,7 @@ export function planBot(snapshot: BotSnapshot): {
     for (const village of snapshot.villages) {
         if (village.merchantsFree <= 0) continue;
         const shipment = decideShipment(
-            village.resources,
+            leftover.get(village.id) ?? village.resources,
             village.capacity,
             village.merchantsFree,
             snapshot.partners,
@@ -96,6 +154,45 @@ export function planBot(snapshot: BotSnapshot): {
             originVillageId: village.id,
             targetVillageId: shipment.partner.villageId,
             resources: shipment.resources,
+        });
+    }
+
+    /*
+     * Verteidigen geht vor angreifen: Wer ein Stammesmitglied verliert, hat
+     * nichts davon, dass er zeitgleich anderswo Beute gemacht hat.
+     */
+    for (const village of snapshot.villages) {
+        if (snapshot.distressCalls.length === 0) break;
+        const support = decideSupport(
+            { x: village.x, y: village.y, units: village.units },
+            snapshot.distressCalls,
+            snapshot.gameTime,
+            snapshot.unitSpeed,
+        );
+        if (!support) continue;
+        intents.push({
+            kind: 'send',
+            originVillageId: village.id,
+            targetVillageId: support.targetVillageId,
+            movement: 'support',
+            units: support.units,
+        });
+    }
+
+    for (const village of snapshot.villages) {
+        if (snapshot.targets.length === 0) break;
+        const attack = decideAttack(
+            { x: village.x, y: village.y, units: village.units },
+            snapshot.targets,
+            snapshot.personality,
+        );
+        if (!attack) continue;
+        intents.push({
+            kind: 'send',
+            originVillageId: village.id,
+            targetVillageId: attack.targetVillageId,
+            movement: 'attack',
+            units: attack.units,
         });
     }
 
@@ -143,10 +240,54 @@ export function handleBotTick(
         );
     }
 
+    runDiplomacy(world, snapshot);
+
     if (keysOf(state.savingFor).length > 0) {
         writeBotState(world, payload.playerId, state);
     }
     scheduleBotTick(world, payload.playerId, nextIn);
+}
+
+/**
+ * Einladungen annehmen und Stämme gründen (Plan 17).
+ *
+ * Getrennt von `planBot`, weil beides keine `Intent`s sind: Es sind
+ * Zustandswechsel ohne Kosten und ohne Marschzeit, und sie brauchen kein
+ * Budget.
+ */
+function runDiplomacy(world: World, snapshot: BotSnapshot): void {
+    const inTribe = snapshot.tribeId !== null;
+
+    const joining = decideInvitation(snapshot.invitations, inTribe);
+    if (joining !== null) {
+        try {
+            acceptInvitation(world, snapshot.playerId, joining);
+            return;
+        } catch (error) {
+            if (!(error instanceof GameError)) throw error;
+        }
+    }
+
+    const partnerId = decideFounding(
+        snapshot.foundingCandidates,
+        inTribe,
+        world.rng.next(),
+    );
+    if (partnerId === null) return;
+    try {
+        // Der Gründer lädt sofort ein; angenommen wird beim nächsten Tick des
+        // Partners — dieselbe Kette wie beim Spieler, kein Sonderweg.
+        const tribeId = foundTribe(
+            world,
+            snapshot.playerId,
+            `Bund von ${snapshot.playerId}`,
+            `B${snapshot.playerId}`,
+        );
+        void tribeId;
+        invitePlayer(world, snapshot.playerId, partnerId);
+    } catch (error) {
+        if (!(error instanceof GameError)) throw error;
+    }
 }
 
 /**

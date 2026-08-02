@@ -154,3 +154,51 @@ export function resolveBattle(input: BattleInput): BattleResult {
         luck,
     };
 }
+
+/**
+ * Schätzt den Ausgang eines Angriffs **ohne** Glücksfaktor — für Bots
+ * (siehe plans/17-staemme-und-krieg.md).
+ *
+ * Bewusst dieselbe `resolveBattle`-Funktion, die auch den echten Kampf
+ * entscheidet: Ein zweites, vereinfachtes Kampfmodell für Bots wäre nach der
+ * nächsten Balancing-Änderung falsch, ohne dass es jemand merkt. Der einzige
+ * Unterschied ist der neutrale Zufall — geschätzt wird der Erwartungswert,
+ * nicht ein einzelner Wurf.
+ */
+export function estimateBattle(
+    attacker: Units,
+    defender: Units,
+    wallLevel: number,
+): BattleResult {
+    return resolveBattle({
+        attacker,
+        defender,
+        wallLevel,
+        loyalty: 100,
+        rng: () => 0.5, // kein Glück, kein Pech
+    });
+}
+
+/**
+ * Wie deutlich ein Angriff ausgehen würde: Anteil der überlebenden Angreifer
+ * am Verhältnis zur eingesetzten Streitmacht.
+ *
+ * 1 = ohne Verluste durchmarschiert, 0 = vollständig aufgerieben. Bots
+ * verlangen je nach Persönlichkeit eine Mindestdeutlichkeit, statt jeden
+ * knappen Sieg mitzunehmen.
+ */
+export function attackMargin(
+    attacker: Units,
+    defender: Units,
+    wallLevel: number,
+): number {
+    const result = estimateBattle(attacker, defender, wallLevel);
+    if (!result.attackerWon) return 0;
+    const sent = entriesOf(attacker).reduce((s, [, n]) => s + n, 0);
+    if (sent <= 0) return 0;
+    const left = entriesOf(result.attackerSurvivors).reduce(
+        (s, [, n]) => s + n,
+        0,
+    );
+    return left / sent;
+}

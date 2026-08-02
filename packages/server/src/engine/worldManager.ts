@@ -46,6 +46,34 @@ function migrateWorldDb(sqlite: Database.Database): void {
         );
         CREATE INDEX IF NOT EXISTS idx_relations_player ON relations(player_id);
     `);
+    // Plan 17: Stämme.
+    sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS tribes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          tag TEXT NOT NULL,
+          founder_id INTEGER NOT NULL,
+          created_game_time INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS tribe_invitations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          tribe_id INTEGER NOT NULL,
+          player_id INTEGER NOT NULL,
+          created_game_time INTEGER NOT NULL,
+          expires_game_time INTEGER NOT NULL,
+          UNIQUE(tribe_id, player_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_invitations_player ON tribe_invitations(player_id);
+    `);
+    const playerCols = sqlite
+        .prepare(`PRAGMA table_info(players)`)
+        .all()
+        .map((row) =>
+            parseRow(TableColumnSchema, row, 'PRAGMA table_info'),
+        );
+    if (!playerCols.some((c) => c.name === 'tribe_id')) {
+        sqlite.exec('ALTER TABLE players ADD COLUMN tribe_id INTEGER');
+    }
 }
 
 export class WorldManager {

@@ -23,6 +23,7 @@ import iconSoundOff from './sprites/icons/sound-off.png';
 import iconSoundOn from './sprites/icons/sound-on.png';
 import iconSupport from './sprites/icons/support.png';
 import iconTrade from './sprites/icons/trade.png';
+import iconTribe from './sprites/icons/tribe.png';
 import iconVictory from './sprites/icons/victory.png';
 import iconVillage from './sprites/icons/village.png';
 import iconWarning from './sprites/icons/warning.png';
@@ -65,6 +66,7 @@ export const SPRITES = {
     'icon.sound.on': iconSoundOn,
     'icon.support': iconSupport,
     'icon.trade': iconTrade,
+    'icon.tribe': iconTribe,
     'icon.victory': iconVictory,
     'icon.village': iconVillage,
     'icon.warning': iconWarning,

@@ -1,4 +1,8 @@
-import { BUILDING_ORDER, UNIT_ORDER } from '@medival/shared';
+import {
+    BUILDING_ORDER,
+    UNIT_ORDER,
+    UnitsSchema,
+} from '@medival/shared';
 import { z } from 'zod';
 
 /**
@@ -34,7 +38,7 @@ export const SendIntentSchema = z.object({
     originVillageId: z.number().int().positive(),
     targetVillageId: z.number().int().positive(),
     movement: z.enum(['attack', 'support']),
-    units: z.record(z.enum(UNIT_ORDER), z.number().int().positive()),
+    units: UnitsSchema,
 });
 
 /** Rohstoffe liefern (Plan 16). */
