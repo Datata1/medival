@@ -25,6 +25,17 @@ export interface Resources {
     iron: number;
 }
 
+/**
+ * Die drei Rohstoffe in fester Reihenfolge — für Schleifen über `Resources`.
+ * Bewusst ein Literal statt `keysOf`: Bei einem vierten Rohstoff soll der
+ * Compiler eine Ergänzung erzwingen, nicht still eine Stelle auslassen.
+ */
+export const RESOURCE_KEYS = [
+    'wood',
+    'clay',
+    'iron',
+] as const satisfies readonly (keyof Resources)[];
+
 export type Units = Partial<Record<UnitType, number>>;
 
 export type BuildingLevels = Record<BuildingType, number>;

@@ -1,6 +1,62 @@
 # Plan 15: Bot-Grundgerüst — Wahrnehmung, Entscheidung, Ausführung
 
-**Status:** ⬜ offen · **Voraussetzung:** keine · **Grundlage für:** [16](16-ansehen-und-handel.md), [17](17-staemme-und-krieg.md)
+**Status:** ✅ erledigt (2026-08-02) · **Voraussetzung:** keine · **Grundlage für:** [16](16-ansehen-und-handel.md), [17](17-staemme-und-krieg.md)
+
+> **Ergebnis:** Das Gerüst steht — `perceive.ts` liest, `decide/build.ts` entscheidet pur,
+> `execute.ts` führt über dieselben Kommandos aus wie der Spieler. Bots bauen nach
+> Rangfolge statt Zufall, sparen auf Ziele, die sie sich noch nicht leisten können, und
+> merken sich das über Neustarts hinweg in `ai_state_json`.
+>
+> **Gemessen** (10 Bots gegen 10 Barbaren, gleiche Startlage, simulierte Spielwoche):
+> Bots **42 915 Punkte gegen 15 556** — Faktor **2,8**. Bots starten dabei *hinter* den
+> Barbaren (190 zu 612 Punkte, weil Barbaren mit Rohstoffgebäuden auf Stufe 2–6 beginnen)
+> und überholen sie. Persönlichkeiten unterscheiden sich am Ende der Woche messbar:
+>
+> | | Wall | Hauptgebäude | Kaserne |
+> |---|---|---|---|
+> | turtle | **20,0** | 15,0 | 15,0 |
+> | raider | 18,0 | 23,0 | **19,0** |
+> | expander | 17,0 | **24,0** | 16,0 |
+>
+> **30 Server-Tests, 6 Verteilungstests für `timeUntilAffordable`, 6 von 6 Prüfungen im
+> Browser.** `check-ai-purity.mjs` läuft in `pnpm lint` und wurde durch absichtliches
+> Einschmuggeln eines `world.db`-Imports geprüft — er fing alle drei Verstöße
+> (DB-Schema, Drizzle, `Date.now`).
+>
+> **Drei echte Fehler, die erst die Ausführung bzw. der Browser gezeigt hat:**
+>
+> 1. **`max_level` im laufenden Betrieb.** `World.upgradeBuilding` rechnet die Bauschleife
+>    in die Zielstufe ein, die Entscheidung tat es nicht — ein bereits eingereihtes Gebäude
+>    wurde ein zweites Mal auf dieselbe Stufe geschickt. Sichtbar wurde es nur, weil
+>    `execute.ts` abgewiesene Intents **protokolliert** statt sie zu verschlucken. Der
+>    Snapshot trägt jetzt `plannedLevels` neben `levels`.
+> 2. **Bots bauten nur Speicher.** Die erste Speicher-Regel verlangte Platz für 1,5 Stunden
+>    Produktion. Bei Speed 200 sind das Speicher Stufe 12, *bevor* ein Bot sein erstes
+>    Holzfällerlager ausbaut — im Browser hatten nach einer Minute alle Bots Speicher 3,0
+>    und sonst alles auf Stufe 1. Ein zweiter Entwurf („Speicher erst, wenn gar nichts mehr
+>    passt") war rein reaktiv und kostete ein Drittel des Wachstums. Die jetzige Regel ist
+>    vorausschauend: Das beste Wirtschaftsziel wird *ohne* Rücksicht aufs Lager bestimmt;
+>    passt es nicht hinein, ist der Speicher dran. Geschwindigkeitsunabhängig.
+> 3. **Alle Bots bauten nur Hauptgebäude.** Der Vergleich zwischen Wirtschafts- und
+>    Persönlichkeitszweig lautete `weights[category] >= weights.economy` — rohe
+>    Kategoriegewichte ohne Kostenbezug. Weil `expansion` bei fast jeder Persönlichkeit
+>    mindestens so hoch liegt wie `economy`, gewann immer das Hauptgebäude, und alle vier
+>    Persönlichkeiten verhielten sich identisch. Jetzt werden beide Zweige auf derselben
+>    Skala bewertet (`gewicht / √kosten`).
+>
+> **Ein ehrlicher Zielkonflikt:** Fehler 3 zu beheben hat das Wachstum von Faktor 3,6 auf
+> 2,8 gesenkt. Das Hauptgebäude senkt Bauzeiten um 4 % je Stufe, es zu spammen war also
+> versehentlich stark — aber es machte alle Persönlichkeiten gleich, und genau die sind
+> der Zweck dieses Plans. Der niedrigere Faktor ist der bewusst gezahlte Preis.
+>
+> **Abweichungen von der Planung:** `decide/plan.ts` gibt es nicht — die Sparziel-Logik
+> passte in `bot.ts` (`planBot`) und `decide/build.ts`, eine dritte Datei wäre leer
+> geblieben. Der `BotSnapshot` enthält noch keine Nachbarn und keine eingehenden Angriffe;
+> beides braucht erst Plan 16 bzw. 17 und wäre jetzt unbenutzter Ballast.
+>
+> **Nebenbefund:** Der Test „Warteschlange bleibt nicht blockiert" musste Bots *und*
+> Barbaren abschalten (`botCount: 0`). Mit lebenden Ketten ist die Event-Warteschlange nie
+> leer — der Test prüfte zu Recht genau das.
 
 ## Kontext
 
@@ -184,11 +240,11 @@ gleichzeitig denken, wären ein unnötiger Ausschlag in der Event-Loop-Latenz.
 | `server/src/ai/intents.ts` | **neu** — Intent-Union + Zod |
 | `server/src/ai/personalities.ts` | **neu** — Gewichte als Daten |
 | `server/src/ai/decide/build.ts` | **neu** — pure Bauentscheidung |
-| `server/src/ai/decide/plan.ts` | **neu** — Sparziel + `timeUntilAffordable` |
 | `server/src/ai/execute.ts` | **neu** — Intents → Kommandos |
 | `server/src/ai/bot.ts` | **neu** — Tick-Handler, klebt die drei Schichten zusammen |
 | `shared/src/schema/events.ts` | `bot_tick` in `EVENT_SCHEMAS` |
-| `shared/src/logic/formulas.ts` | `timeUntilAffordable(have, cost, rates)` |
+| `shared/src/logic/formulas.ts` | `timeUntilAffordable(have, cost, rates, capacity)` |
+| `shared/src/types.ts` | `RESOURCE_KEYS` |
 | `server/src/engine/world.ts` · `mapgen.ts` | Zweig in `handleEvent`, erste Ticks |
 | `scripts/check-ai-purity.mjs` | **neu** — Reinheitsprüfung mit Selbsttest |
 | `package.json` | `check:ai-purity` in `pnpm lint` |

@@ -14,7 +14,7 @@ aber als stark beschleunigte **Singleplayer**-Version, in der die Karte von Bots
 |---|---|---|
 | M1 | Weltverwaltung, Spielzeit-Uhr/Pause, Event-Scheduler, Ökonomie, Bau-Queue, Dorf-UI | ✅ fertig |
 | M2 | Karte (Canvas), Rekrutierung, Truppenbewegungen, Kampf, Beute, Eroberung, Berichte | ✅ fertig |
-| M3 | Barbarendörfer ✅ · Bot-KI (Persönlichkeiten), Ansehen & Handel, Stämme | 🔨 |
+| M3 | Barbarendörfer ✅ · Bot-Grundgerüst ✅ · Ansehen & Handel, Stämme | 🔨 |
 | M4 | Siegbedingung, Balancing, Docker-Release | ⬜ |
 
 ## Entwicklung
@@ -124,6 +124,27 @@ Hintergrund: [plans/09-mobx-state-management.md](plans/09-mobx-state-management.
 Datenquelle gibt. Eine neue Feature-Seite ist eine neue Datei; `/worlds/1/map` und
 `/worlds/1/village/3` sind teilbare Links.
 Hintergrund: [plans/10-tanstack-router.md](plans/10-tanstack-router.md).
+
+## Idiom: Wahrnehmung → Entscheidung → Ausführung
+
+Die KI (`packages/server/src/ai/`) ist in drei Schichten geschnitten. Die mittlere,
+`ai/decide/`, besteht aus **puren Funktionen** `(snapshot, rng) → Ergebnis`: kein
+Datenbankzugriff, keine Uhr, kein Zufall außer dem hereingereichten. Ein Test schreibt
+den Snapshot als Literal hin — ohne SQLite, ohne Scheduler, ohne laufende Welt.
+
+Ausgeführt wird über **dieselben Kommandos, die auch der Spieler benutzt**
+(`upgradeBuilding`, `recruitUnits`). Bots haben keine Sonderrechte und keinen zweiten
+Regelsatz; eine Balancing-Änderung wirkt automatisch auf beiden Seiten.
+
+```
+perceive(world, playerId) ─→ Snapshot ─→ decide(snapshot, rng) ─→ Intent[] ─→ execute(world, …)
+      Datenbank                              pure                             Kommandos
+```
+
+`pnpm lint` erzwingt die Grenze (`scripts/check-ai-purity.mjs`, Selbsttest über
+`pnpm check:ai-purity`). Ohne diese Prüfung wandert beim ersten Zeitdruck ein
+`world.db.select()` in eine Entscheidungsfunktion, und der Testgewinn ist weg.
+Hintergrund: [plans/15-bot-grundgeruest.md](plans/15-bot-grundgeruest.md).
 
 ## Idiom: keine Type-Casts
 

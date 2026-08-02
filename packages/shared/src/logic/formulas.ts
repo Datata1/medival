@@ -6,12 +6,13 @@ import {
 import { UNITS } from '../data/units.js';
 import { entriesOf, keysOf } from '../lib/objects.js';
 import { amountAtRate, Duration, type DurationLike } from '../time.js';
-import type {
-    BuildingLevels,
-    BuildingType,
-    Resources,
-    Units,
-    UnitType,
+import {
+    type BuildingLevels,
+    type BuildingType,
+    RESOURCE_KEYS,
+    type Resources,
+    type Units,
+    type UnitType,
 } from '../types.js';
 
 /**
@@ -131,6 +132,43 @@ export function projectResources(
         clay: grown(levels.clay_pit, stored.clay),
         iron: grown(levels.iron_mine, stored.iron),
     };
+}
+
+/**
+ * Wann kann man sich `cost` leisten? (siehe plans/15-bot-grundgeruest.md)
+ *
+ * Der Kern der Bot-Planung: Weil die Produktion deterministisch ist, muss man
+ * auf den Zeitpunkt nicht warten und auch nicht regelmäßig nachschauen — man
+ * kann ihn ausrechnen und den nächsten Denk-Tick genau darauf legen. Damit
+ * bleibt die Engine ohne Tick, so wie es Plan 14 für Barbaren gelöst hat.
+ *
+ *   t = max über {wood, clay, iron} von (kosten − vorrat) / rate
+ *
+ * Gibt `null` für „nie erreichbar" zurück — zwei Fälle, die beide keine
+ * Wartezeit sind, sondern eine andere Entscheidung erzwingen:
+ *
+ *   - Rate 0 bei fehlendem Rohstoff → erst das Rohstoffgebäude bauen.
+ *   - Kosten über der Speicherkapazität → erst den Speicher ausbauen.
+ *
+ * Ohne diese Unterscheidung liefe ein Bot in eine Endlosschleife: Er würde
+ * ewig auf etwas sparen, das nie in sein Lager passt.
+ */
+export function timeUntilAffordable(
+    have: Resources,
+    cost: Resources,
+    ratesPerHour: Resources,
+    capacity = Number.POSITIVE_INFINITY,
+): Duration | null {
+    let longestHours = 0;
+    for (const key of RESOURCE_KEYS) {
+        const missing = cost[key] - have[key];
+        if (missing <= 0) continue;
+        if (cost[key] > capacity) return null; // passt nie ins Lager
+        const rate = ratesPerHour[key];
+        if (!(rate > 0)) return null; // wächst nie nach
+        longestHours = Math.max(longestHours, missing / rate);
+    }
+    return Duration.hours(longestHours);
 }
 
 export function canAfford(have: Resources, cost: Resources): boolean {

@@ -9,6 +9,7 @@ import {
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { startBarbarianTicks } from '../ai/barbarian.js';
+import { startBotTicks } from '../ai/bot.js';
 import { META_DDL, WORLD_DDL } from '../db/ddl.js';
 import { parseJsonColumn, parseRow } from '../db/parse.js';
 import {
@@ -137,6 +138,7 @@ export class WorldManager {
             (patch) => this.persistMeta(id, patch),
         );
         startBarbarianTicks(world);
+        startBotTicks(world);
         this.worlds.set(id, world);
         return world;
     }
@@ -176,6 +178,7 @@ export class WorldManager {
         // Idempotent: rüstet Welten nach, die vor Plan 14 entstanden sind, und
         // tut bei laufenden Ketten nichts.
         startBarbarianTicks(world);
+        startBotTicks(world);
         this.worlds.set(id, world);
         return world;
     }
