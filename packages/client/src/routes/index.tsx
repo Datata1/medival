@@ -8,13 +8,15 @@ export const Route = createFileRoute('/')({
 function LobbyRoute() {
     const navigate = useNavigate();
     return (
-        <Lobby
-            onOpen={(worldId) =>
-                void navigate({
-                    to: '/worlds/$worldId',
-                    params: { worldId: String(worldId) },
-                })
-            }
-        />
+        <div className="page">
+            <Lobby
+                onOpen={(worldId) =>
+                    void navigate({
+                        to: '/worlds/$worldId',
+                        params: { worldId: String(worldId) },
+                    })
+                }
+            />
+        </div>
     );
 }

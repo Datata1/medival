@@ -82,6 +82,25 @@ const COMBINATIONS = [
         bg: 'timber',
         what: 'Kopfzeilenschrift auf Holz',
     },
+    // Plan 18-1: die Kopfzeile ist ein dunkles Band mit acht Reitern.
+    {
+        fg: 'parchment-dark',
+        bg: 'timber',
+        what: 'Nebentext in der Kopfzeile (Rang, Punkte)',
+    },
+    {
+        fg: 'parchment',
+        bg: 'seal',
+        what: 'Aktiver Reiter in der Kopfzeile',
+    },
+    // Eiche auf Holz erreicht nur 2.75:1 — zu wenig für einen Rahmen. Die
+    // Reiter tragen deshalb einen hellen Beschlagrand statt eines dunklen.
+    {
+        fg: 'parchment-dark',
+        bg: 'seal',
+        what: 'Reiterrahmen des aktiven Reiters',
+        min: 3,
+    },
     {
         fg: 'oak',
         bg: 'parchment',

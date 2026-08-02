@@ -91,7 +91,7 @@ export function perceiveBot(
         .from(players)
         .where(eq(players.id, playerId))
         .all()[0];
-    if (!player || !player.isBot) return null;
+    if (!player?.isBot) return null;
 
     const owned = world.db
         .select()

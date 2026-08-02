@@ -2,7 +2,8 @@
 
 Sequenziell abzuarbeitende Vorhaben. **01–10** räumen technische Schuld auf, **11–13**
 stellen die Weichen für Aussehen, Assets und Klang, **14–17** erwecken die Karte zum Leben
-(Meilenstein 3). Die Nummerierung ist die empfohlene Reihenfolge:
+(Meilenstein 3), **18** macht die Oberfläche bedienbar. Die Nummerierung ist die
+empfohlene Reihenfolge:
 
 | # | Plan | Bereich | Status |
 |---|------|---------|--------|
@@ -23,6 +24,7 @@ stellen die Weichen für Aussehen, Assets und Klang, **14–17** erwecken die Ka
 | 15 | [Bot-Grundgerüst: Wahrnehmung → Entscheidung → Ausführung](15-bot-grundgeruest.md) | server + shared | ✅ erledigt |
 | 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ✅ erledigt |
 | 17 | [Stämme & Krieg](17-staemme-und-krieg.md) | server + shared + client | ✅ erledigt |
+| 18 | [UX-Überarbeitung (6 Tickets)](18-ux/README.md) | client (+shared, +server) | 📋 offen |
 
 **Warum diese Reihenfolge?**
 
@@ -32,6 +34,7 @@ stellen die Weichen für Aussehen, Assets und Klang, **14–17** erwecken die Ka
 - **09 vor 10:** Nach dem MobX-Umbau sind die Komponenten datenfrei, sodass der Router nur noch Sichtbarkeit und aktive IDs steuert. Andersherum müsste der Datenfluss zweimal angefasst werden — die Router-Loader würden zunächst gegen Query-Hooks verdrahtet, die unmittelbar danach wegfallen.
 - **11 → 12 → 13:** Das Design legt Farbpalette und Raster fest, an denen sich die Sprites orientieren müssen — Assets vorher zu zeichnen hieße, sie zweimal zu zeichnen. Der Klang ist technisch unabhängig, seine Bedienelemente (Regler, Symbol) brauchen aber Design und Icons, die bis dahin stehen.
 - **14 steht für sich:** Barbarendörfer teilen mit den Bots nur die Erkenntnis, dass die nächste Entscheidung *ausgerechnet* und nicht *abgefragt* wird (kein Tick). Sonst brauchen sie nichts von 15–17 und lassen sich jederzeit dazwischenschieben.
+- **18 nach 17:** Die Oberfläche ist über siebzehn Pläne mitgewachsen, ohne je entworfen worden zu sein. Sie jetzt zu überarbeiten heißt, alle Bildschirme zu kennen, die es geben soll — vorher hätte jeder neue Plan die frische Schale wieder aufgebrochen. Plan 18 ist deshalb ein Ordner mit sechs weitgehend unabhängigen Tickets statt eines einzelnen Arbeitsschritts.
 - **15 → 16 → 17:** Erst das Gerüst (Wahrnehmung → Entscheidung → Ausführung), dann Ansehen und Handel als Hebel, dann die Folgen in Stämmen und Krieg. Andersherum ginge es nicht: Ohne Ansehen gibt es keine Bedingung dafür, wen ein Bot angreift oder in seinen Stamm lässt. Jeder der drei Schritte endet mit etwas Spielbarem — Bots wachsen, Bots mögen dich, Bots handeln danach.
 
 **Arbeitsweise:** Pro Plan ein zusammenhängender Arbeitsschritt. Nach Abschluss: Status-Spalte hier und die Status-Zeile im Plandokument aktualisieren. Nach jedem Plan müssen `pnpm lint` (ab 01), `pnpm typecheck`, `pnpm test` und `pnpm build` grün sein.

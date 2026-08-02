@@ -43,8 +43,7 @@ export class WebAudioOutput implements AudioOutput {
 
     play(sound: SoundId, volume: number): void {
         const context = this.context;
-        if (!context || context.state !== 'running' || volume <= 0)
-            return;
+        if (context?.state !== 'running' || volume <= 0) return;
 
         const buffer = this.buffers.get(sound);
         if (!buffer) {

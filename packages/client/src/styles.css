@@ -79,8 +79,18 @@
         @apply font-body text-ink;
     }
 
+    /*
+     * Kein Innenabstand mehr: Die beiden Leisten aus Plan 18-1 liegen bündig
+     * am oberen Rand, das Polster trägt der Seiteninhalt (`.page`). 1280 px
+     * statt 1000, weil Dorfansicht und Karte zweispaltig werden.
+     */
     #root {
-        @apply mx-auto max-w-[1000px] p-4;
+        @apply mx-auto max-w-[1280px];
+    }
+
+    /* Der Inhalt unter den Leisten. */
+    .page {
+        @apply px-4 pt-4 pb-8;
     }
 
     h1 {
@@ -131,5 +141,14 @@
     /* Die Tastaturbedienung wird dem Aussehen nicht geopfert. */
     :focus-visible {
         @apply outline-2 outline-seal outline-offset-2;
+    }
+
+    /*
+     * Auf dem dunklen Band der Kopfzeile ist Siegelrot zu schwach — dafür
+     * wurde `focus-dark` in Plan 11 angelegt. Der Offset entfällt, sonst
+     * überlappen sich die Ringe benachbarter Reiter.
+     */
+    .nav-dark :focus-visible {
+        @apply outline-focus-dark outline-offset-0;
     }
 }

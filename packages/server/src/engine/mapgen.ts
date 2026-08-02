@@ -1,6 +1,7 @@
 import {
     BUILDING_ORDER,
     type BuildingLevels,
+    PLAYER_ID,
     pickRandom,
     type Rng,
     randInt,
@@ -12,8 +13,6 @@ import {
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { firstOrThrow } from '../db/parse.js';
 import { buildings, players, units, villages } from '../db/schema.js';
-
-export const PLAYER_ID = 1;
 
 const BOT_PERSONALITIES = [
     'turtle',

@@ -125,7 +125,9 @@ export class RootStore {
     }
 
     private ownsVillage(villageId: number): boolean {
-        return this.world.playerVillages.some((v) => v.id === villageId);
+        return this.world.playerVillages.some(
+            (v) => v.id === villageId,
+        );
     }
 
     /** Ein Rascheln nur für Berichte, die gerade erst eingetroffen sind. */

@@ -12,13 +12,18 @@ import iconAttack from './sprites/icons/attack.png';
 import iconClay from './sprites/icons/clay.png';
 import iconConquered from './sprites/icons/conquered.png';
 import iconDefeat from './sprites/icons/defeat.png';
+import iconHandbook from './sprites/icons/handbook.png';
 import iconIron from './sprites/icons/iron.png';
 import iconMap from './sprites/icons/map.png';
+import iconMessage from './sprites/icons/message.png';
 import iconPause from './sprites/icons/pause.png';
 import iconPlay from './sprites/icons/play.png';
 import iconPopulation from './sprites/icons/population.png';
+import iconProfile from './sprites/icons/profile.png';
+import iconRanking from './sprites/icons/ranking.png';
 import iconReport from './sprites/icons/report.png';
 import iconReturn from './sprites/icons/return.png';
+import iconSettings from './sprites/icons/settings.png';
 import iconSoundOff from './sprites/icons/sound-off.png';
 import iconSoundOn from './sprites/icons/sound-on.png';
 import iconSupport from './sprites/icons/support.png';
@@ -55,13 +60,18 @@ export const SPRITES = {
     'icon.clay': iconClay,
     'icon.conquered': iconConquered,
     'icon.defeat': iconDefeat,
+    'icon.handbook': iconHandbook,
     'icon.iron': iconIron,
     'icon.map': iconMap,
+    'icon.message': iconMessage,
     'icon.pause': iconPause,
     'icon.play': iconPlay,
     'icon.population': iconPopulation,
+    'icon.profile': iconProfile,
+    'icon.ranking': iconRanking,
     'icon.report': iconReport,
     'icon.return': iconReturn,
+    'icon.settings': iconSettings,
     'icon.sound.off': iconSoundOff,
     'icon.sound.on': iconSoundOn,
     'icon.support': iconSupport,

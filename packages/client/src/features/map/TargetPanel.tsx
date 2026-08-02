@@ -1,12 +1,10 @@
-import type { MapVillage } from '@medival/shared';
+import { type MapVillage, PLAYER_ID } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
 import { SendResourcesForm } from './SendResourcesForm.js';
 import { SendUnitsForm } from './SendUnitsForm.js';
-
-const PLAYER_ID = 1;
 
 export const TargetPanel = observer(function TargetPanel({
     target,

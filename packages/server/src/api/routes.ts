@@ -9,6 +9,7 @@ import {
     FoundTribeRequestSchema,
     InvitePlayerRequestSchema,
     NumericIdSchema,
+    PLAYER_ID,
     RecruitRequestSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
@@ -29,7 +30,6 @@ import {
     tribes,
     villages,
 } from '../db/schema.js';
-import { PLAYER_ID } from '../engine/mapgen.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
 import { sendResources } from '../engine/trade.js';
 import {

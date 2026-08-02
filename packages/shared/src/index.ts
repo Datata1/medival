@@ -2,6 +2,7 @@ export * from './data/buildings.js';
 export * from './data/units.js';
 export * from './lib/objects.js';
 export * from './logic/combat.js';
+export * from './logic/continent.js';
 export * from './logic/formulas.js';
 export * from './logic/relations.js';
 export * from './logic/rng.js';
@@ -26,6 +27,13 @@ export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     victoryVillageShare: 0.6,
     seed: 0,
 };
+
+/**
+ * Der menschliche Spieler. Das Spiel ist Einzelspieler, es gibt genau einen —
+ * die Kennung stand bisher dreimal im Code (Karte, Zielleiste, Kartengenerator)
+ * und muss auch von der Kopfzeile für Profil und Rangliste erreichbar sein.
+ */
+export const PLAYER_ID = 1;
 
 export const STARTING_LOYALTY = 100;
 

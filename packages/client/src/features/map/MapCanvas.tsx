@@ -1,9 +1,11 @@
-import type { MapVillage, MovementsResponse } from '@medival/shared';
+import {
+    type MapVillage,
+    type MovementsResponse,
+    PLAYER_ID,
+} from '@medival/shared';
 import { type RefObject, useEffect } from 'react';
 import type { Camera, MapCameraHandlers } from './useMapCamera.js';
 import type { LoadedSprites } from './useSpriteAtlas.js';
-
-const PLAYER_ID = 1;
 
 /**
  * Kartenfarben. Sie leben hier statt im CSS-Theme, weil Canvas keine

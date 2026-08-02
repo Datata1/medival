@@ -6,7 +6,6 @@ import { BuildQueueCard } from './BuildQueueCard.js';
 import { effectiveLevels, liveResources } from './derive.js';
 import { RecruitQueueCard } from './RecruitQueueCard.js';
 import { RecruitTable } from './RecruitTable.js';
-import { ResourceBar } from './ResourceBar.js';
 import { UnitsCard } from './UnitsCard.js';
 
 /** Container: liest aus den Stores, das Darstellen erledigen die Kindkomponenten. */
@@ -23,7 +22,9 @@ export const VillagePanel = observer(function VillagePanel() {
 
     return (
         <div>
-            <ResourceBar village={view} live={live} />
+            {/* Ressourcen, Bauernhofplätze und Dorfname stehen seit Plan 18-1
+                in der Dorfleiste des Rahmens — dort sind sie auf jedem
+                Bildschirm sichtbar statt nur auf diesem. */}
             <BuildQueueCard queue={view.buildQueue} />
             <BuildingsTable
                 village={view}

@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { PLAYER_ID } from '@medival/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { PLAYER_ID } from '../src/engine/mapgen.js';
 import type { World } from '../src/engine/world.js';
 import { WorldManager } from '../src/engine/worldManager.js';
 

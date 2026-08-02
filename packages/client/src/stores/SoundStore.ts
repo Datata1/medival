@@ -63,6 +63,18 @@ export class SoundStore {
         this.output.play(sound, this.effectiveVolume);
     }
 
+    /**
+     * Rückmeldung auf einen Reiterwechsel in der Kopfzeile.
+     *
+     * Die einzige Stelle, an der eine Komponente einen Klang auslöst — sie
+     * spricht dafür den Store an, nicht die Audioausgabe (Plan 13). Ein Klick
+     * ist außerdem eine Interaktion, also darf ab jetzt Ton kommen.
+     */
+    click(): void {
+        this.unlock();
+        this.play('click');
+    }
+
     setVolume(volume: number): void {
         this.volume = Math.max(0, Math.min(1, volume));
         // Am Regler zu ziehen ist eine Interaktion — also darf ab jetzt Ton kommen.

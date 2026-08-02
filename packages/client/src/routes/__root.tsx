@@ -14,10 +14,14 @@ export interface RouterContext {
 function NotFound() {
     const { t } = useTranslation();
     return (
-        <Card>
-            <h2>{t('routes.notFoundTitle')}</h2>
-            <p className="text-ink-light">{t('routes.notFoundHint')}</p>
-        </Card>
+        <div className="page">
+            <Card>
+                <h2>{t('routes.notFoundTitle')}</h2>
+                <p className="text-ink-light">
+                    {t('routes.notFoundHint')}
+                </p>
+            </Card>
+        </div>
     );
 }
 

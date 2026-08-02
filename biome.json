@@ -11,6 +11,7 @@
             "!**/dist",
             "!**/node_modules",
             "!data",
+            "!.mycelium",
             "!**/*.sqlite*",
             "!packages/client/src/styles.css",
             "!packages/client/src/routeTree.gen.ts",
