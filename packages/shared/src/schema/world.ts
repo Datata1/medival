@@ -16,6 +16,30 @@ const worldSettingsFields = z.object({
     mapSize: z.number().int().min(20).max(500),
     botCount: z.number().int().min(0).max(500),
     barbarianCount: z.number().int().min(0).max(5_000),
+    /*
+     * Basisrate bei Weltgeschwindigkeit 1; die Engine multipliziert sie mit
+     * `speed`. Obergrenze 60: Zusammen mit Speed 500 und 80 Dörfern wären das
+     * schon ~670 Events pro Sekunde. Die Untergrenze 0 ist ausdrücklich
+     * erlaubt und bedeutet „keine Ticks einplanen" — der Rückweg zum
+     * Verhalten vor Plan 14.
+     *
+     * `.default()` statt Pflichtfeld, damit Welt-Dateien aus der Zeit vor
+     * Plan 14 weiter geöffnet werden können: Ihr `settings_json` kennt diese
+     * Felder nicht, und ein Pflichtfeld würde jeden bestehenden Spielstand
+     * unlesbar machen. Additive Migration, wie in `migrateWorldDb`.
+     */
+    barbarianAttemptsPerHour: z
+        .number()
+        .finite()
+        .min(0)
+        .max(60)
+        .default(1),
+    barbarianMaxPoints: z
+        .number()
+        .int()
+        .min(0)
+        .max(100_000)
+        .default(1500),
     victoryVillageShare: z.number().finite().gt(0).max(1),
     seed: z.number().int().min(0).max(0xffff_ffff),
 });

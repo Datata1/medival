@@ -1,3 +1,5 @@
+import { Duration } from '../time.js';
+
 /** Deterministic seeded RNG (mulberry32). One instance per world, state persisted as the seed advances. */
 export type Rng = () => number;
 
@@ -38,6 +40,37 @@ export function createStatefulRng(state: number): StatefulRng {
             return a >>> 0;
         },
     };
+}
+
+/**
+ * Wartezeit bis zum nächsten Treffer eines Poisson-Prozesses, in Spielstunden.
+ *
+ * Der Hintergrund (siehe plans/14-barbarendoerfer.md): Gewünscht ist „pro
+ * Zeiteinheit besteht die Chance p, dass etwas passiert" — ein Bernoulli-
+ * Prozess. Dessen Wartezeit ist exponentialverteilt, und die lässt sich in
+ * *einem* Zug ziehen, statt tausendmal zu würfeln, bis einmal „ja" fällt:
+ *
+ *     Δt = -ln(1 - U) / λ        mit U gleichverteilt [0,1)
+ *
+ * Das Ergebnis ist dieselbe Verteilung, nicht eine Näherung. Der Unterschied
+ * liegt allein in den Kosten: ein Event pro Treffer statt 3600 Würfen pro
+ * Stunde. Diese Engine hat bewusst keinen Tick — eine Schleife über alle
+ * Dörfer im Sekundentakt wäre die erste Stelle, die das Prinzip bricht.
+ *
+ * Gibt `null` zurück, wenn die Rate 0 oder ungültig ist: „nie" ist kein
+ * Zeitpunkt, und `Infinity` würde sonst als Zeitstempel in der Event-Tabelle
+ * landen und den Scheduler auf einem kaputten Wert festnageln.
+ */
+export function exponentialWait(
+    rng: Rng,
+    ratePerGameHour: number,
+): Duration | null {
+    if (!Number.isFinite(ratePerGameHour) || ratePerGameHour <= 0)
+        return null;
+    // 1 - rng() statt rng(): mulberry32 kann 0 liefern, und ln(0) ist -∞.
+    // Der Ausdruck landet damit in (0,1], wo der Logarithmus endlich bleibt.
+    const hours = -Math.log(1 - rng()) / ratePerGameHour;
+    return Duration.hours(hours);
 }
 
 /**

@@ -14,7 +14,7 @@ aber als stark beschleunigte **Singleplayer**-Version, in der die Karte von Bots
 |---|---|---|
 | M1 | Weltverwaltung, Spielzeit-Uhr/Pause, Event-Scheduler, Ökonomie, Bau-Queue, Dorf-UI | ✅ fertig |
 | M2 | Karte (Canvas), Rekrutierung, Truppenbewegungen, Kampf, Beute, Eroberung, Berichte | ✅ fertig |
-| M3 | Bot-KI (Persönlichkeiten), Adelshof & Erobern | ⬜ |
+| M3 | Barbarendörfer ✅ · Bot-KI (Persönlichkeiten), Ansehen & Handel, Stämme | 🔨 |
 | M4 | Siegbedingung, Balancing, Docker-Release | ⬜ |
 
 ## Entwicklung

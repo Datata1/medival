@@ -1,6 +1,54 @@
 # Plan 14: Barbarendörfer — zufälliges Wachstum ohne Tick
 
-**Status:** ⬜ offen · **Voraussetzung:** keine (unabhängig von 15–17)
+**Status:** ✅ erledigt (2026-08-02) · **Voraussetzung:** keine (unabhängig von 15–17)
+
+> **Ergebnis:** Barbarendörfer wachsen und bewaffnen sich. Eine Kette aus
+> `barbarian_tick`-Events je Dorf plant sich nach jeder Handlung selbst neu, die
+> Entscheidung ist eine pure Funktion ohne Datenbankzugriff, und Truppen entstehen über
+> `recruitUnits` — dieselbe Funktion, die auch der Spieler benutzt.
+>
+> **Gemessen** (80 Dörfer, Speed 200, Basisrate 1/h): **2,1 Events pro Sekunde**, Punkte von
+> 4773 auf 25439 in einer Echtzeitstunde, Rechenaufwand 3,9 s für diese Stunde (0,1 % der
+> Wanduhr). **18 Server-Tests und 7 Verteilungstests**; im Browser **7 von 7 Prüfungen**:
+> Voreinstellung greift, Dörfer wachsen sichtbar (4591 → 5449 Punkte in 40 s), Pause hält
+> das Wachstum an, nach dem Fortsetzen wird nichts nachgeholt, Event-Loop-p99 bei 11,1 ms
+> ohne Rückstand.
+>
+> **Der wichtigste Befund — die Planung hatte die Zeitrechnung falsch:** Dieses Dokument
+> nahm ursprünglich an, dass `speed` die Uhr beschleunigt („bei Speed 200 vergeht eine
+> Spielstunde in 18 echten Sekunden"). Das stimmt nicht. Die Spielzeit läuft **1:1 mit der
+> Echtzeit** (`engine/clock.ts`); `speed` skaliert Produktion und Bauzeiten, nicht die Uhr.
+> Aufgefallen ist es erst am laufenden Server: 60 Sekunden zusehen, null Wachstum. Die Rate
+> wird deshalb jetzt ausdrücklich mit `settings.speed` multipliziert — genauso wie
+> `resourceRatePerHour` es tut. Ohne diese Skalierung stünden Barbaren in einer 500x-Welt
+> relativ zu allem anderen still. Die Einstellung heißt entsprechend
+> `barbarianAttemptsPerHour` (Basisrate bei Weltgeschwindigkeit 1), nicht
+> `…PerGameHour`.
+>
+> **Der `persist()`-Verdacht wurde gemessen und verworfen.** Ja, nach jedem Event wird in
+> `worlds.sqlite` geschrieben — 2,1-mal pro Sekunde statt der 0,067, die der 15-Sekunden-
+> Timer bräuchte. Der Aufwand dafür sind aber nur **4,7 % der Rechenzeit** (1733 ms → 1651 ms
+> ohne persist), und diese Rechenzeit ist selbst 0,1 % der Wanduhr. Damit ist der Code
+> unverändert geblieben: Der Plan verlangte eine Änderung nur, *falls* die Last ins Gewicht
+> fällt.
+>
+> **Zwei Fallen, die beim Bauen aufgefallen sind:**
+> - `startBarbarianTicks` musste **idempotent** werden. Ohne die Prüfung auf bereits
+>   laufende Ketten hätte jedes Öffnen einer Welt die Zahl der Events verdoppelt — nach ein
+>   paar Neustarts hätte ein Barbarendorf im Sekundentakt gebaut. Ein Test hält das fest.
+> - `WorldSettingsSchema` hätte bestehende Spielstände unlesbar gemacht, weil deren
+>   `settings_json` die neuen Felder nicht kennt. Mit `.default()` öffnen sie sich weiter
+>   und bekommen die Vorgabewerte; verifiziert am echten Spielstand aus `data/`, der
+>   prompt 80 Ketten nachgerüstet bekam.
+>
+> **Abweichung von der Planung:** Statt zweier Zahlenfelder in der Lobby gibt es eine
+> Voreinstellung (statisch / träge / lebhaft) — die Lobby arbeitet durchgehend mit
+> Voreinstellungen statt Rohwerten, und `barbarianMaxPoints` bleibt eine Stellschraube auf
+> Einstellungsebene.
+>
+> **Nebenbefund:** Bestehende Server-Tests mussten Barbaren stillstellen
+> (`barbarianAttemptsPerHour: 0`). Sonst hätten tickende Dörfer ihre Ereigniszahlen
+> unvorhersehbar gemacht — ein Test zur Warteschlange erwartete zu Recht eine leere Queue.
 
 ## Kontext
 
@@ -44,22 +92,45 @@ würfeln, bis einmal „ja" fällt, zieht man direkt, wann das „ja" fällt:
 Das ist **dieselbe Verteilung**, nicht eine ähnliche. Der Unterschied liegt allein in den
 Kosten: ein Event pro Bauversuch statt 3600 Würfen pro Stunde und Dorf.
 
-### Warum 1 % pro Sekunde trotzdem zu viel ist
+### Die Rate skaliert mit der Weltgeschwindigkeit
 
-Die Zahl selbst muss angepasst werden, unabhängig vom Verfahren. Alle Zeiten in der Engine
-sind Spielzeit; bei Speed 200 vergeht eine Spielstunde in 18 echten Sekunden.
+Hier lag der Fehler der ersten Planung, deshalb steht die Richtigstellung ausführlich da.
 
-| Rate | Versuche/Spielstunde | Events/echte Sekunde bei 80 Dörfern, Speed 200 |
+**Die Spielzeit läuft 1:1 mit der Echtzeit.** `engine/clock.ts` sagt es deutlich:
+*„Game time advances 1:1 with wall time while running (world speed scales
+durations/production, not the clock rate)."* Eine Spielstunde ist eine echte Stunde. Was
+`speed` beschleunigt, sind Produktion (`resourceRatePerHour` multipliziert damit) und
+Bauzeiten (`buildTime` dividiert damit) — nicht die Uhr.
+
+Daraus folgt: Eine feste Rate „x Versuche pro Stunde" wäre **unabhängig von der
+Weltgeschwindigkeit**. In einer 500x-Welt, in der ein Gebäude in Sekunden fertig wird,
+würde ein Barbarendorf genauso träge handeln wie in einer 1x-Welt — es stünde relativ zu
+allem anderen still. Die Rate wird deshalb wie die Produktion behandelt:
+
+```
+wirksame Rate = barbarianAttemptsPerHour × settings.speed
+```
+
+`barbarianAttemptsPerHour` ist damit eine **Basisrate bei Weltgeschwindigkeit 1**, genau wie
+`baseTimeS` bei Gebäuden und `recruitTimeS` bei Einheiten.
+
+Mit dieser Skalierung stimmen auch die Größenordnungen:
+
+| Basisrate | Wirksam bei Speed 200 | Events/s bei 80 Dörfern |
 |---|---|---|
-| 1 % pro Spielsekunde | 36 | **160** |
-| 1 Versuch pro Spielstunde | 1 | **4,4** |
+| 1 % pro Sekunde (= 36/h Basis) | 7200/h je Dorf | **160** |
+| 1 pro Stunde (Vorgabe) | 200/h je Dorf | **4,4** rechnerisch · **2,1** gemessen |
+
+Der gemessene Wert liegt unter dem rechnerischen, weil ein Dorf mit laufendem Bauvorhaben
+keinen neuen Bau anstößt und über dem Punktedeckel seltener tickt.
 
 160 Events pro Sekunde wären nicht unbedingt zu langsam, aber sie wären reine
 Verschwendung: Der weitaus größte Teil dieser Versuche würde ohnehin an fehlenden
 Rohstoffen scheitern. Die Wirtschaft ist bereits die eigentliche Bremse — der Zufall soll
 nur dafür sorgen, dass Barbaren **nicht** sofort bauen, sobald sie könnten.
 
-Vorgabe deshalb: **1 Versuch pro Spielstunde**, einstellbar über `WorldSettings`.
+Vorgabe deshalb: **Basisrate 1**, einstellbar über `WorldSettings` und in der Lobby als
+statisch (0) / träge (1) / lebhaft (3).
 
 ---
 
@@ -134,7 +205,7 @@ In `WorldSettings` (`shared/src/types.ts`) und `WorldSettingsSchema`
 | Feld | Vorgabe | Bedeutung |
 |---|---|---|
 | `barbarianMaxPoints` | 1500 | Deckel, ab dem nicht mehr gebaut wird |
-| `barbarianAttemptsPerGameHour` | 1.0 | mittlere Versuchsrate (0 = Barbaren bleiben statisch) |
+| `barbarianAttemptsPerHour` | 1.0 | Basisrate bei Weltgeschwindigkeit 1; wird mit `speed` multipliziert (0 = statisch) |
 
 Beide **validiert**, mit Ober- und Untergrenze. Der Befund aus Plan 08 war genau hier:
 `{"speed":"schnell"}` lief ungeprüft bis in `buildTime()` und schrieb NaN-Zeitstempel in
@@ -142,7 +213,7 @@ die Datenbank. Eine unvalidierte Rate von 0 oder NaN würde hier zu einer Wartez
 `Infinity` oder `NaN` — im ersten Fall stehen die Barbaren still, im zweiten friert der
 Scheduler auf einem kaputten Zeitstempel ein.
 
-`barbarianAttemptsPerGameHour: 0` bleibt ausdrücklich erlaubt und bedeutet „keine Ticks
+`barbarianAttemptsPerHour: 0` bleibt ausdrücklich erlaubt und bedeutet „keine Ticks
 einplanen" — das ist der Rückweg zum heutigen Verhalten und macht Vergleichsmessungen
 möglich.
 
@@ -158,6 +229,11 @@ Der Plan **misst** das zuerst (Schreibvorgänge pro Sekunde vorher/nachher) und 
 Persistieren nur dann für KI-Events bedingt, wenn es messbar ins Gewicht fällt. Vermutungen
 über Leistung werden hier nicht umgesetzt, sondern geprüft.
 
+**Ergebnis der Messung: unverändert gelassen.** 2,1 Schreibvorgänge pro Sekunde, und ihr
+Anteil an der Rechenzeit sind 4,7 % (1733 ms mit, 1651 ms ohne) einer Rechenzeit, die
+selbst nur 0,1 % der Wanduhr ausmacht. Eine Optimierung hätte Komplexität gekostet und
+nichts gebracht.
+
 ---
 
 ## Dateien
@@ -171,7 +247,7 @@ Persistieren nur dann für KI-Events bedingt, wenn es messbar ins Gewicht fällt
 | `server/src/ai/barbarian.ts` | **neu** — Tick-Handler (Wahrnehmung + Ausführung) |
 | `server/src/engine/world.ts` | Zweig in `handleEvent` |
 | `server/src/engine/mapgen.ts` | erste Ticks mit Versatz einplanen |
-| `client/src/features/lobby/*` · `i18n/de.ts` | die zwei Einstellungen bei „Welt erstellen" |
+| `client/src/features/lobby/CreateWorldForm.tsx` · `i18n/de.ts` | Voreinstellung statisch/träge/lebhaft |
 
 Keine neuen Tabellen und keine neuen Spalten — deshalb auch keine Migration. Barbarendörfer
 sind Zeilen in `villages` mit `player_id IS NULL`; das bleibt so.

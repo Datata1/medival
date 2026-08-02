@@ -20,6 +20,8 @@ export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     mapSize: 100,
     botCount: 30,
     barbarianCount: 80,
+    barbarianAttemptsPerHour: 1,
+    barbarianMaxPoints: 1500,
     victoryVillageShare: 0.6,
     seed: 0,
 };

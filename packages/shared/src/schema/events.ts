@@ -28,11 +28,21 @@ export const ArrivalPayloadSchema = z.object({
     movementId: z.number().int().positive(),
 });
 
+/**
+ * Ein Barbarendorf handelt (plans/14-barbarendoerfer.md). Das Event plant sich
+ * nach jeder Ausführung selbst neu — die Kette lebt damit in der Event-Tabelle
+ * und überlebt Neustarts, ohne eigenen Zustand zu brauchen.
+ */
+export const BarbarianTickPayloadSchema = z.object({
+    villageId,
+});
+
 /** Alle bekannten Event-Typen mit ihren Payloads. */
 export const EVENT_SCHEMAS = {
     build_complete: BuildCompletePayloadSchema,
     recruit_tick: RecruitTickPayloadSchema,
     arrival: ArrivalPayloadSchema,
+    barbarian_tick: BarbarianTickPayloadSchema,
 } as const;
 
 export type EventType = keyof typeof EVENT_SCHEMAS;
@@ -46,3 +56,6 @@ export type RecruitTickPayload = z.infer<
     typeof RecruitTickPayloadSchema
 >;
 export type ArrivalPayload = z.infer<typeof ArrivalPayloadSchema>;
+export type BarbarianTickPayload = z.infer<
+    typeof BarbarianTickPayloadSchema
+>;

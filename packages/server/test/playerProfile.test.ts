@@ -18,6 +18,10 @@ beforeEach(() => {
         mapSize: 40,
         botCount: 4,
         barbarianCount: 6,
+        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+        barbarianAttemptsPerHour: 0,
         seed: 777,
     });
     world.pause();
