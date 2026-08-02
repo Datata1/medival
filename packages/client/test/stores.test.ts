@@ -328,6 +328,39 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
         root.closeWorld();
     });
 
+    it('klingt nur beim Bau im eigenen Dorf', async () => {
+        mocked.getWorld.mockResolvedValue(worldSummary());
+        mocked.getVillage.mockResolvedValue(villageView());
+        mocked.getMap.mockResolvedValue([]);
+        mocked.getMovements.mockResolvedValue({
+            gameTime: 0,
+            incoming: [],
+            outgoing: [],
+        } as never);
+        mocked.getReports.mockResolvedValue([]);
+
+        const played: string[] = [];
+        const audio = {
+            isReady: true,
+            unlock: () => {},
+            play: (sound: string) => played.push(sound),
+        };
+        const socket = new FakeSocket();
+        const root = new RootStore(socket, audio as never);
+        root.sound.unlock();
+        await root.openWorld(1);
+
+        // Der Server sendet an die ganze Welt — Bot- und Barbarendörfer
+        // bauen ständig aus. Das darf beim Spieler nicht zu hören sein.
+        socket.emit({ type: 'build_complete', villageId: 999 });
+        expect(played).toEqual([]);
+
+        socket.emit({ type: 'build_complete', villageId: 7 });
+        expect(played).toEqual(['build.complete']);
+
+        root.closeWorld();
+    });
+
     it('räumt beim Schließen alles ab', async () => {
         mocked.getWorld.mockResolvedValue(worldSummary());
         mocked.getVillage.mockResolvedValue(villageView());

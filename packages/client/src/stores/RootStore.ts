@@ -124,6 +124,10 @@ export class RootStore {
         }
     }
 
+    private ownsVillage(villageId: number): boolean {
+        return this.world.playerVillages.some((v) => v.id === villageId);
+    }
+
     /** Ein Rascheln nur für Berichte, die gerade erst eingetroffen sind. */
     announceReports(): void {
         if (
@@ -143,9 +147,10 @@ export class RootStore {
                 if (this.village.villageId === message.villageId) {
                     void this.village.reload();
                 }
-                // Nur der fertige Bau klingt. `village_updated` kommt bei jeder
-                // Änderung am Dorf — daraus würde ein Dauerhämmern.
-                if (message.type === 'build_complete') {
+                if (
+                    message.type === 'build_complete' &&
+                    this.ownsVillage(message.villageId)
+                ) {
                     this.sound.play('build.complete');
                 }
                 break;
