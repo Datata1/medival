@@ -1,0 +1,33 @@
+{
+    "name": "medival",
+    "private": true,
+    "version": "0.1.0",
+    "description": "Open-source, self-hosted singleplayer Tribal-Wars-like browser game with bot opponents",
+    "license": "MIT",
+    "scripts": {
+        "dev": "concurrently -n server,client -c blue,green \"pnpm --filter @medival/server dev\" \"pnpm --filter @medival/client dev\"",
+        "test": "pnpm -r test",
+        "build": "pnpm -r build",
+        "typecheck": "pnpm -r typecheck",
+        "lint": "biome check . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs",
+        "lint:fix": "biome check --write . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs",
+        "format": "biome format --write .",
+        "check:casts": "node scripts/check-no-casts.mjs --self-test && node scripts/check-no-casts.mjs",
+        "check:layering": "node scripts/check-layering.mjs --self-test && node scripts/check-layering.mjs",
+        "check:contrast": "node scripts/check-contrast.mjs --self-test && node scripts/check-contrast.mjs --verbose",
+        "check:assets": "node scripts/check-assets.mjs --self-test && node scripts/check-assets.mjs",
+        "assets:generate": "node scripts/generate-placeholder-assets.mjs"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.5.6",
+        "concurrently": "^9.1.2",
+        "typescript": "^5.7.3"
+    },
+    "packageManager": "pnpm@10.33.2",
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "better-sqlite3",
+            "esbuild"
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+# Abhängigkeiten und Build-Ergebnisse
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Spielstände: eine SQLite-Datei je Welt (MEDIVAL_DATA_DIR überschreibt den Ort).
+# Eine Welt sichern heißt, ihre Datei zu kopieren — ins Repo gehört sie nicht.
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Geheimnisse
+.env
+.env.*
+!.env.example
+
+# Werkzeug-Zwischenstände
+coverage/
+.vite/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor und Betriebssystem
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.swp

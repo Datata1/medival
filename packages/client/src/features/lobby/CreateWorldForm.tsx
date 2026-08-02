@@ -1,0 +1,82 @@
+import { keysOf } from '@medival/shared';
+import { observer } from 'mobx-react-lite';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '../../components/Button.js';
+import { Card } from '../../components/Card.js';
+import { useStores } from '../../stores/StoreContext.js';
+
+const SPEED_PRESETS = {
+    relaxed: {
+        labelKey: 'lobby.presetRelaxed',
+        speed: 100,
+        unitSpeed: 20,
+    },
+    fast: { labelKey: 'lobby.presetFast', speed: 200, unitSpeed: 30 },
+    blitz: { labelKey: 'lobby.presetBlitz', speed: 500, unitSpeed: 50 },
+} as const;
+
+type PresetKey = keyof typeof SPEED_PRESETS;
+const PRESET_KEYS = keysOf(SPEED_PRESETS);
+
+/** Der Wert eines <select> ist ein String — hier wird er geprüft, nicht behauptet. */
+function parsePresetKey(value: string): PresetKey {
+    return PRESET_KEYS.find((key) => key === value) ?? 'fast';
+}
+
+export const CreateWorldForm = observer(function CreateWorldForm({
+    onCreated,
+}: {
+    onCreated: (id: number) => void;
+}) {
+    const { t } = useTranslation();
+    const { lobby } = useStores();
+    const [name, setName] = useState('');
+    const [preset, setPreset] = useState<PresetKey>('fast');
+
+    const submit = async () => {
+        const chosen = SPEED_PRESETS[preset];
+        const id = await lobby.createWorld(
+            name || t('lobby.newWorld'),
+            {
+                speed: chosen.speed,
+                unitSpeed: chosen.unitSpeed,
+            },
+        );
+        if (id !== null) onCreated(id);
+    };
+
+    return (
+        <Card>
+            <h2>{t('lobby.newWorld')}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+                <input
+                    placeholder={t('lobby.worldName')}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <select
+                    value={preset}
+                    onChange={(e) =>
+                        setPreset(parsePresetKey(e.target.value))
+                    }
+                >
+                    {PRESET_KEYS.map((key) => (
+                        <option key={key} value={key}>
+                            {t(SPEED_PRESETS[key].labelKey)}
+                        </option>
+                    ))}
+                </select>
+                <Button
+                    onClick={() => void submit()}
+                    disabled={lobby.isSubmitting}
+                >
+                    {t('lobby.create')}
+                </Button>
+            </div>
+            {lobby.submitError && (
+                <p className="text-seal">{lobby.submitError}</p>
+            )}
+        </Card>
+    );
+});

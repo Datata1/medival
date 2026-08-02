@@ -1,0 +1,28 @@
+GIMP Palette
+Name: Medival
+Columns: 8
+#
+242 230 208	parchment
+227 211 179	parchmentDark
+ 59  43  26	ink
+ 99  82  63	inkLight
+139  47  34	seal
+200 151  63	goldLeaf
+ 61  86  54	moss
+117  93  60	oak
+ 36  26  16	timber
+168 118  63	woodLight
+107  68  35	woodDark
+192 106  74	clayLight
+138  69  48	clayDark
+154 163 171	ironLight
+ 92 100 108	ironDark
+184 171 147	stoneLight
+125 113  96	stoneDark
+166  63  46	roofLight
+110  42  31	roofDark
+ 92 122  74	grassLight
+ 61  86  54	grassDark
+217 166 120	skin
+195 202 209	steel
+139  47  34	blood

@@ -1,0 +1,135 @@
+@import 'tailwindcss';
+
+/*
+ * Mittelalterliches Design: Pergament & Tinte (siehe plans/11-mittelalterliches-design.md).
+ *
+ * Die Oberfläche besteht überwiegend aus Tabellen — Gebäude, Truppen, Berichte,
+ * Dorflisten. Lange Zahlenkolonnen liest man auf hellem Grund deutlich besser,
+ * deshalb Pergament statt Burgverlies. Der dunkle Ton bleibt für Kopfzeile und
+ * Kartengrund erhalten, damit die Karte Kontrast behält.
+ */
+
+@font-face {
+    font-family: 'Cinzel';
+    src: url('./assets/fonts/Cinzel-var.woff2') format('woff2-variations');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'EB Garamond';
+    src: url('./assets/fonts/EBGaramond-normal.woff2') format('woff2');
+    font-weight: 400 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'EB Garamond';
+    src: url('./assets/fonts/EBGaramond-italic.woff2') format('woff2');
+    font-weight: 400 600;
+    font-style: italic;
+    font-display: swap;
+}
+
+@theme {
+    /* Pergament & Tinte — Werte gespiegelt in scripts/check-contrast.mjs */
+    --color-parchment: #f2e6d0;
+    --color-parchment-dark: #e3d3b3;
+    --color-ink: #3b2b1a;
+    --color-ink-light: #63523f;
+    --color-seal: #8b2f22;
+    --color-gold-leaf: #7a5a1e;
+    --color-moss: #3d5636;
+    --color-oak: #755d3c;
+    --color-timber: #241a10;
+    /* Fokusring auf dunklem Grund (Karte, Kopfzeile) — auf Pergament wäre
+       dieses Gold zu schwach, dort greift `seal`. */
+    --color-focus-dark: #c8973f;
+
+    --font-display: 'Cinzel', 'Palatino Linotype', Palatino, serif;
+    --font-body: 'EB Garamond', Garamond, Georgia, serif;
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+    }
+
+    body {
+        /* Feine Papierstruktur ohne Bilddatei: zwei sehr schwache Verläufe. */
+        background-color: var(--color-parchment);
+        background-image:
+            radial-gradient(
+                ellipse at 20% 10%,
+                rgb(0 0 0 / 0.035) 0%,
+                transparent 55%
+            ),
+            radial-gradient(
+                ellipse at 85% 80%,
+                rgb(0 0 0 / 0.03) 0%,
+                transparent 50%
+            );
+        /* Ohne diese beiden Zeilen kachelt der Verlauf und erzeugt sichtbare
+           Bänder, sobald die Seite höher ist als der Inhalt. */
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        min-height: 100vh;
+        @apply font-body text-ink;
+    }
+
+    #root {
+        @apply mx-auto max-w-[1000px] p-4;
+    }
+
+    h1 {
+        @apply my-2 font-display font-semibold text-3xl text-ink tracking-wide;
+    }
+
+    h2 {
+        @apply mb-2.5 font-display font-semibold text-gold-leaf text-lg tracking-wide;
+    }
+
+    h3 {
+        @apply mt-2.5 mb-1 font-display font-semibold text-[0.95rem] text-ink;
+    }
+
+    input,
+    select {
+        @apply rounded-sm border border-oak bg-parchment px-2.5 py-1.5 font-body text-[0.95rem] text-ink;
+    }
+
+    /*
+     * Pixel-Art muss scharf bleiben. Der Canvas wird per CSS gestreckt
+     * (720 px intern auf volle Breite), deshalb reicht
+     * `imageSmoothingEnabled = false` allein nicht — der Browser
+     * interpoliert sonst beim Skalieren des fertigen Bildes.
+     */
+    .pixelated,
+    canvas {
+        image-rendering: pixelated;
+    }
+
+    /*
+     * Der Lautstärkeregler. Ohne eigene Regeln zeichnet jeder Browser sein
+     * eigenes Bedienelement — hellblau unter Chrome, grau unter Firefox —,
+     * was neben Pergament und Siegellack sofort auffällt.
+     */
+    input[type='range'] {
+        @apply h-1.5 cursor-pointer appearance-none rounded-full border border-oak bg-parchment-dark;
+    }
+
+    input[type='range']::-webkit-slider-thumb {
+        @apply size-3.5 appearance-none rounded-full border border-timber bg-seal;
+    }
+
+    input[type='range']::-moz-range-thumb {
+        @apply size-3.5 rounded-full border border-timber bg-seal;
+    }
+
+    /* Die Tastaturbedienung wird dem Aussehen nicht geopfert. */
+    :focus-visible {
+        @apply outline-2 outline-seal outline-offset-2;
+    }
+}
