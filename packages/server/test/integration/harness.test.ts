@@ -23,6 +23,7 @@ import {
     advance,
     advanceTo,
     advanceUntil,
+    advanceYielding,
     createTestWorld,
     type TestWorld,
 } from '../harness/world.js';
@@ -256,7 +257,7 @@ describe('Regression: Bots verschicken Kleinstlieferungen im Sekundentakt', () =
      * ~25 000 Events in Stunde 6. Behoben in 19-4; gemessen danach: 878
      * Ankünfte in Stunde 4 (vorher 2 485), 1 745 in Stunde 6.
      */
-    it('liefert nur lohnende Mengen und je Partner eins nach dem anderen', () => {
+    it('liefert nur lohnende Mengen und je Partner eins nach dem anderen', async () => {
         tw = createTestWorld({
             botCount: 10,
             barbarianCount: 10,
@@ -264,7 +265,7 @@ describe('Regression: Bots verschicken Kleinstlieferungen im Sekundentakt', () =
             seed: 555,
         });
         const { world } = tw;
-        advance(world, Duration.hours(3));
+        await advanceYielding(world, Duration.hours(3));
 
         let arrivals = 0;
         const violations: string[] = [];
@@ -291,7 +292,7 @@ describe('Regression: Bots verschicken Kleinstlieferungen im Sekundentakt', () =
                 pairs.add(key);
             }
         });
-        advance(world, Duration.hours(1));
+        await advanceYielding(world, Duration.hours(1), 6);
 
         expect(violations).toEqual([]);
         // Großzügige Obergrenze: 1,5 Ankünfte je Bot und Spielstunde (Speed

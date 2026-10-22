@@ -54,7 +54,12 @@ import {
 } from '../db/schema.js';
 import { GameClock } from './clock.js';
 import { GameError } from './errors.js';
-import { handleArrival, handleRecruitTick } from './military.js';
+import {
+    handleArrival,
+    handleRecruitDone,
+    handleRecruitTick,
+    settleRecruits,
+} from './military.js';
 import { type GameEvent, Scheduler } from './scheduler.js';
 import { freeMerchantCapacity } from './trade.js';
 import { tribeOf } from './tribes.js';
@@ -75,6 +80,13 @@ export type WorldMessage = Record<string, unknown> & { type: string };
 
 const BUILD_QUEUE_LIMIT = 5;
 
+/**
+ * So viele Events holt `catchUp` vor einem Befehl höchstens synchron nach.
+ * Bei ~1 ms je Event sind das rund eine Sekunde — mehr darf eine einzelne
+ * Anfrage nicht blockieren.
+ */
+const CATCH_UP_LIMIT = 1_000;
+
 export class World {
     readonly id: number;
     readonly name: string;
@@ -86,6 +98,14 @@ export class World {
     private readonly subscribers = new Set<
         (msg: WorldMessage) => void
     >();
+    /** Gebündelte Nachrichten bis zum nächsten Event-Loop-Durchlauf. */
+    private readonly pendingMessages = new Map<string, WorldMessage>();
+    private flushScheduled = false;
+    /**
+     * Fälligkeit des Events, das gerade verarbeitet wird — `null` außerhalb
+     * der Event-Verarbeitung. Siehe `now()`.
+     */
+    private eventTime: GameTime | null = null;
 
     constructor(
         meta: WorldMeta,
@@ -119,8 +139,47 @@ export class World {
         if (this.status === 'running') this.scheduler.processDue();
     }
 
+    /**
+     * Der Zeitpunkt, zu dem gerade gerechnet wird.
+     *
+     * Während ein Event verarbeitet wird, ist das seine **Fälligkeit**, nicht
+     * die Uhr (plans/19-prototyp/19-2). Feuert der Timer 15 ms zu spät oder
+     * holt die Welt nach einem Neustart Stunden nach, rechnet jeder Handler —
+     * und jedes Kommando, das er auslöst — trotzdem mit dem richtigen
+     * Zeitpunkt: Rohstoffe, Rückkehrzeiten und der nächste Bot-Tick hängen am
+     * Zeitstempel des Events, nicht daran, wann Node dazu kam. Das ersetzt
+     * einen `at`-Parameter in jedem Handler, den ein neuer Handler vergessen
+     * könnte.
+     */
     now(): GameTime {
-        return GameTime.of(Math.floor(this.clock.now()));
+        return (
+            this.eventTime ?? GameTime.of(Math.floor(this.clock.now()))
+        );
+    }
+
+    /**
+     * Holt alle bis jetzt fälligen Events nach — vor jedem Befehl und jedem
+     * Lesezugriff von außen (plans/19-prototyp/19-2).
+     *
+     * Der Timer feuert „frühestens dann", ein Event kann also schon fällig,
+     * aber noch nicht verarbeitet sein. Ohne Nachholen sähe ein Befehl einen
+     * Zustand von vor diesem Event: ein Gebäude auf der alten Stufe, Truppen,
+     * die laut Zeitstempel längst angegriffen wurden. Weil better-sqlite3
+     * synchron ist und Node einen Thread hat, kommt zwischen Nachholen und
+     * Befehl nichts dazwischen.
+     *
+     * Ein großer Rückstand (Neustart nach Stunden) wird **nicht** synchron
+     * abgearbeitet; das übernimmt der Batch-Catch-up aus Plan 03. Bis dahin
+     * meldet die Welt `catching_up`.
+     */
+    catchUp(): void {
+        if (this.scheduler.isProcessing) return;
+        const now = this.now();
+        const done = this.scheduler.drainUntil(now, CATCH_UP_LIMIT);
+        if (done < CATCH_UP_LIMIT) return;
+        const next = this.scheduler.nextDue();
+        if (next !== null && next <= now)
+            throw new GameError('catching_up');
     }
 
     // ── lifecycle ──────────────────────────────────────────────────────
@@ -166,7 +225,8 @@ export class World {
 
     close(): void {
         this.clock.pause();
-        this.scheduler.stop();
+        this.scheduler.dispose();
+        this.pendingMessages.clear();
         this.persistMeta({
             gameTimeMs: this.now(),
             rngState: this.rng.state,
@@ -181,8 +241,28 @@ export class World {
         return () => this.subscribers.delete(fn);
     }
 
+    /**
+     * Nachricht an alle Abonnenten — **gebündelt** (plans/19-prototyp/19-2).
+     *
+     * Gesendet wird im nächsten Event-Loop-Durchlauf, gleiche Nachrichten nur
+     * einmal. Ein Batch von 200 Events, die alle dasselbe Dorf betreffen,
+     * erzeugt so eine `village_updated`-Nachricht statt 200. Ohne Abonnenten
+     * (Tests, Welten ohne offenen Client) wird gar nichts vorgemerkt.
+     */
     broadcast(msg: WorldMessage): void {
-        for (const fn of this.subscribers) fn(msg);
+        if (this.subscribers.size === 0) return;
+        this.pendingMessages.set(JSON.stringify(msg), msg);
+        if (this.flushScheduled) return;
+        this.flushScheduled = true;
+        setImmediate(() => this.flushMessages());
+    }
+
+    private flushMessages(): void {
+        this.flushScheduled = false;
+        const messages = [...this.pendingMessages.values()];
+        this.pendingMessages.clear();
+        for (const msg of messages)
+            for (const fn of this.subscribers) fn(msg);
     }
 
     // ── queries ────────────────────────────────────────────────────────
@@ -197,6 +277,8 @@ export class World {
     }
 
     getUnits(villageId: number): Units {
+        // Was in der Kaserne inzwischen fertig ist, zählt mit (19-2).
+        settleRecruits(this, villageId);
         const rows = this.db
             .select()
             .from(units)
@@ -423,13 +505,15 @@ export class World {
             .where(eq(buildQueue.villageId, villageId))
             .orderBy(asc(buildQueue.completesAt))
             .all();
+        // Erst abrechnen (getUnits), dann die Schleife lesen — sonst zeigt
+        // die Ansicht Aufträge, die laut Zeit schon fertig sind.
+        const unitCounts = this.getUnits(villageId);
         const recruits = this.db
             .select()
             .from(recruitQueue)
             .where(eq(recruitQueue.villageId, villageId))
             .orderBy(asc(recruitQueue.id))
             .all();
-        const unitCounts = this.getUnits(villageId);
         return {
             id: v.id,
             playerId: v.playerId,
@@ -457,7 +541,18 @@ export class World {
             },
             buildings: levels,
             buildQueue: queue,
-            recruitQueue: recruits,
+            // API-Form unverändert: `nextUnitDoneAt` ist der Zeitpunkt der
+            // nächsten fertigen Einheit, 0 für wartende Aufträge.
+            recruitQueue: recruits.map(({ startedAt, ...q }) => ({
+                ...q,
+                nextUnitDoneAt:
+                    startedAt === null
+                        ? 0
+                        : GameTime.add(
+                              GameTime.of(startedAt),
+                              q.perUnitMs,
+                          ),
+            })),
             units: unitCounts,
             popUsed: this.popInUse(villageId, levels),
             popMax: farmCapacity(levels.farm),
@@ -591,6 +686,15 @@ export class World {
     // ── event handlers ─────────────────────────────────────────────────
 
     private handleEvent(ev: GameEvent): void {
+        this.eventTime = ev.dueGameTime;
+        try {
+            this.dispatchEvent(ev);
+        } finally {
+            this.eventTime = null;
+        }
+    }
+
+    private dispatchEvent(ev: GameEvent): void {
         // Payloads werden geparst statt gecastet: Events überleben Neustarts
         // und damit Programmversionen (plans/08-no-typecasting.md). Ein Event,
         // das nicht zum Schema passt, wirft hier und wird vom Scheduler
@@ -612,6 +716,16 @@ export class World {
                         EVENT_SCHEMAS.recruit_tick,
                         ev.payload,
                         'event.recruit_tick',
+                    ),
+                );
+                break;
+            case 'recruit_done':
+                handleRecruitDone(
+                    this,
+                    parseRow(
+                        EVENT_SCHEMAS.recruit_done,
+                        ev.payload,
+                        'event.recruit_done',
                     ),
                 );
                 break;
@@ -649,7 +763,12 @@ export class World {
                 // Unknown events are dropped; future milestones add handlers here.
                 break;
         }
-        this.persist();
+        /*
+         * Kein `persist()` mehr je Event (plans/19-prototyp/19-2): Es schrieb
+         * bei jedem Event Uhr und Zufallszustand in die Meta-DB. Das
+         * 15-s-Intervall im WorldManager und pause/close genügen — die Events
+         * selbst liegen in der Welt-DB und gehen nicht verloren.
+         */
     }
 
     private onBuildComplete(payload: {

@@ -58,12 +58,15 @@ export function createTestWorld(
         fs.rmSync(dir, { recursive: true, force: true });
     };
     try {
-        const world = manager.createWorld(name, {
-            ...QUIET_SETTINGS,
-            ...settings,
-        });
-        // Kein echter Timer: Zeit vergeht ausschließlich über `advance*`.
-        world.pause();
+        // Pausiert angelegt: Kein echter Timer, und die Uhr steht exakt auf
+        // 0 — Zeit vergeht ausschließlich über `advance*`. Erst anlegen und
+        // dann pausieren ließ die Uhr ein paar Millisekunden laufen, je nach
+        // Last unterschiedlich viele.
+        const world = manager.createWorld(
+            name,
+            { ...QUIET_SETTINGS, ...settings },
+            { paused: true },
+        );
         return { world, manager, dir, dispose };
     } catch (error) {
         dispose();
@@ -100,6 +103,35 @@ export function gameWeeks(world: World, n: number): Duration {
 /** Lässt die Welt um `d` weiterlaufen. */
 export function advance(world: World, d: DurationLike): number {
     return advanceTo(world, GameTime.add(world.now(), d));
+}
+
+/**
+ * Wie `advance`, aber in `slices` Scheiben mit einem Event-Loop-Durchlauf
+ * dazwischen. Das Ergebnis ist dasselbe — die Welt läuft Event für Event,
+ * nur in Etappen.
+ *
+ * Für lange Simulationen: Ein Vitest-Worker, der über 60 s am Stück
+ * synchron rechnet, kann seine Statusmeldungen nicht zustellen und bricht
+ * mit „Timeout calling onTaskUpdate" ab, obwohl jeder Test grün ist. Auf dem
+ * CI-Runner rechnen die Wochensimulationen drei- bis viermal so lange wie
+ * auf einem Laptop.
+ */
+export async function advanceYielding(
+    world: World,
+    d: DurationLike,
+    slices = 24,
+): Promise<number> {
+    const target = GameTime.add(world.now(), d);
+    const start = world.now();
+    let count = 0;
+    for (let i = 1; i <= slices; i++) {
+        const step = GameTime.of(
+            start + ((target - start) * i) / slices,
+        );
+        count += advanceTo(world, step);
+        await new Promise((resolve) => setImmediate(resolve));
+    }
+    return count;
 }
 
 /**

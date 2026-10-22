@@ -37,6 +37,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { GameError } from './errors.js';
+import { EVENT_PRIORITY } from './scheduler.js';
 import { handleTradeArrival } from './trade.js';
 import type { World } from './world.js';
 
@@ -89,7 +90,11 @@ function writeReport(
 
 /**
  * Queue `count` units. Each recruitment building (barracks/stable/academy)
- * processes its queue sequentially, one unit at a time, so units trickle in.
+ * processes its queue sequentially, one unit after another.
+ *
+ * Seit plans/19-prototyp/19-2 entsteht dafür **ein** Event je Auftrag
+ * (`recruit_done` am Ende), nicht eines je Einheit. Was zwischendurch fertig
+ * wird, rechnet `settleRecruits` beim Zugriff aus — wie die Rohstoffe.
  */
 export function recruitUnits(
     world: World,
@@ -135,16 +140,20 @@ export function recruitUnits(
             .where(eq(villages.id, villageId))
             .run();
 
-        const perUnitMs = recruitTime(unitType, world.settings.speed);
-        // Sequential per building: start immediately only if that building's queue is idle.
-        const sameBuilding = world.db
+        // Ganze Millisekunden: Die Spalte ist INTEGER, und ein Bruchteil
+        // würde sich über tausend Einheiten zu Sekunden aufsummieren.
+        const perUnitMs = Math.max(
+            1,
+            Math.round(recruitTime(unitType, world.settings.speed)),
+        );
+        // Sequential per building: start immediately only if that building's
+        // queue is idle (`popInUse` above has already settled it).
+        const idle = !world.db
             .select()
             .from(recruitQueue)
             .where(eq(recruitQueue.villageId, villageId))
-            .orderBy(asc(recruitQueue.id))
             .all()
-            .filter((q) => UNITS[q.unitType].recruitedAt === building);
-        const idle = sameBuilding.length === 0;
+            .some((q) => UNITS[q.unitType].recruitedAt === building);
         const row = firstOrThrow(
             world.db
                 .insert(recruitQueue)
@@ -152,93 +161,171 @@ export function recruitUnits(
                     villageId,
                     unitType,
                     count,
-                    nextUnitDoneAt: idle
-                        ? GameTime.add(now, perUnitMs)
-                        : 0, // 0 = waiting for its turn
+                    startedAt: idle ? now : null, // null = waiting for its turn
                     perUnitMs,
                 })
                 .returning({ id: recruitQueue.id })
                 .all(),
             'internal',
         );
-        if (idle) {
-            world.scheduler.insert(
-                'recruit_tick',
-                GameTime.add(now, perUnitMs),
-                { queueId: row.id },
-            );
-        }
+        if (idle)
+            scheduleRecruitDone(world, row.id, now, count, perUnitMs);
     })();
     world.broadcast({ type: 'village_updated', villageId });
 }
 
-/** One unit finishes; re-arm for the next or hand over to the next queue row. */
+function scheduleRecruitDone(
+    world: World,
+    queueId: number,
+    startedAt: GameTime,
+    count: number,
+    perUnitMs: number,
+): void {
+    world.scheduler.insert(
+        'recruit_done',
+        GameTime.add(startedAt, count * perUnitMs),
+        { queueId },
+    );
+}
+
+/**
+ * Rekrutierung faul abrechnen (plans/19-prototyp/19-2) — das vierte Glied
+ * neben Rohstoffen, Loyalität und Ansehen.
+ *
+ * Je Gebäude läuft höchstens ein Auftrag; fertig ist, was seit `startedAt` in
+ * ganzen `perUnitMs` hineinpasst. Ist ein Auftrag durch, beginnt der nächste
+ * wartende desselben Gebäudes genau dann, wenn der vorige endete — nicht
+ * erst, wenn jemand nachsieht. Mehrere Aufträge können so in einem Aufruf
+ * nacheinander fertig werden.
+ *
+ * Aufgerufen von `World.getUnits` und damit überall, wo Truppen gezählt
+ * werden: Dorfansicht, Abmarsch, Kampf (zum Ankunftszeitpunkt).
+ */
+export function settleRecruits(
+    world: World,
+    villageId: number,
+    at: GameTime = world.now(),
+): void {
+    const rows = world.db
+        .select()
+        .from(recruitQueue)
+        .where(eq(recruitQueue.villageId, villageId))
+        .orderBy(asc(recruitQueue.id))
+        .all();
+    if (rows.length === 0) return;
+
+    world.sqlite.transaction(() => {
+        for (const building of new Set(
+            rows.map((r) => UNITS[r.unitType].recruitedAt),
+        )) {
+            const queue = rows.filter(
+                (r) => UNITS[r.unitType].recruitedAt === building,
+            );
+            let active = queue.find((r) => r.startedAt !== null);
+            while (active && active.startedAt !== null) {
+                const done = Math.min(
+                    active.count,
+                    Math.floor(
+                        GameTime.between(active.startedAt, at) /
+                            active.perUnitMs,
+                    ),
+                );
+                if (done <= 0) break;
+                world.addUnits(
+                    villageId,
+                    singleEntry(active.unitType, done),
+                );
+                const startedAt = GameTime.add(
+                    GameTime.of(active.startedAt),
+                    done * active.perUnitMs,
+                );
+                if (done < active.count) {
+                    world.db
+                        .update(recruitQueue)
+                        .set({ count: active.count - done, startedAt })
+                        .where(eq(recruitQueue.id, active.id))
+                        .run();
+                    break;
+                }
+                world.db
+                    .delete(recruitQueue)
+                    .where(eq(recruitQueue.id, active.id))
+                    .run();
+                const finishedId = active.id;
+                const next = queue.find(
+                    (r) => r.startedAt === null && r.id > finishedId,
+                );
+                if (!next) break;
+                world.db
+                    .update(recruitQueue)
+                    .set({ startedAt })
+                    .where(eq(recruitQueue.id, next.id))
+                    .run();
+                scheduleRecruitDone(
+                    world,
+                    next.id,
+                    startedAt,
+                    next.count,
+                    next.perUnitMs,
+                );
+                active = { ...next, startedAt };
+            }
+        }
+    })();
+}
+
+/** Ein Auftrag ist fertig: abrechnen und den nächsten anstoßen. */
+export function handleRecruitDone(
+    world: World,
+    payload: { queueId: number },
+): void {
+    const row = world.db
+        .select({ villageId: recruitQueue.villageId })
+        .from(recruitQueue)
+        .where(eq(recruitQueue.id, payload.queueId))
+        .all()[0];
+    // Schon beim Zugriff abgerechnet (oder Dorf erobert): nichts zu tun.
+    if (!row) return;
+    settleRecruits(world, row.villageId);
+    world.broadcast({
+        type: 'village_updated',
+        villageId: row.villageId,
+    });
+}
+
+/**
+ * Veraltetes `recruit_tick` aus Welten vor 19-2: abrechnen und sicherstellen,
+ * dass der laufende Auftrag sein `recruit_done` bekommt. Ein doppeltes
+ * `recruit_done` ist harmlos — der zweite Aufruf findet nichts mehr vor.
+ */
 export function handleRecruitTick(
     world: World,
     payload: { queueId: number },
 ): void {
-    let villageId: number | undefined;
-    world.sqlite.transaction(() => {
-        const row = world.db
-            .select()
-            .from(recruitQueue)
-            .where(eq(recruitQueue.id, payload.queueId))
-            .all()[0];
-        if (!row) return;
-        villageId = row.villageId;
-        world.addUnits(row.villageId, singleEntry(row.unitType, 1));
-
-        if (row.count > 1) {
-            const nextAt = GameTime.add(
-                GameTime.of(row.nextUnitDoneAt),
-                row.perUnitMs,
-            );
-            world.db
-                .update(recruitQueue)
-                .set({ count: row.count - 1, nextUnitDoneAt: nextAt })
-                .where(eq(recruitQueue.id, row.id))
-                .run();
-            world.scheduler.insert('recruit_tick', nextAt, {
-                queueId: row.id,
-            });
-            return;
-        }
-
-        world.db
-            .delete(recruitQueue)
-            .where(eq(recruitQueue.id, row.id))
-            .run();
-        // Start the next waiting order of the same building, if any.
-        const building = UNITS[row.unitType].recruitedAt;
-        const next = world.db
-            .select()
-            .from(recruitQueue)
-            .where(
-                and(
-                    eq(recruitQueue.villageId, row.villageId),
-                    eq(recruitQueue.nextUnitDoneAt, 0),
-                ),
-            )
-            .orderBy(asc(recruitQueue.id))
-            .all()
-            .find((q) => UNITS[q.unitType].recruitedAt === building);
-        if (next) {
-            const nextAt = GameTime.add(
-                GameTime.of(row.nextUnitDoneAt),
-                next.perUnitMs,
-            );
-            world.db
-                .update(recruitQueue)
-                .set({ nextUnitDoneAt: nextAt })
-                .where(eq(recruitQueue.id, next.id))
-                .run();
-            world.scheduler.insert('recruit_tick', nextAt, {
-                queueId: next.id,
-            });
-        }
-    })();
-    if (villageId !== undefined)
-        world.broadcast({ type: 'village_updated', villageId });
+    const row = world.db
+        .select()
+        .from(recruitQueue)
+        .where(eq(recruitQueue.id, payload.queueId))
+        .all()[0];
+    if (!row) return;
+    settleRecruits(world, row.villageId);
+    const after = world.db
+        .select()
+        .from(recruitQueue)
+        .where(eq(recruitQueue.id, row.id))
+        .all()[0];
+    if (after && after.startedAt !== null)
+        scheduleRecruitDone(
+            world,
+            after.id,
+            GameTime.of(after.startedAt),
+            after.count,
+            after.perUnitMs,
+        );
+    world.broadcast({
+        type: 'village_updated',
+        villageId: row.villageId,
+    });
 }
 
 /**
@@ -333,9 +420,15 @@ export function sendUnits(
                 .all(),
             'internal',
         );
-        world.scheduler.insert('arrival', arrivalGameTime, {
-            movementId: movement.id,
-        });
+        // Angriffe nach Unterstützung derselben Millisekunde (19-2).
+        world.scheduler.insert(
+            'arrival',
+            arrivalGameTime,
+            { movementId: movement.id },
+            kind === 'attack'
+                ? EVENT_PRIORITY.arrival_attack
+                : EVENT_PRIORITY.arrival,
+        );
     })();
     world.broadcast({
         type: 'movement',

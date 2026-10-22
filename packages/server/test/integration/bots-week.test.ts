@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { World } from '../../src/engine/world.js';
 import type { WorldManager } from '../../src/engine/worldManager.js';
 import {
-    advance,
+    advanceYielding,
     createTestWorld,
     gameWeeks,
     type TestWorld,
@@ -64,9 +64,9 @@ describe('Bots in einer laufenden Welt', () => {
         expect(pending.n).toBe(10);
     });
 
-    it('wächst über zwei Spielwochen', () => {
+    it('wächst über zwei Spielwochen', async () => {
         const before = pointsOf('bot');
-        advance(world, gameWeeks(world, 2));
+        await advanceYielding(world, gameWeeks(world, 2));
         expect(pointsOf('bot')).toBeGreaterThan(before);
     }, 60_000);
 

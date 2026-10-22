@@ -128,9 +128,14 @@ export const events = sqliteTable(
         id: integer('id').primaryKey({ autoIncrement: true }),
         dueGameTime: integer('due_game_time').notNull(),
         type: text('type').notNull(),
+        /** Reihenfolge bei gleicher Fälligkeit, siehe `EVENT_PRIORITY`. */
+        priority: integer('priority').notNull().default(50),
         payload: text('payload_json').notNull().default('{}'),
     },
-    (t) => [index('idx_events_due').on(t.dueGameTime)],
+    (t) => [
+        index('idx_events_due').on(t.dueGameTime),
+        index('idx_events_order').on(t.dueGameTime, t.priority, t.id),
+    ],
 );
 
 export const buildQueue = sqliteTable(
@@ -154,7 +159,14 @@ export const recruitQueue = sqliteTable(
         villageId: integer('village_id').notNull(),
         unitType: text('unit_type', { enum: UNIT_ORDER }).notNull(),
         count: integer('count').notNull(),
-        nextUnitDoneAt: integer('next_unit_done_at').notNull(),
+        /**
+         * Wann die Produktion der noch offenen `count` Einheiten begann;
+         * `null` heißt „wartet, bis die Schleife des Gebäudes frei ist"
+         * (plans/19-prototyp/19-2). Fertig ist, was seitdem in ganzen
+         * `perUnitMs` hineinpasst. Bewusst nicht `0` als Platzhalter: 0 ist
+         * ein gültiger Zeitpunkt — der Weltstart.
+         */
+        startedAt: integer('started_at'),
         perUnitMs: integer('per_unit_ms').notNull(),
     },
     (t) => [index('idx_recruit_queue_village').on(t.villageId)],

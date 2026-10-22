@@ -45,9 +45,17 @@ import {
 import { GameError, type World } from '../engine/world.js';
 import type { WorldManager } from '../engine/worldManager.js';
 
+/**
+ * Die Welt einer Anfrage — **nachgeholt bis jetzt** (plans/19-prototyp/19-2).
+ *
+ * Jede Route, die eine Welt liest oder ändert, kommt hier vorbei. Deshalb
+ * steht das Nachholen genau hier: Kein Befehl und keine Ansicht sieht einen
+ * Zustand, in dem ein schon fälliges Event noch fehlt.
+ */
 function requireWorld(manager: WorldManager, id: string): World {
     const world = manager.getWorld(Number(id));
     if (!world) throw new GameError('world_not_found');
+    world.catchUp();
     return world;
 }
 
@@ -57,6 +65,13 @@ export function registerRoutes(
 ): void {
     app.setErrorHandler((err, _req, reply) => {
         if (err instanceof GameError) {
+            // Die Welt arbeitet einen großen Rückstand ab (19-2): später
+            // wiederkommen, nicht „fehlerhafter Aufruf".
+            if (err.message === 'catching_up')
+                return reply
+                    .status(503)
+                    .header('Retry-After', '1')
+                    .send({ error: err.message });
             // „Nicht gefunden" ist semantisch ein 404, alles andere ein
             // fehlerhafter Aufruf (400).
             const status = err.message.endsWith('_not_found')

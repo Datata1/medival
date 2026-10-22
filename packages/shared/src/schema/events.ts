@@ -20,7 +20,20 @@ export const BuildCompletePayloadSchema = z.object({
     queueId: z.number().int().positive(),
 });
 
+/**
+ * Veraltet seit plans/19-prototyp/19-2: ein Event je rekrutierter Einheit.
+ * Bleibt lesbar, damit Welten mit laufenden Aufträgen weiterlaufen; neue
+ * Aufträge erzeugen `recruit_done`.
+ */
 export const RecruitTickPayloadSchema = z.object({
+    queueId: z.number().int().positive(),
+});
+
+/**
+ * Ein Rekrutierungsauftrag ist fertig (plans/19-prototyp/19-2). Ein Event je
+ * Auftrag; die Einheiten dazwischen werden beim Zugriff ausgerechnet.
+ */
+export const RecruitDonePayloadSchema = z.object({
     queueId: z.number().int().positive(),
 });
 
@@ -46,6 +59,7 @@ export const BotTickPayloadSchema = z.object({
 export const EVENT_SCHEMAS = {
     build_complete: BuildCompletePayloadSchema,
     recruit_tick: RecruitTickPayloadSchema,
+    recruit_done: RecruitDonePayloadSchema,
     arrival: ArrivalPayloadSchema,
     barbarian_tick: BarbarianTickPayloadSchema,
     bot_tick: BotTickPayloadSchema,
@@ -60,6 +74,9 @@ export type BuildCompletePayload = z.infer<
 >;
 export type RecruitTickPayload = z.infer<
     typeof RecruitTickPayloadSchema
+>;
+export type RecruitDonePayload = z.infer<
+    typeof RecruitDonePayloadSchema
 >;
 export type ArrivalPayload = z.infer<typeof ArrivalPayloadSchema>;
 export type BarbarianTickPayload = z.infer<
