@@ -1,10 +1,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { PLAYER_ID } from '@medival/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { World } from '../src/engine/world.js';
 import { WorldManager } from '../src/engine/worldManager.js';
+
+/** Der Gründer der Testwelt — Spieler 1 mit dem Dorf in der Mitte (19-9). */
+const PLAYER_ID = 1;
 
 let dir: string;
 let manager: WorldManager;
@@ -13,17 +15,21 @@ let world: World;
 beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-profile-'));
     manager = new WorldManager(dir);
-    world = manager.createWorld('Profilwelt', {
-        speed: 100,
-        mapSize: 40,
-        botCount: 4,
-        barbarianCount: 6,
-        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
-        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
-        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
-        barbarianAttemptsPerHour: 0,
-        seed: 777,
-    });
+    world = manager.createWorld(
+        'Profilwelt',
+        {
+            speed: 100,
+            mapSize: 40,
+            botCount: 4,
+            barbarianCount: 6,
+            // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+            // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+            // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+            barbarianAttemptsPerHour: 0,
+            seed: 777,
+        },
+        { founder: { name: 'Spieler' } },
+    );
     world.pause();
 });
 

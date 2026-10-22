@@ -15,6 +15,7 @@ const CONTINENT = 100;
 
 interface MiniScene {
     villages: MapVillage[];
+    playerId: number | null;
     mapSize: number;
     /** Gezeigter Ausschnitt der Welt, in Feldern. */
     window: { x0: number; y0: number; span: number };
@@ -119,7 +120,7 @@ function drawMini(
             village.y >= win.y0 + win.span
         )
             continue;
-        ctx.fillStyle = villageColor(village);
+        ctx.fillStyle = villageColor(village, scene.playerId);
         ctx.fillRect(px(village.x), py(village.y), dot, dot);
     }
 
@@ -154,6 +155,7 @@ function drawMini(
  */
 export function MiniMap({
     villages,
+    playerId,
     mapSize,
     camera,
     nearView,
@@ -163,6 +165,8 @@ export function MiniMap({
     label,
 }: {
     villages: MapVillage[];
+    /** Mein Spieler — eigene Dörfer in eigener Farbe (19-9). */
+    playerId: number | null;
     mapSize: number;
     camera: { x: number; y: number } | null;
     /** Größe der Nahansicht in CSS-Pixeln — daraus wird ihr Ausschnitt. */
@@ -178,6 +182,7 @@ export function MiniMap({
         camera && win
             ? {
                   villages,
+                  playerId,
                   mapSize,
                   window: win,
                   view: {

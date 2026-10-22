@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../components/Card.js';
 import { MainNav } from '../features/world/MainNav.js';
+import { NotJoined } from '../features/world/NotJoined.js';
 import { VillageBar } from '../features/world/VillageBar.js';
 import { useStores } from '../stores/StoreContext.js';
 
@@ -26,6 +27,8 @@ const WorldLayout = observer(function WorldLayout() {
             <p className="page text-ink-light">{t('world.loading')}</p>
         );
     if (world.world.error || !world.summary) return <WorldError />;
+    if (world.summary.playerId === null)
+        return <NotJoined worldId={world.summary.id} />;
 
     return (
         <div>

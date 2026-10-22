@@ -21,17 +21,21 @@ afterEach(() => {
 });
 
 function smallWorld(): World {
-    return manager.createWorld('Prüfwelt', {
-        speed: 100,
-        unitSpeed: 100,
-        mapSize: 40,
-        // Weder Bots noch Barbaren: Diese Tests prüfen die Warteschlange
-        // selbst, und beide würden sie dauerhaft gefüllt halten.
-        botCount: 0,
-        barbarianCount: 8,
-        barbarianAttemptsPerHour: 0,
-        seed: 4242,
-    });
+    return manager.createWorld(
+        'Prüfwelt',
+        {
+            speed: 100,
+            unitSpeed: 100,
+            mapSize: 40,
+            // Weder Bots noch Barbaren: Diese Tests prüfen die Warteschlange
+            // selbst, und beide würden sie dauerhaft gefüllt halten.
+            botCount: 0,
+            barbarianCount: 8,
+            barbarianAttemptsPerHour: 0,
+            seed: 4242,
+        },
+        { founder: { name: 'Spieler' } },
+    );
 }
 
 describe('Welt-Einstellungen werden geprüft, nicht behauptet', () => {
@@ -39,20 +43,30 @@ describe('Welt-Einstellungen werden geprüft, nicht behauptet', () => {
         // Der belegte Bug aus plans/08: {"speed":"schnell"} lief bis in
         // buildTime() und schrieb NaN-Zeitstempel in die Welt-Datei.
         expect(() =>
-            manager.createWorld('Kaputt', {
-                speed: 'schnell',
-            } as never),
+            manager.createWorld(
+                'Kaputt',
+                {
+                    speed: 'schnell',
+                } as never,
+                { founder: { name: 'Spieler' } },
+            ),
         ).toThrow();
     });
 
     it('lehnt unsinnige Kartengrößen und Dorfzahlen ab', () => {
         expect(() =>
-            manager.createWorld('Zu klein', { mapSize: -5 } as never),
+            manager.createWorld('Zu klein', { mapSize: -5 } as never, {
+                founder: { name: 'Spieler' },
+            }),
         ).toThrow();
         expect(() =>
-            manager.createWorld('Zu voll', {
-                botCount: 999_999,
-            } as never),
+            manager.createWorld(
+                'Zu voll',
+                {
+                    botCount: 999_999,
+                } as never,
+                { founder: { name: 'Spieler' } },
+            ),
         ).toThrow();
     });
 

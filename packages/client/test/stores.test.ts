@@ -26,6 +26,7 @@ vi.mock('../src/api/client.js', () => ({
         createWorld: vi.fn(),
         deleteWorld: vi.fn(),
         getWorld: vi.fn(),
+        joinWorld: vi.fn(),
         pauseWorld: vi.fn(),
         resumeWorld: vi.fn(),
         getVillage: vi.fn(),
@@ -630,5 +631,43 @@ describe('AuthStore (19-8)', () => {
         await auth.ensureLoaded();
         expect(auth.loaded).toBe(true);
         expect(auth.account).toBeNull();
+    });
+});
+
+describe('Beitreten (19-9)', () => {
+    it('LobbyStore.join tritt bei und lädt die Liste neu', async () => {
+        mocked.joinWorld.mockResolvedValue(
+            worldSummary({ playerId: 5 }),
+        );
+        mocked.listWorlds.mockResolvedValue([]);
+        const lobby = new LobbyStore();
+        expect(await lobby.join(1)).toBe(true);
+        expect(mocked.joinWorld).toHaveBeenCalledWith(1);
+        expect(mocked.listWorlds).toHaveBeenCalled();
+    });
+
+    it('meldet, wenn der Account schon mitspielt', async () => {
+        mocked.joinWorld.mockRejectedValue(new Error('already_joined'));
+        const lobby = new LobbyStore();
+        expect(await lobby.join(1)).toBe(false);
+        expect(lobby.submitError).toBe(
+            'Du spielst in dieser Welt schon mit',
+        );
+    });
+
+    it('WorldStore kennt den eigenen Spieler — oder keinen', async () => {
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: null }),
+        );
+        const world = new WorldStore();
+        await world.open(1);
+        expect(world.playerId).toBeNull();
+        world.close();
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: 7 }),
+        );
+        await world.open(1);
+        expect(world.playerId).toBe(7);
+        world.close();
     });
 });

@@ -47,6 +47,11 @@ export interface TestWorld {
 export function createTestWorld(
     settings: Partial<WorldSettings> = {},
     name = 'Testwelt',
+    /**
+     * Mit Gründer (Standard): Spieler 1 mit dem Dorf in der Mitte, wie vor
+     * 19-9 jede Welt. Ohne: nur Bots und Barbaren, Menschen treten bei.
+     */
+    { founder = true }: { founder?: boolean } = {},
 ): TestWorld {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-it-'));
     const manager = new WorldManager(dir);
@@ -65,7 +70,10 @@ export function createTestWorld(
         const world = manager.createWorld(
             name,
             { ...QUIET_SETTINGS, ...settings },
-            { paused: true },
+            {
+                paused: true,
+                founder: founder ? { name: 'Spieler' } : undefined,
+            },
         );
         return { world, manager, dir, dispose };
     } catch (error) {

@@ -34,7 +34,10 @@ export function WorldListItem({
                 </span>
             </div>
             <div className="flex items-center gap-2">
-                <Button onClick={onOpen}>{t('lobby.open')}</Button>
+                {/* Wer noch nicht mitspielt, tritt bei (19-9). */}
+                <Button onClick={onOpen}>
+                    {world.joined ? t('lobby.open') : t('lobby.join')}
+                </Button>
                 {onDelete && (
                     <Button variant="danger" onClick={onDelete}>
                         {t('lobby.delete')}

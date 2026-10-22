@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTestApp, type TestApp } from '../harness/app.js';
+import {
+    createTestApp,
+    loginAs,
+    type TestApp,
+} from '../harness/app.js';
 import {
     givenPlayer,
     givenTribe,
@@ -11,6 +15,8 @@ import {
  */
 
 let api: TestApp | null = null;
+/** Session eines angemeldeten Accounts — die Karte ist nur angemeldet lesbar (19-9). */
+let cookie = '';
 afterEach(async () => {
     await api?.dispose();
     api = null;
@@ -32,6 +38,7 @@ interface TileResponse {
 /** Eine Welt mit `count` Dörfern auf einem Raster um die Mitte. */
 async function crowded(count: number) {
     api = await createTestApp();
+    cookie = (await loginAs(api, 'Kartografin')).cookie;
     const world = api.manager.createWorld('Karte', {
         mapSize: 1000,
         botCount: 0,
@@ -56,6 +63,7 @@ describe('GET /map/tiles', () => {
     it('liefert genau die Dörfer der angefragten Kacheln', async () => {
         const world = await crowded(5_000);
         const res = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/tiles?tx0=22&ty0=22&tx1=25&ty1=25`,
         });
         expect(res.statusCode).toBe(200);
@@ -78,11 +86,11 @@ describe('GET /map/tiles', () => {
     it('beantwortet den Übersichtsausschnitt (6×6) schnell', async () => {
         const world = await crowded(5_000);
         const url = `/api/worlds/${world.id}/map/tiles?tx0=22&ty0=22&tx1=27&ty1=27`;
-        await api!.app.inject({ url }); // Aufwärmen
+        await api!.app.inject({ url, headers: { cookie } }); // Aufwärmen
         const times: number[] = [];
         for (let i = 0; i < 20; i++) {
             const t0 = performance.now();
-            await api!.app.inject({ url });
+            await api!.app.inject({ url, headers: { cookie } });
             times.push(performance.now() - t0);
         }
         times.sort((a, b) => a - b);
@@ -94,10 +102,12 @@ describe('GET /map/tiles', () => {
     it('lehnt zu große Ausschnitte ab und liefert jenseits der Karte leere Kacheln', async () => {
         const world = await crowded(10);
         const tooBig = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/tiles?tx0=0&ty0=0&tx1=6&ty1=6`,
         });
         expect(tooBig.statusCode).toBe(400);
         const outside = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/tiles?tx0=60&ty0=60&tx1=61&ty1=61`,
         });
         expect(outside.statusCode).toBe(200);
@@ -110,6 +120,7 @@ describe('GET /map/tiles', () => {
 
     it('trägt das Stammeskürzel des Besitzers', async () => {
         api = await createTestApp();
+        cookie = (await loginAs(api, 'Kartografin')).cookie;
         const world = api.manager.createWorld('Stamm', {
             mapSize: 100,
             botCount: 0,
@@ -120,6 +131,7 @@ describe('GET /map/tiles', () => {
         givenVillage(world, a, { x: 10, y: 10 });
         givenTribe(world, a, [], 'Die Roten', 'ROT');
         const res = await api.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/tiles?tx0=0&ty0=0&tx1=0&ty1=0`,
         });
         const [tile] = (res.json() as TileResponse).tiles;
@@ -133,6 +145,7 @@ describe('GET /map/at', () => {
     it('findet das Dorf auf einem Feld — oder keines', async () => {
         const world = await crowded(10);
         const hit = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/at?x=400&y=402`,
         });
         expect(
@@ -140,6 +153,7 @@ describe('GET /map/at', () => {
                 ?.x,
         ).toBe(400);
         const miss = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map/at?x=401&y=401`,
         });
         expect(
@@ -152,6 +166,7 @@ describe('Alte Route', () => {
     it('/map mit allen Dörfern gibt es nicht mehr', async () => {
         const world = await crowded(1);
         const res = await api!.app.inject({
+            headers: { cookie },
             url: `/api/worlds/${world.id}/map`,
         });
         expect(res.statusCode).toBe(404);

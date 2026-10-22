@@ -47,6 +47,7 @@ import {
     buildings,
     buildQueue,
     movements,
+    players,
     recruitQueue,
     relations,
     units,
@@ -97,6 +98,19 @@ export type MetaPatch = Partial<
 
 export type WorldMessage = Record<string, unknown> & { type: string };
 
+/** Empfänger einer Nachricht: bestimmte Spieler oder alle (19-9). */
+type Recipients = Set<number> | 'all';
+
+interface Subscriber {
+    playerId: number | null;
+    fn: (msg: WorldMessage) => void;
+}
+
+function mergeRecipients(a: Recipients, b: Recipients): Recipients {
+    if (a === 'all' || b === 'all') return 'all';
+    return new Set([...a, ...b]);
+}
+
 const BUILD_QUEUE_LIMIT = 5;
 
 /**
@@ -118,11 +132,13 @@ export class World {
     readonly rng: StatefulRng;
     /** Vorbereitete Abfragen, siehe Konstruktor. */
     readonly q;
-    private readonly subscribers = new Set<
-        (msg: WorldMessage) => void
-    >();
+    /** Abonnenten mit ihrem Spieler (19-9); `null` = sieht nur Öffentliches. */
+    private readonly subscribers = new Set<Subscriber>();
     /** Gebündelte Nachrichten bis zum nächsten Event-Loop-Durchlauf. */
-    private readonly pendingMessages = new Map<string, WorldMessage>();
+    private readonly pendingMessages = new Map<
+        string,
+        { msg: WorldMessage; to: Recipients }
+    >();
     private flushScheduled = false;
     /**
      * Fälligkeit des Events, das gerade verarbeitet wird — `null` außerhalb
@@ -314,33 +330,87 @@ export class World {
 
     // ── pub/sub ────────────────────────────────────────────────────────
 
-    subscribe(fn: (msg: WorldMessage) => void): () => void {
-        this.subscribers.add(fn);
-        return () => this.subscribers.delete(fn);
+    /**
+     * Ein Live-Kanal für einen Spieler (19-9). Er bekommt Nachrichten, die
+     * ihn betreffen, und öffentliche — nicht die Truppenbewegungen und
+     * Dorfänderungen anderer.
+     */
+    subscribe(
+        playerId: number | null,
+        fn: (msg: WorldMessage) => void,
+    ): () => void {
+        const subscriber = { playerId, fn };
+        this.subscribers.add(subscriber);
+        return () => this.subscribers.delete(subscriber);
     }
 
     /**
-     * Nachricht an alle Abonnenten — **gebündelt** (plans/19-prototyp/19-2).
+     * Nachricht an die Betroffenen — **gebündelt** (plans/19-prototyp/19-2)
+     * und **gefiltert** (19-9).
+     *
+     * Wen eine Nachricht betrifft, entscheidet `recipientsOf` an einer
+     * Stelle, statt dass jede Aufrufstelle Empfänger nennt: Dorfnachrichten
+     * gehen an den Besitzer, Bewegungen an beide Seiten, Berichte an den
+     * Empfänger, Stammesnachrichten an die Mitglieder, alles andere an alle.
+     * Die Empfänger werden beim Einreihen bestimmt — nach einer Eroberung
+     * erfährt der alte Besitzer noch davon.
      *
      * Gesendet wird im nächsten Event-Loop-Durchlauf, gleiche Nachrichten nur
-     * einmal. Ein Batch von 200 Events, die alle dasselbe Dorf betreffen,
-     * erzeugt so eine `village_updated`-Nachricht statt 200. Ohne Abonnenten
-     * (Tests, Welten ohne offenen Client) wird gar nichts vorgemerkt.
+     * einmal. Ohne Abonnenten (Tests, Welten ohne offenen Client) wird gar
+     * nichts vorgemerkt.
      */
     broadcast(msg: WorldMessage): void {
         if (this.subscribers.size === 0) return;
-        this.pendingMessages.set(JSON.stringify(msg), msg);
+        const key = JSON.stringify(msg);
+        const to = this.recipientsOf(msg);
+        const known = this.pendingMessages.get(key);
+        this.pendingMessages.set(key, {
+            msg,
+            to: known ? mergeRecipients(known.to, to) : to,
+        });
         if (this.flushScheduled) return;
         this.flushScheduled = true;
         setImmediate(() => this.flushMessages());
+    }
+
+    private recipientsOf(msg: WorldMessage): Recipients {
+        const ownerOf = (id: unknown): number[] => {
+            if (typeof id !== 'number') return [];
+            const owner = this.q.village.all({ villageId: id })[0]
+                ?.playerId;
+            return owner == null ? [] : [owner];
+        };
+        if (msg.type === 'report' && typeof msg.playerId === 'number')
+            return new Set([msg.playerId]);
+        if (msg.type === 'tribe' && typeof msg.tribeId === 'number')
+            return new Set(
+                this.db
+                    .select({ id: players.id })
+                    .from(players)
+                    .where(eq(players.tribeId, msg.tribeId))
+                    .all()
+                    .map((p) => p.id),
+            );
+        if ('villageId' in msg) return new Set(ownerOf(msg.villageId));
+        if ('originVillageId' in msg || 'targetVillageId' in msg)
+            return new Set([
+                ...ownerOf(msg.originVillageId),
+                ...ownerOf(msg.targetVillageId),
+            ]);
+        return 'all';
     }
 
     private flushMessages(): void {
         this.flushScheduled = false;
         const messages = [...this.pendingMessages.values()];
         this.pendingMessages.clear();
-        for (const msg of messages)
-            for (const fn of this.subscribers) fn(msg);
+        for (const { msg, to } of messages)
+            for (const { playerId, fn } of this.subscribers)
+                if (
+                    to === 'all' ||
+                    (playerId !== null && to.has(playerId))
+                )
+                    fn(msg);
     }
 
     // ── queries ────────────────────────────────────────────────────────

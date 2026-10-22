@@ -38,13 +38,6 @@ export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     seed: 0,
 };
 
-/**
- * Der menschliche Spieler. Das Spiel ist Einzelspieler, es gibt genau einen —
- * die Kennung stand bisher dreimal im Code (Karte, Zielleiste, Kartengenerator)
- * und muss auch von der Kopfzeile für Profil und Rangliste erreichbar sein.
- */
-export const PLAYER_ID = 1;
-
 export const STARTING_LOYALTY = 100;
 
 export const STARTING_BUILDINGS = {

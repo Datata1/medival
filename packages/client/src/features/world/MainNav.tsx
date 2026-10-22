@@ -1,4 +1,3 @@
-import { PLAYER_ID } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import type { ReactNode } from 'react';
@@ -149,7 +148,10 @@ export const MainNav = observer(function MainNav() {
 
             <Link
                 to="/worlds/$worldId/players/$playerId"
-                params={{ worldId, playerId: String(PLAYER_ID) }}
+                params={{
+                    worldId,
+                    playerId: String(world.playerId ?? 0),
+                }}
                 onClick={() => sound.click()}
                 className={NAV_LINK_CLASS}
             >

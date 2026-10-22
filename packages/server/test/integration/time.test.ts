@@ -1,7 +1,11 @@
 import { Duration, GameTime } from '@medival/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from '../harness/act.js';
-import { createTestApp, type TestApp } from '../harness/app.js';
+import {
+    createTestApp,
+    loginAs,
+    type TestApp,
+} from '../harness/app.js';
 import { givenPlayer, givenVillage } from '../harness/given.js';
 import {
     levelOf,
@@ -34,12 +38,20 @@ afterEach(async () => {
 describe('Nachholen vor jedem Zugriff', () => {
     it('ein Befehl sieht ein schon fälliges, noch unverarbeitetes Event', async () => {
         api = await createTestApp();
+        // Der angemeldete Account gründet die Welt und steuert Dorf 1 (19-9).
+        const { cookie, account } = await loginAs(api, 'Baumeisterin');
         const world = api.manager.createWorld(
             'Nachholen',
             QUIET_SETTINGS,
+            {
+                founder: {
+                    name: 'Baumeisterin',
+                    accountId: account.id,
+                },
+            },
         );
         world.pause();
-        const v = givenVillage(world, givenPlayer(world), {
+        const v = givenVillage(world, 1, {
             x: 10,
             y: 10,
             resources: 'full',
@@ -55,6 +67,7 @@ describe('Nachholen vor jedem Zugriff', () => {
 
         const res = await api.app.inject({
             url: `/api/worlds/${world.id}/villages/${v}`,
+            headers: { cookie },
         });
         expect(res.statusCode).toBe(200);
         expect(
@@ -65,6 +78,7 @@ describe('Nachholen vor jedem Zugriff', () => {
 
     it('meldet bei großem Rückstand 503 statt synchron zu blockieren', async () => {
         api = await createTestApp();
+        const { cookie } = await loginAs(api, 'Geduldige');
         const world = api.manager.createWorld(
             'Rückstand',
             QUIET_SETTINGS,
@@ -80,12 +94,14 @@ describe('Nachholen vor jedem Zugriff', () => {
 
         const first = await api.app.inject({
             url: `/api/worlds/${world.id}`,
+            headers: { cookie },
         });
         expect(first.statusCode).toBe(503);
         expect(first.headers['retry-after']).toBe('1');
         // Die erste Anfrage hat 1 000 abgearbeitet, die zweite schafft den Rest.
         const second = await api.app.inject({
             url: `/api/worlds/${world.id}`,
+            headers: { cookie },
         });
         expect(second.statusCode).toBe(200);
     });

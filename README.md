@@ -1,7 +1,7 @@
 # ⚔️ Medival
 
-Ein Open-Source, self-hosted Browsergame nach dem Vorbild von **Die Stämme (Tribal Wars)** —
-aber als stark beschleunigte **Singleplayer**-Version, in der die Karte von Bots bespielt wird.
+Ein Open-Source, self-hosted Browsergame nach dem Vorbild von **Die Stämme (Tribal Wars)**:
+eine Mehrspielerwelt im Browser, in der neben Menschen auch Bots spielen.
 
 - **Schnell:** Speed-Faktor 100–500x. Gebäude in Sekunden statt Stunden.
 - **Partien-basiert:** Jede Welt ist ein eigener Spielstand (eine SQLite-Datei) mit eigenen
@@ -50,7 +50,9 @@ pnpm --filter @medival/server start   # → http://localhost:3080
 
 Spielstände liegen in `./data/` (`MEDIVAL_DATA_DIR` zum Überschreiben).
 
-**Konten.** Wer die Seite öffnet, meldet sich an oder legt ein Konto an. Das **erste
+**Konten.** Wer die Seite öffnet, meldet sich an oder legt ein Konto an, und tritt dann
+einer Welt bei: Das eigene Dorf entsteht am Rand des besiedelten Gebiets. Jeder steuert
+nur seine eigenen Dörfer und sieht nur seine eigenen Berichte und Bewegungen. Das **erste
 Konto einer Installation ist Admin** und darf Welten anlegen und löschen sowie im
 Entwicklermodus pausieren und vorspulen. Weitere Admins über `MEDIVAL_ADMINS` (Namen,
 kommagetrennt). Sessions liegen in `data/worlds.sqlite`, im Browser als signiertes

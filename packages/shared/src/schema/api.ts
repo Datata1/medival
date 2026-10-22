@@ -125,6 +125,8 @@ export const WorldListEntrySchema = z.object({
     settings: WorldSettingsSchema,
     gameTimeMs: GameTimeSchema,
     createdAt: z.number().int(),
+    /** Ist der angemeldete Account in dieser Welt Spieler (19-9)? */
+    joined: z.boolean(),
 });
 
 export const WorldSummarySchema = z.object({
@@ -140,6 +142,11 @@ export const WorldSummarySchema = z.object({
     epochZeroMs: z.number().finite(),
     /** Server läuft im Entwicklermodus: Pause und Vorspulen verfügbar. */
     devMode: z.boolean(),
+    /**
+     * Der Spieler des angemeldeten Accounts in dieser Welt — `null`, solange
+     * er nicht beigetreten ist (19-9).
+     */
+    playerId: z.number().int().positive().nullable(),
     playerVillages: z.array(
         villageRef.extend({ points: z.number().int() }),
     ),
@@ -333,6 +340,8 @@ export const WorldMessageSchema = z.discriminatedUnion('type', [
     }),
     z.object({ type: z.literal('report'), playerId: z.number().int() }),
     z.object({ type: z.literal('tribe'), tribeId: z.number().int() }),
+    /** Öffentlich: ein neues Dorf oder ein Besitzerwechsel (19-9). */
+    z.object({ type: z.literal('map_changed') }),
     z.object({
         type: z.literal('world_status'),
         status: WorldStatusSchema,

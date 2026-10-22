@@ -20,8 +20,10 @@ CREATE TABLE IF NOT EXISTS players (
   personality TEXT,
   difficulty TEXT,
   ai_state_json TEXT NOT NULL DEFAULT '{}',
-  tribe_id INTEGER
+  tribe_id INTEGER,
+  account_id INTEGER
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_players_account ON players(account_id);
 CREATE TABLE IF NOT EXISTS tribes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -123,6 +125,13 @@ CREATE INDEX IF NOT EXISTS idx_reports_player ON reports(player_id);
 `;
 
 export const META_DDL = `
+CREATE TABLE IF NOT EXISTS memberships (
+  world_id INTEGER NOT NULL,
+  account_id INTEGER NOT NULL,
+  player_id INTEGER NOT NULL,
+  UNIQUE(world_id, account_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memberships_account ON memberships(account_id);
 CREATE TABLE IF NOT EXISTS worlds (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,

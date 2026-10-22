@@ -111,6 +111,15 @@ export class RootStore {
             await this.village.select(worldId, first.id);
     }
 
+    /**
+     * Die Welt neu öffnen — nach dem Beitreten (19-9): Jetzt gibt es einen
+     * Spieler und ein Dorf, das gewählt werden kann.
+     */
+    async reopenWorld(worldId: number): Promise<void> {
+        this.opening = null;
+        await this.openWorld(worldId);
+    }
+
     closeWorld(): void {
         this.incomingWatcher.reset();
         this.reportWatcher.reset();
@@ -187,6 +196,10 @@ export class RootStore {
                 break;
             case 'tribe':
                 void this.tribe.reload();
+                break;
+            case 'map_changed':
+                // Öffentlich (19-9): neues Dorf oder Besitzerwechsel irgendwo.
+                this.map.reload();
                 break;
             case 'world_status':
                 void this.world.reload();
