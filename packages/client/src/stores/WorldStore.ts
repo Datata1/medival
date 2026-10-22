@@ -51,6 +51,11 @@ export class WorldStore {
         return this.summary?.status === 'running';
     }
 
+    /** Mein Spieler in dieser Welt; `null`, solange nicht beigetreten (19-9). */
+    get playerId(): number | null {
+        return this.summary?.playerId ?? null;
+    }
+
     /** Wanduhrzeit des Servers, zu der die Spielzeit 0 war (19-3). */
     get epochZeroMs(): number {
         return this.summary?.epochZeroMs ?? 0;

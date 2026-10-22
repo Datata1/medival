@@ -1,4 +1,4 @@
-import { type MapVillage, PLAYER_ID } from '@medival/shared';
+import type { MapVillage } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
@@ -10,15 +10,19 @@ export const TargetPanel = observer(function TargetPanel({
     target,
     home,
     activeVillageId,
+    ownPlayerId,
     worldId,
 }: {
     target: MapVillage;
     home: MapVillage | undefined;
     activeVillageId: number;
+    /** Mein Spieler (19-9). */
+    ownPlayerId: number | null;
     worldId: number;
 }) {
     const { t } = useTranslation();
-    const isOwn = target.playerId === PLAYER_ID;
+    const isOwn =
+        ownPlayerId !== null && target.playerId === ownPlayerId;
     const isSelf = target.id === activeVillageId;
 
     const kind =

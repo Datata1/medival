@@ -1,4 +1,4 @@
-import { type MapVillage, PLAYER_ID } from '@medival/shared';
+import type { MapVillage } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,7 +68,7 @@ export const TargetPicker = observer(function TargetPicker({
         village.villageId === null
             ? undefined
             : (map.villageById(village.villageId) ??
-              (own ? { ...own, playerId: PLAYER_ID } : undefined));
+              (own ? { ...own, playerId: world.playerId } : undefined));
     const isHome = target !== null && target.id === village.villageId;
 
     return (

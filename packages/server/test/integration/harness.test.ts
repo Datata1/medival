@@ -337,6 +337,7 @@ describe('HTTP-App ohne Port', () => {
 
         const fetched = await api.app.inject({
             url: `/api/worlds/${id}`,
+            headers: { cookie },
         });
         expect(fetched.statusCode).toBe(200);
         expect(fetched.json()).toMatchObject({ id, name: 'API-Welt' });

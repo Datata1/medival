@@ -24,6 +24,8 @@ export const players = sqliteTable('players', {
     difficulty: text('difficulty'),
     aiState: text('ai_state_json').notNull().default('{}'),
     tribeId: integer('tribe_id'),
+    /** Der Account eines Menschen; `null` für Bots (19-9). */
+    accountId: integer('account_id'),
 });
 
 /**

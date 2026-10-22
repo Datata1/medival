@@ -1,6 +1,48 @@
 # Ticket 19-9: Welt beitreten & Mehrspieler-Rechte
 
-**Status:** 📋 offen · **Voraussetzung:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md), [19-8](19-8-accounts-und-session.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md), [19-8](19-8-accounts-und-session.md)
+
+> **Ergebnis:** Menschen kommen nur noch über ihren Account in eine Welt. Mit
+> `POST /api/worlds/:id/join` entstehen ein Spieler (`players.account_id`, eindeutig)
+> und ein Dorf am Rand des Siedlungskreises. `PLAYER_ID` ist aus dem ganzen Code
+> entfernt. Jede Weltroute verlangt eine Anmeldung, Spielrouten verlangen einen
+> beigetretenen Spieler (`not_joined`, 403). Dorfansicht und alle Dorfkommandos (bauen,
+> rekrutieren, schicken, liefern) prüfen den Besitz (`village_not_owned`, 403).
+> Berichte, Bewegungen, Diplomatie und Stammesaktionen gelten für den Spieler der Anfrage.
+> Nachrichten haben Empfänger: `World.broadcast` bestimmt sie zentral. Dorfnachrichten
+> gehen an den Besitzer, Bewegungen an beide Seiten, Berichte an den Empfänger, Stammes-
+> nachrichten an die Mitglieder, Weltstatus und `map_changed` an alle. Der Client nutzt
+> überall `world.playerId`. In der Lobby steht „Beitreten" für fremde Welten, und wer über
+> einen Link kommt, sieht eine Beitreten-Karte.
+>
+> **Tests:** `test/integration/multiplayer.test.ts`, drei Accounts in einer Welt:
+> Beitreten (einmal je Welt, 409), Zuschauer ohne Spieler (403), A kann B's Dorf weder
+> ansehen noch bauen, rekrutieren, schicken oder liefern (je 403, B unverändert),
+> Berichte nur bei A und B, B sieht den Angriff ohne Truppenliste, C sieht nichts. Live:
+> Baut A, erfährt es nur A. Greift A B an, erfährt es B, C nicht. Im Client gibt es Tests
+> für `LobbyStore.join` und `WorldStore.playerId`.
+>
+> **Im Browser** (Chrome über das DevTools-Protokoll mit echtem Session-Cookie): Die
+> Spielerin sieht in der Lobby „Beitreten" und kein Anlegeformular. Nach dem Klick steht
+> sie in ihrem Dorf (481|515, K54) am Rand des Kreises, mit zwei Barbaren daneben.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Gründer statt festem Spieler 1:** `createWorld(…, { founder })` legt auf Wunsch vor
+>   den Bots einen Menschen mit dem Dorf in der Mitte an, wahlweise mit Account. Die
+>   bestehenden Tests setzen genau diese Lage voraus und bekommen sie jetzt
+>   ausdrücklich. Der Harness legt ihn standardmäßig an. Ohne Gründer erzeugt die
+>   Generierung nur Bots und Barbaren.
+> - **Besitzprüfung in den Routen** (`ownVillage`) statt in `world.command`. Bots
+>   handeln innerhalb von Events und planen nur eigene Dörfer. Eine Prüfung in
+>   `execute.ts` ist nicht gebaut.
+> - **Mitgliedschaften zusätzlich in der Meta-DB** (`memberships`), damit die Lobby nicht
+>   jede Welt laden muss. Maßgeblich bleibt `players.account_id` in der Welt.
+> - **Alte Spielstände:** Spieler 1 („Spieler") aus Welten vor 19-9 hat keinen Account
+>   und bleibt als passiver Spieler stehen. Wer beitritt, bekommt ein neues Dorf.
+> - **Karten-Invalidierung:** Neben dem gedrosselten Nachladen auf eigene
+>   `village_updated`/`movement` gibt es jetzt `map_changed` für alle bei Eroberung und
+>   neuem Dorf. Eine kachelgenaue Variante ist weiterhin nicht gebaut.
 
 ## Kontext
 

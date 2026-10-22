@@ -25,17 +25,21 @@ afterEach(() => {
 });
 
 function createSmallWorld() {
-    return manager.createWorld('Testwelt', {
-        speed: 100,
-        mapSize: 40,
-        botCount: 5,
-        barbarianCount: 10,
-        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
-        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
-        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
-        barbarianAttemptsPerHour: 0,
-        seed: 12345,
-    });
+    return manager.createWorld(
+        'Testwelt',
+        {
+            speed: 100,
+            mapSize: 40,
+            botCount: 5,
+            barbarianCount: 10,
+            // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+            // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+            // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+            barbarianAttemptsPerHour: 0,
+            seed: 12345,
+        },
+        { founder: { name: 'Spieler' } },
+    );
 }
 
 describe('world creation', () => {
@@ -54,14 +58,18 @@ describe('world creation', () => {
 
     it('is deterministic for the same seed', () => {
         const a = createSmallWorld();
-        const b = manager.createWorld('Zwilling', {
-            speed: 100,
-            mapSize: 40,
-            botCount: 5,
-            barbarianCount: 10,
-            seed: 12345,
-            barbarianAttemptsPerHour: 0,
-        });
+        const b = manager.createWorld(
+            'Zwilling',
+            {
+                speed: 100,
+                mapSize: 40,
+                botCount: 5,
+                barbarianCount: 10,
+                seed: 12345,
+                barbarianAttemptsPerHour: 0,
+            },
+            { founder: { name: 'Spieler' } },
+        );
         const rowsA = a.sqlite
             .prepare('SELECT x, y FROM villages ORDER BY id')
             .all();
@@ -79,14 +87,18 @@ describe('world creation', () => {
      * (1 + Bots + Barbaren ≤ mapSize²/4).
      */
     it('stellt Dörfer bevorzugt in die Ebene', () => {
-        const world = manager.createWorld('Geländewelt', {
-            speed: 100,
-            mapSize: 60,
-            botCount: 10,
-            barbarianCount: 30,
-            barbarianAttemptsPerHour: 0,
-            seed: 24680,
-        });
+        const world = manager.createWorld(
+            'Geländewelt',
+            {
+                speed: 100,
+                mapSize: 60,
+                botCount: 10,
+                barbarianCount: 30,
+                barbarianAttemptsPerHour: 0,
+                seed: 24680,
+            },
+            { founder: { name: 'Spieler' } },
+        );
         const rows = world.sqlite
             .prepare(
                 'SELECT x, y FROM villages WHERE player_id IS NULL OR player_id <> 1',
@@ -112,15 +124,19 @@ describe('world creation', () => {
         const capacity = settlementCapacity(20, 0.2);
         expect(capacity).toBe(40);
         for (const seed of [893, 813, 748, 4711]) {
-            const world = manager.createWorld(`Enge ${seed}`, {
-                speed: 100,
-                mapSize: 20,
-                settlementDensity: 0.2,
-                botCount: 10,
-                barbarianCount: capacity - 11,
-                barbarianAttemptsPerHour: 0,
-                seed,
-            });
+            const world = manager.createWorld(
+                `Enge ${seed}`,
+                {
+                    speed: 100,
+                    mapSize: 20,
+                    settlementDensity: 0.2,
+                    botCount: 10,
+                    barbarianCount: capacity - 11,
+                    barbarianAttemptsPerHour: 0,
+                    seed,
+                },
+                { founder: { name: 'Spieler' } },
+            );
             const count = world.sqlite
                 .prepare('SELECT COUNT(*) AS n FROM villages')
                 .get() as { n: number };
@@ -130,13 +146,17 @@ describe('world creation', () => {
 
     it('lehnt mehr Dörfer ab, als der Siedlungskreis fasst', () => {
         expect(() =>
-            manager.createWorld('Zu eng', {
-                mapSize: 20,
-                settlementDensity: 0.2,
-                botCount: 10,
-                barbarianCount: 40,
-                seed: 1,
-            }),
+            manager.createWorld(
+                'Zu eng',
+                {
+                    mapSize: 20,
+                    settlementDensity: 0.2,
+                    botCount: 10,
+                    barbarianCount: 40,
+                    seed: 1,
+                },
+                { founder: { name: 'Spieler' } },
+            ),
         ).toThrow(/Zu viele Dörfer/);
     });
 });

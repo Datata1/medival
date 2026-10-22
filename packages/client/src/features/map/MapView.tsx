@@ -1,4 +1,4 @@
-import { type MapVillage, PLAYER_ID } from '@medival/shared';
+import type { MapVillage } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -95,7 +95,7 @@ export const MapView = observer(function MapView() {
         activeVillageId === null
             ? undefined
             : (map.villageById(activeVillageId) ??
-              (own ? { ...own, playerId: PLAYER_ID } : undefined));
+              (own ? { ...own, playerId: world.playerId } : undefined));
     const mapSize = world.summary?.settings.mapSize ?? 100;
     const sprites = useSpriteAtlas(MAP_SPRITE_IDS);
     const {
@@ -140,6 +140,7 @@ export const MapView = observer(function MapView() {
               seed: world.summary?.settings.seed ?? 0,
               gameTime: world.gameTime,
               selectedId: map.selectedVillageId,
+              playerId: world.playerId,
               activeVillageId,
               sprites,
           }
@@ -244,6 +245,7 @@ export const MapView = observer(function MapView() {
             <div className="min-w-70 flex-1">
                 <MiniMap
                     villages={map.list}
+                    playerId={world.playerId}
                     mapSize={mapSize}
                     camera={camera}
                     nearView={map.frameSize}
@@ -257,6 +259,7 @@ export const MapView = observer(function MapView() {
                         target={map.selected}
                         home={home}
                         activeVillageId={activeVillageId}
+                        ownPlayerId={world.playerId}
                         worldId={world.summary?.id ?? 0}
                     />
                 ) : (

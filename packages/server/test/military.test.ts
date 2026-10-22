@@ -14,18 +14,22 @@ let world: World;
 beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-mil-'));
     manager = new WorldManager(dir);
-    world = manager.createWorld('Kriegswelt', {
-        speed: 100,
-        unitSpeed: 100,
-        mapSize: 40,
-        botCount: 3,
-        barbarianCount: 8,
-        // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
-        // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
-        // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
-        barbarianAttemptsPerHour: 0,
-        seed: 999,
-    });
+    world = manager.createWorld(
+        'Kriegswelt',
+        {
+            speed: 100,
+            unitSpeed: 100,
+            mapSize: 40,
+            botCount: 3,
+            barbarianCount: 8,
+            // Barbaren ruhig stellen: Diese Tests prüfen anderes, und tickende
+            // Dörfer würden Ereigniszahlen und Ressourcen unvorhersehbar machen.
+            // Barbarenverhalten hat eine eigene Datei (barbarian.test.ts).
+            barbarianAttemptsPerHour: 0,
+            seed: 999,
+        },
+        { founder: { name: 'Spieler' } },
+    );
     world.pause(); // deterministic: advance time only via skip()
 });
 

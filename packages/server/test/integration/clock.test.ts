@@ -145,10 +145,12 @@ describe('Spielzeit läuft an der Wanduhr', () => {
 describe('Pause und Vorspulen nur im Entwicklermodus', () => {
     it('ohne Entwicklermodus gibt es die Routen nicht', async () => {
         api = await createTestApp({ devMode: false });
+        const { cookie } = await loginAs(api, 'Verwalter');
         const world = api.manager.createWorld('Prod', QUIET_SETTINGS);
         for (const url of ['pause', 'resume', 'dev/skip']) {
             const res = await api.app.inject({
                 method: 'POST',
+                headers: { cookie },
                 url: `/api/worlds/${world.id}/${url}`,
                 payload: { ms: 1000 },
             });
@@ -156,6 +158,7 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
         }
         const summary = await api.app.inject({
             url: `/api/worlds/${world.id}`,
+            headers: { cookie },
         });
         expect(summary.json()).toMatchObject({ devMode: false });
     });
@@ -204,10 +207,12 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
     it('die Uhrzeit einer Spielzeit ist Nullpunkt plus Spielzeit', async () => {
         const wall = fakeWallClock(1_800_000_000_000);
         api = await createTestApp();
+        const { cookie } = await loginAs(api, 'Uhrmacherin');
         const world = api.manager.createWorld('Uhr', QUIET_SETTINGS);
         wall.advance(Duration.minutes(7));
         const res = await api.app.inject({
             url: `/api/worlds/${world.id}`,
+            headers: { cookie },
         });
         const { epochZeroMs, gameTime } = res.json() as {
             epochZeroMs: number;

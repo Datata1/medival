@@ -740,4 +740,6 @@ function resolveAttackArrival(
 
     writeReport(world, origin.playerId, 'attack', reportPayload);
     writeReport(world, target.playerId, 'defense', reportPayload);
+    // Ein Besitzerwechsel steht auf jeder Karte (19-9: öffentlich).
+    if (conquered) world.broadcast({ type: 'map_changed' });
 }

@@ -2,7 +2,6 @@ import {
     BUILDING_ORDER,
     type BuildingLevels,
     createRng,
-    PLAYER_ID,
     pickRandom,
     placeVillage,
     type Rng,
@@ -108,10 +107,23 @@ export function insertVillage(
  * Dörfer; sie wird als `settled_count` gespeichert, damit spätere
  * Ansiedlungen (`settleNewPlayer`) am Rand weitermachen.
  */
+export interface Founder {
+    name: string;
+    /** Account des Gründers; ohne Account ein Mensch ohne Anmeldung (Tests). */
+    accountId?: number | null;
+}
+
 export function generateMap(
     db: BetterSQLite3Database<Record<string, unknown>>,
     settings: WorldSettings,
     rng: Rng,
+    /**
+     * Ein Mensch, der vor allen Bots angelegt wird: Spieler 1 mit dem Dorf in
+     * der Mitte (19-9). Wer eine Welt anlegt, kann so gleich mitspielen —
+     * und Tests, die genau diese Lage voraussetzen, bekommen sie
+     * ausdrücklich statt stillschweigend.
+     */
+    founder: Founder | null = null,
 ): number {
     const size = settings.mapSize;
     const seed = settings.seed;
@@ -155,15 +167,29 @@ export function generateMap(
         () => rollBarbarian(rng),
     );
 
-    // Das erste Dorf steht in der Mitte. Bis 19-9 gehört es dem Menschen.
-    db.insert(players)
-        .values({ id: PLAYER_ID, name: 'Spieler', isBot: false })
-        .run();
-    const home = place();
-    insertVillage(db, PLAYER_ID, home.x, home.y, 'Heimatdorf', {
-        ...STARTING_BUILDINGS,
-    });
-
+    /*
+     * Menschen treten über ihren Account bei und werden am Rand angesiedelt
+     * (`settleNewPlayer`, 19-9). Nur ein ausdrücklicher Gründer bekommt das
+     * erste Dorf in der Mitte; sonst gehört es dem ersten Bot.
+     */
+    if (founder) {
+        const founderId = firstOrThrow(
+            db
+                .insert(players)
+                .values({
+                    name: founder.name,
+                    isBot: false,
+                    accountId: founder.accountId ?? null,
+                })
+                .returning({ id: players.id })
+                .all(),
+            'internal',
+        ).id;
+        const home = place();
+        insertVillage(db, founderId, home.x, home.y, 'Heimatdorf', {
+            ...STARTING_BUILDINGS,
+        });
+    }
     const botIds = bots.map(
         (bot) =>
             firstOrThrow(

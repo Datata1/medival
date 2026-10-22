@@ -99,6 +99,11 @@ export const api = {
             WorldSummarySchema,
             postJson({ name, settings }),
         ),
+    /** Einer Welt beitreten: Spieler und Dorf am Rand (19-9). */
+    joinWorld: (id: number) =>
+        request(`/api/worlds/${id}/join`, WorldSummarySchema, {
+            method: 'POST',
+        }),
     getWorld: (id: number) =>
         request(`/api/worlds/${id}`, WorldSummarySchema),
     pauseWorld: (id: number) =>

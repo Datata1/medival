@@ -53,15 +53,19 @@ function setUp(distanceFields: number) {
 beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-trade-'));
     manager = new WorldManager(dir);
-    world = manager.createWorld('Handelswelt', {
-        speed: 100,
-        unitSpeed: 100,
-        mapSize: 60,
-        botCount: 2,
-        barbarianCount: 2,
-        seed: 909,
-        barbarianAttemptsPerHour: 0,
-    });
+    world = manager.createWorld(
+        'Handelswelt',
+        {
+            speed: 100,
+            unitSpeed: 100,
+            mapSize: 60,
+            botCount: 2,
+            barbarianCount: 2,
+            seed: 909,
+            barbarianAttemptsPerHour: 0,
+        },
+        { founder: { name: 'Spieler' } },
+    );
 });
 
 afterEach(() => {

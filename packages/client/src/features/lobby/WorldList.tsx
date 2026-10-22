@@ -35,7 +35,16 @@ export const WorldList = observer(function WorldList({
                     <WorldListItem
                         key={world.id}
                         world={world}
-                        onOpen={() => onOpen(world.id)}
+                        onOpen={() =>
+                            world.joined
+                                ? onOpen(world.id)
+                                : void lobby
+                                      .join(world.id)
+                                      .then(
+                                          (ok) =>
+                                              ok && onOpen(world.id),
+                                      )
+                        }
                         onDelete={
                             canDelete
                                 ? () => {

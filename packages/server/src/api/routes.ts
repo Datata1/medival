@@ -13,7 +13,6 @@ import {
     MapPointQuerySchema,
     MapTilesQuerySchema,
     NumericIdSchema,
-    PLAYER_ID,
     RecruitRequestSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
@@ -23,8 +22,8 @@ import {
     UnitsSchema,
 } from '@medival/shared';
 import { and, asc, between, desc, eq, inArray, or } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { requireAdmin } from '../auth/plugin.js';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { requireAccount, requireAdmin } from '../auth/plugin.js';
 import {
     firstOrThrow,
     parseInput,
@@ -39,6 +38,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
+import { settleNewPlayer } from '../engine/settle.js';
 import { sendResources } from '../engine/trade.js';
 import {
     acceptInvitation,
@@ -72,6 +72,9 @@ const AUTH_STATUS: Readonly<Record<string, number | undefined>> = {
     not_authenticated: 401,
     invalid_credentials: 401,
     forbidden: 403,
+    not_joined: 403,
+    village_not_owned: 403,
+    already_joined: 409,
     name_taken: 409,
     too_many_attempts: 429,
 };
@@ -107,7 +110,82 @@ export function registerRoutes(
         return reply.status(500).send({ error: 'internal' });
     });
 
-    app.get('/api/worlds', () => manager.listWorlds());
+    /*
+     * Wer fragt, in welcher Welt, als welcher Spieler (19-9). Jede Weltroute
+     * verlangt einen angemeldeten Account; Spielrouten zusätzlich, dass er
+     * in der Welt mitspielt.
+     */
+    const worldOf = (req: FastifyRequest, id: string): World => {
+        requireAccount(req);
+        return requireWorld(manager, id);
+    };
+    const playerIdOf = (
+        world: World,
+        req: FastifyRequest,
+    ): number | null => {
+        const account = requireAccount(req);
+        return (
+            world.db
+                .select({ id: players.id })
+                .from(players)
+                .where(eq(players.accountId, account.id))
+                .all()[0]?.id ?? null
+        );
+    };
+    const playerOf = (world: World, req: FastifyRequest): number => {
+        const id = playerIdOf(world, req);
+        if (id === null) throw new GameError('not_joined');
+        return id;
+    };
+    /** Kommandos auf ein Dorf nur durch seinen Besitzer (19-9). */
+    const ownVillage = (
+        world: World,
+        req: FastifyRequest,
+        vid: string,
+    ): { me: number; villageId: number } => {
+        const me = playerOf(world, req);
+        const villageId = parseInput(NumericIdSchema, vid);
+        if (world.getVillageRow(villageId).playerId !== me)
+            throw new GameError('village_not_owned');
+        return { me, villageId };
+    };
+
+    app.get('/api/worlds', (req) => {
+        const account = requireAccount(req);
+        const joined = manager.membershipsOf(account.id);
+        return manager
+            .listWorlds()
+            .map((w) => ({ ...w, joined: joined.has(w.id) }));
+    });
+
+    /*
+     * Einer Welt beitreten (19-9): ein Spieler für den Account, sein Dorf am
+     * Rand des Siedlungskreises (19-6). Je Welt höchstens einmal.
+     */
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/join',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const account = requireAccount(req);
+            if (playerIdOf(world, req) !== null)
+                throw new GameError('already_joined');
+            const playerId = firstOrThrow(
+                world.db
+                    .insert(players)
+                    .values({
+                        name: account.name,
+                        isBot: false,
+                        accountId: account.id,
+                    })
+                    .returning({ id: players.id })
+                    .all(),
+                'internal',
+            ).id;
+            settleNewPlayer(world, playerId, `${account.name}s Dorf`);
+            manager.recordMembership(world.id, account.id, playerId);
+            return worldSummary(world, options.devMode, playerId);
+        },
+    );
 
     app.get('/api/health', () =>
         manager.health.snapshot(manager.loadedWorlds()),
@@ -127,12 +205,20 @@ export function registerRoutes(
             body.name ?? 'Neue Welt',
             body.settings ?? {},
         );
-        return worldSummary(world, options.devMode);
+        return worldSummary(
+            world,
+            options.devMode,
+            playerIdOf(world, req),
+        );
     });
 
     app.get<{ Params: { id: string } }>('/api/worlds/:id', (req) => {
-        const world = requireWorld(manager, req.params.id);
-        return worldSummary(world, options.devMode);
+        const world = worldOf(req, req.params.id);
+        return worldSummary(
+            world,
+            options.devMode,
+            playerIdOf(world, req),
+        );
     });
 
     /*
@@ -146,9 +232,13 @@ export function registerRoutes(
             '/api/worlds/:id/pause',
             (req) => {
                 requireAdmin(req);
-                const world = requireWorld(manager, req.params.id);
+                const world = worldOf(req, req.params.id);
                 world.pause();
-                return worldSummary(world, true);
+                return worldSummary(
+                    world,
+                    true,
+                    playerIdOf(world, req),
+                );
             },
         );
 
@@ -156,9 +246,13 @@ export function registerRoutes(
             '/api/worlds/:id/resume',
             (req) => {
                 requireAdmin(req);
-                const world = requireWorld(manager, req.params.id);
+                const world = worldOf(req, req.params.id);
                 world.resume();
-                return worldSummary(world, true);
+                return worldSummary(
+                    world,
+                    true,
+                    playerIdOf(world, req),
+                );
             },
         );
 
@@ -166,10 +260,14 @@ export function registerRoutes(
             '/api/worlds/:id/dev/skip',
             (req) => {
                 requireAdmin(req);
-                const world = requireWorld(manager, req.params.id);
+                const world = worldOf(req, req.params.id);
                 const body = parseInput(DevSkipRequestSchema, req.body);
                 world.devSkip(Duration.ms(body.ms));
-                return worldSummary(world, true);
+                return worldSummary(
+                    world,
+                    true,
+                    playerIdOf(world, req),
+                );
             },
         );
     }
@@ -187,7 +285,7 @@ export function registerRoutes(
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/map/tiles',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
             const q = parseInput(MapTilesQuerySchema, req.query);
             const x0 = q.tx0 * TILE_SIZE;
             const y0 = q.ty0 * TILE_SIZE;
@@ -221,7 +319,7 @@ export function registerRoutes(
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/map/at',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
             const { x, y } = parseInput(MapPointQuerySchema, req.query);
             return {
                 village: mapVillagesInBox(world, x, y, x, y)[0] ?? null,
@@ -234,16 +332,17 @@ export function registerRoutes(
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/diplomacy',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             pruneInvitations(world);
             const now = world.now();
             const tags = tribeTags(world);
 
-            const own = tribeOf(world, PLAYER_ID);
+            const own = tribeOf(world, me);
             const homes = world.db
                 .select({ x: villages.x, y: villages.y })
                 .from(villages)
-                .where(eq(villages.playerId, PLAYER_ID))
+                .where(eq(villages.playerId, me))
                 .all();
             const allVillages = world.db
                 .select({
@@ -259,7 +358,7 @@ export function registerRoutes(
                 .select()
                 .from(players)
                 .all()
-                .filter((p) => p.id !== PLAYER_ID)
+                .filter((p) => p.id !== me)
                 .map((p) => {
                     const mine = allVillages.filter(
                         (v) => v.playerId === p.id,
@@ -273,7 +372,7 @@ export function registerRoutes(
                             );
                     const standing = world.effectiveStanding(
                         p.id,
-                        PLAYER_ID,
+                        me,
                         now,
                     );
                     return {
@@ -296,7 +395,7 @@ export function registerRoutes(
             const invitations = world.db
                 .select()
                 .from(tribeInvitations)
-                .where(eq(tribeInvitations.playerId, PLAYER_ID))
+                .where(eq(tribeInvitations.playerId, me))
                 .all()
                 .map((row) => {
                     const tribe = world.db
@@ -324,9 +423,10 @@ export function registerRoutes(
     app.post<{ Params: { id: string } }>(
         '/api/worlds/:id/tribe',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             const body = parseInput(FoundTribeRequestSchema, req.body);
-            foundTribe(world, PLAYER_ID, body.name, body.tag);
+            foundTribe(world, me, body.name, body.tag);
             return { ok: true };
         },
     );
@@ -334,12 +434,13 @@ export function registerRoutes(
     app.post<{ Params: { id: string } }>(
         '/api/worlds/:id/tribe/invite',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             const body = parseInput(
                 InvitePlayerRequestSchema,
                 req.body,
             );
-            invitePlayer(world, PLAYER_ID, body.playerId);
+            invitePlayer(world, me, body.playerId);
             return { ok: true };
         },
     );
@@ -347,12 +448,13 @@ export function registerRoutes(
     app.post<{ Params: { id: string } }>(
         '/api/worlds/:id/tribe/accept',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             const body = parseInput(
                 AcceptInvitationRequestSchema,
                 req.body,
             );
-            acceptInvitation(world, PLAYER_ID, body.tribeId);
+            acceptInvitation(world, me, body.tribeId);
             return { ok: true };
         },
     );
@@ -360,8 +462,9 @@ export function registerRoutes(
     app.post<{ Params: { id: string } }>(
         '/api/worlds/:id/tribe/leave',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            leaveTribe(world, PLAYER_ID);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            leaveTribe(world, me);
             return { ok: true };
         },
     );
@@ -369,7 +472,7 @@ export function registerRoutes(
     app.get<{ Params: { id: string; playerId: string } }>(
         '/api/worlds/:id/players/:playerId',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
             const playerId = parseInput(
                 NumericIdSchema,
                 req.params.playerId,
@@ -422,10 +525,11 @@ export function registerRoutes(
 
             // Asymmetrisch: die Sicht *dieses* Spielers auf uns, nicht
             // umgekehrt (plans/16-ansehen-und-handel.md).
+            const me = playerIdOf(world, req);
             const standing =
-                playerId === PLAYER_ID
+                me === null || playerId === me
                     ? null
-                    : world.effectiveStanding(playerId, PLAYER_ID);
+                    : world.effectiveStanding(playerId, me);
 
             return {
                 id: player.id,
@@ -447,9 +551,10 @@ export function registerRoutes(
     app.post<{ Params: { id: string; vid: string } }>(
         '/api/worlds/:id/villages/:vid/ship',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            const villageId = parseInput(
-                NumericIdSchema,
+            const world = worldOf(req, req.params.id);
+            const { villageId } = ownVillage(
+                world,
+                req,
                 req.params.vid,
             );
             const body = parseInput(
@@ -469,17 +574,24 @@ export function registerRoutes(
     app.get<{ Params: { id: string; vid: string } }>(
         '/api/worlds/:id/villages/:vid',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            return world.villageView(Number(req.params.vid));
+            const world = worldOf(req, req.params.id);
+            // Fremde Dörfer gibt es nur als Kartendaten (19-9).
+            const { villageId } = ownVillage(
+                world,
+                req,
+                req.params.vid,
+            );
+            return world.villageView(villageId);
         },
     );
 
     app.post<{ Params: { id: string; vid: string } }>(
         '/api/worlds/:id/villages/:vid/build',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            const villageId = parseInput(
-                NumericIdSchema,
+            const world = worldOf(req, req.params.id);
+            const { villageId } = ownVillage(
+                world,
+                req,
                 req.params.vid,
             );
             const body = parseInput(BuildRequestSchema, req.body);
@@ -491,9 +603,10 @@ export function registerRoutes(
     app.post<{ Params: { id: string; vid: string } }>(
         '/api/worlds/:id/villages/:vid/recruit',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            const villageId = parseInput(
-                NumericIdSchema,
+            const world = worldOf(req, req.params.id);
+            const { villageId } = ownVillage(
+                world,
+                req,
                 req.params.vid,
             );
             const body = parseInput(RecruitRequestSchema, req.body);
@@ -505,9 +618,10 @@ export function registerRoutes(
     app.post<{ Params: { id: string; vid: string } }>(
         '/api/worlds/:id/villages/:vid/send',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
-            const villageId = parseInput(
-                NumericIdSchema,
+            const world = worldOf(req, req.params.id);
+            const { villageId } = ownVillage(
+                world,
+                req,
                 req.params.vid,
             );
             const body = parseInput(SendUnitsRequestSchema, req.body);
@@ -525,11 +639,12 @@ export function registerRoutes(
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/movements',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             const own = world.db
                 .select({ id: villages.id })
                 .from(villages)
-                .where(eq(villages.playerId, PLAYER_ID))
+                .where(eq(villages.playerId, me))
                 .all()
                 .map((v) => v.id);
             if (own.length === 0)
@@ -597,11 +712,12 @@ export function registerRoutes(
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/reports',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             const rows = world.db
                 .select()
                 .from(reports)
-                .where(eq(reports.playerId, PLAYER_ID))
+                .where(eq(reports.playerId, me))
                 .orderBy(desc(reports.id))
                 .limit(50)
                 .all();
@@ -622,11 +738,12 @@ export function registerRoutes(
     app.post<{ Params: { id: string } }>(
         '/api/worlds/:id/reports/read',
         (req) => {
-            const world = requireWorld(manager, req.params.id);
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
             world.db
                 .update(reports)
                 .set({ read: true })
-                .where(eq(reports.playerId, PLAYER_ID))
+                .where(eq(reports.playerId, me))
                 .run();
             return { ok: true };
         },
@@ -647,10 +764,14 @@ export function registerRoutes(
                 socket.close();
                 return;
             }
-            const unsubscribe = world.subscribe((msg) => {
-                if (socket.readyState === socket.OPEN)
-                    socket.send(JSON.stringify(msg));
-            });
+            // Nur, was diesen Spieler betrifft, und Öffentliches (19-9).
+            const unsubscribe = world.subscribe(
+                playerIdOf(world, req),
+                (msg) => {
+                    if (socket.readyState === socket.OPEN)
+                        socket.send(JSON.stringify(msg));
+                },
+            );
             socket.on('close', unsubscribe);
         },
     );
@@ -687,7 +808,11 @@ function mapVillagesInBox(
         .all();
 }
 
-function worldSummary(world: World, devMode: boolean) {
+function worldSummary(
+    world: World,
+    devMode: boolean,
+    playerId: number | null,
+) {
     const playerVillages = world.db
         .select({
             id: villages.id,
@@ -697,7 +822,7 @@ function worldSummary(world: World, devMode: boolean) {
             points: villages.points,
         })
         .from(villages)
-        .where(eq(villages.playerId, PLAYER_ID))
+        .where(eq(villages.playerId, playerId ?? -1))
         .all();
     return {
         id: world.id,
@@ -707,6 +832,7 @@ function worldSummary(world: World, devMode: boolean) {
         gameTime: world.now(),
         epochZeroMs: world.clock.epochZeroMs,
         devMode,
+        playerId,
         playerVillages,
     };
 }

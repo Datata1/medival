@@ -2,7 +2,6 @@ import {
     type GameTimeLike,
     type MapVillage,
     type MovementsResponse,
-    PLAYER_ID,
     terrainAt,
 } from '@medival/shared';
 import type { RefObject } from 'react';
@@ -33,12 +32,18 @@ export interface MapScene {
     gameTime: GameTimeLike;
     selectedId: number | null;
     activeVillageId: number | null;
+    /** Mein Spieler — eigene Dörfer werden anders gezeichnet (19-9). */
+    playerId: number | null;
     sprites: LoadedSprites;
 }
 
 /** Die Farbe eines Dorfes nach Besitzer — auch die Übersichtskarte färbt so. */
-export function villageColor(village: MapVillage): string {
-    if (village.playerId === PLAYER_ID) return MAP_COLORS.own;
+export function villageColor(
+    village: MapVillage,
+    ownPlayerId: number | null,
+): string {
+    if (ownPlayerId !== null && village.playerId === ownPlayerId)
+        return MAP_COLORS.own;
     return village.playerId === null
         ? MAP_COLORS.barbarian
         : MAP_COLORS.enemy;
@@ -219,7 +224,8 @@ function drawVillages(
             continue;
 
         const spriteId =
-            village.playerId === PLAYER_ID
+            scene.playerId !== null &&
+            village.playerId === scene.playerId
                 ? 'map.village.player'
                 : village.playerId === null
                   ? 'map.village.barbarian'
@@ -235,7 +241,7 @@ function drawVillages(
             );
         } else {
             // Fällt ein Sprite aus, bleibt die Karte lesbar statt leer.
-            ctx.fillStyle = villageColor(village);
+            ctx.fillStyle = villageColor(village, scene.playerId);
             ctx.fillRect(
                 x - half,
                 y - half,

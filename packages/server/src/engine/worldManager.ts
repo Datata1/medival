@@ -9,6 +9,7 @@ import {
 } from '@medival/shared';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { z } from 'zod';
 import { startBarbarianTicks } from '../ai/barbarian.js';
 import { startBotTicks } from '../ai/bot.js';
 import { Accounts } from '../auth/accounts.js';
@@ -19,7 +20,7 @@ import {
     WorldMetaRowSchema,
 } from '../db/rowSchemas.js';
 import { EngineHealth } from './health.js';
-import { generateMap } from './mapgen.js';
+import { type Founder, generateMap } from './mapgen.js';
 import { type MetaPatch, World, type WorldMeta } from './world.js';
 
 /** Additive migrations for world DBs created by older versions. */
@@ -77,6 +78,17 @@ function migrateWorldDb(sqlite: Database.Database): void {
         sqlite.exec('ALTER TABLE players ADD COLUMN tribe_id INTEGER');
     }
 
+    // Plan 19-9: Spieler gehören zu Accounts; ein Account je Welt höchstens
+    // einmal (mehrere NULL — Bots — erlaubt SQLite im UNIQUE-Index).
+    if (!columnsOf(sqlite, 'players').includes('account_id')) {
+        sqlite.exec(
+            'ALTER TABLE players ADD COLUMN account_id INTEGER',
+        );
+    }
+    sqlite.exec(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_players_account ON players(account_id)',
+    );
+
     // Plan 19-2: feste Reihenfolge bei Gleichstand, ganze Millisekunden.
     if (!columnsOf(sqlite, 'events').includes('priority')) {
         sqlite.exec(
@@ -113,6 +125,11 @@ function loadSecret(dataDir: string): string {
     fs.writeFileSync(file, secret, { mode: 0o600 });
     return secret;
 }
+
+const MembershipRowSchema = z.object({
+    world_id: z.number().int(),
+    player_id: z.number().int(),
+});
 
 function villageCount(sqlite: Database.Database): number {
     return sqlite.prepare('SELECT id FROM villages').all().length;
@@ -216,7 +233,7 @@ export class WorldManager {
          * hängt ihr Startzustand davon ab, wie schnell die Maschine ist
          * (plans/19-prototyp/19-2).
          */
-        options: { paused?: boolean } = {},
+        options: { paused?: boolean; founder?: Founder } = {},
     ): World {
         const status = options.paused ? 'paused' : 'running';
         // Die Grenze liegt hier, nicht erst in der HTTP-Route: Der Manager ist
@@ -254,7 +271,12 @@ export class WorldManager {
         sqlite.pragma('journal_mode = WAL');
         sqlite.exec(WORLD_DDL);
         const db = drizzle(sqlite);
-        const settledCount = generateMap(db, settings, createRng(seed));
+        const settledCount = generateMap(
+            db,
+            settings,
+            createRng(seed),
+            options.founder ?? null,
+        );
 
         const world = new World(
             {
@@ -276,6 +298,9 @@ export class WorldManager {
         startBotTicks(world);
         // Den Nullpunkt sofort festhalten — nicht erst im 15-s-Intervall.
         world.persist();
+        // Ein Gründer mit Account spielt von Anfang an mit (Spieler 1).
+        if (options.founder?.accountId != null)
+            this.recordMembership(id, options.founder.accountId, 1);
         this.worlds.set(id, world);
         return world;
     }
@@ -324,6 +349,41 @@ export class WorldManager {
         return world;
     }
 
+    /**
+     * In welchen Welten ein Account mitspielt: Welt-ID → Spieler-ID (19-9).
+     * Steht in der Meta-DB, damit die Lobby nicht jede Welt laden muss, nur
+     * um das zu wissen. Maßgeblich bleibt `players.account_id` in der Welt.
+     */
+    membershipsOf(accountId: number): Map<number, number> {
+        return new Map(
+            this.meta
+                .prepare(
+                    'SELECT world_id, player_id FROM memberships WHERE account_id = ?',
+                )
+                .all(accountId)
+                .map((row) => {
+                    const r = parseRow(
+                        MembershipRowSchema,
+                        row,
+                        'membership',
+                    );
+                    return [r.world_id, r.player_id] as const;
+                }),
+        );
+    }
+
+    recordMembership(
+        worldId: number,
+        accountId: number,
+        playerId: number,
+    ): void {
+        this.meta
+            .prepare(
+                'INSERT OR REPLACE INTO memberships (world_id, account_id, player_id) VALUES (?, ?, ?)',
+            )
+            .run(worldId, accountId, playerId);
+    }
+
     deleteWorld(id: number): boolean {
         const loaded = this.worlds.get(id);
         if (loaded) {
@@ -332,6 +392,9 @@ export class WorldManager {
         }
         const res = this.meta
             .prepare('DELETE FROM worlds WHERE id = ?')
+            .run(id);
+        this.meta
+            .prepare('DELETE FROM memberships WHERE world_id = ?')
             .run(id);
         for (const suffix of ['', '-wal', '-shm']) {
             fs.rmSync(this.worldPath(id) + suffix, { force: true });

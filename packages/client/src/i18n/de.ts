@@ -21,6 +21,10 @@ const de = {
         saves: 'Spielstände',
         noWorlds: 'Noch keine Welten.',
         open: 'Öffnen',
+        join: 'Beitreten',
+        notJoinedTitle: 'Du spielst in dieser Welt noch nicht mit',
+        notJoinedHint:
+            'Beim Beitreten bekommst du ein Dorf am Rand des besiedelten Gebiets.',
         delete: 'Löschen',
         confirmDelete: 'Welt „{{name}}" wirklich löschen?',
         meta: '· Speed {{speed}}x · {{time}} · {{status}}',
@@ -377,6 +381,10 @@ const de = {
     },
     errors: {
         not_authenticated: 'Bitte zuerst anmelden',
+        not_joined: 'Du spielst in dieser Welt nicht mit',
+        already_joined: 'Du spielst in dieser Welt schon mit',
+        village_not_owned: 'Das ist nicht dein Dorf',
+        map_full: 'Die Welt ist voll',
         invalid_credentials: 'Name oder Passwort stimmt nicht',
         forbidden: 'Dafür fehlen die Rechte',
         name_taken: 'Dieser Name ist schon vergeben',

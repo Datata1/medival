@@ -338,15 +338,19 @@ describe('Stämme', () => {
     beforeEach(() => {
         dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-tribe-'));
         manager = new WorldManager(dir);
-        world = manager.createWorld('Stammeswelt', {
-            speed: 100,
-            unitSpeed: 100,
-            mapSize: 50,
-            botCount: 3,
-            barbarianCount: 2,
-            seed: 4242,
-            barbarianAttemptsPerHour: 0,
-        });
+        world = manager.createWorld(
+            'Stammeswelt',
+            {
+                speed: 100,
+                unitSpeed: 100,
+                mapSize: 50,
+                botCount: 3,
+                barbarianCount: 2,
+                seed: 4242,
+                barbarianAttemptsPerHour: 0,
+            },
+            { founder: { name: 'Spieler' } },
+        );
     });
 
     afterEach(() => {

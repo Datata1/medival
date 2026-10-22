@@ -22,6 +22,31 @@ export class LobbyStore {
         await this.worlds.load(() => api.listWorlds());
     }
 
+    /**
+     * Einer Welt beitreten (19-9); liefert true bei Erfolg. Danach gilt die
+     * Welt in der Liste als `joined`.
+     */
+    async join(worldId: number): Promise<boolean> {
+        runInAction(() => {
+            this.isSubmitting = true;
+            this.submitError = null;
+        });
+        try {
+            await api.joinWorld(worldId);
+            await this.load();
+            return true;
+        } catch (cause) {
+            runInAction(() => {
+                this.submitError = apiErrorMessage(cause);
+            });
+            return false;
+        } finally {
+            runInAction(() => {
+                this.isSubmitting = false;
+            });
+        }
+    }
+
     /** Legt eine Welt an und liefert ihre ID, oder null bei einem Fehler. */
     async createWorld(
         name: string,
