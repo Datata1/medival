@@ -1,6 +1,40 @@
 # Ticket 19-8: Accounts & Session
 
-**Status:** 📋 offen · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md) · **Grundlage für:** [19-9](19-9-welt-beitreten-und-rechte.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md) · **Grundlage für:** [19-9](19-9-welt-beitreten-und-rechte.md)
+
+> **Ergebnis:** Accounts und Sessions liegen in der Meta-DB (`server/src/auth/`).
+> Passwörter werden asynchron mit `scrypt` gehasht und in konstanter Zeit verglichen. Bei
+> unbekanntem Namen wird gleich lange gerechnet, damit die Antwortzeit keine Namen
+> verrät. Das Session-Cookie ist signiert und `httpOnly`, mit `SameSite=Lax` und 30 Tagen
+> Gültigkeit, die bei Benutzung höchstens einmal am Tag verlängert wird. Routen:
+> `POST /api/auth/register|login|logout`, `GET /api/me`. Admin ist der erste Account oder
+> wer in `MEDIVAL_ADMINS` steht. Weltverwaltung und Dev-Werkzeuge sind nur für Admins
+> erlaubt. Der WebSocket ohne Session wird mit 4401 geschlossen. Gedrosselt wird nach zehn
+> Fehlversuchen je Name und Adresse in 15 min (429). Im Client gibt es `AuthStore`, die
+> Routen `/login` und `/register`, eine Umleitung ohne Session in der Root-Route,
+> Anmelde-Hinweis und Abmelden in Lobby und Einstellungen. Anlegen und Löschen sind nur
+> für Admins sichtbar.
+>
+> **Tests:** `test/integration/auth.test.ts` (13): An- und Abmelden über das Cookie,
+> falsches Passwort und unbekannter Name gleich (401), Name doppelt auch in anderer
+> Schreibweise (409), ungültige Eingaben (400), kein Klartextpasswort in der DB, Rollen
+> (401/403/200 beim Anlegen und Löschen), `MEDIVAL_ADMINS`, Sessions laufen ab und
+> gleiten weiter, Sessions überstehen einen Neustart, verfälschtes Cookie, Drosselung,
+> WebSocket mit und ohne Session. Im Client: `AuthStore` (4). Harness: `loginAs(api,
+> name)`.
+>
+> **Am echten Server und im Browser:** `/` leitet ohne Session zu `/login` um. Nach dem
+> Registrieren ist man Admin, kann eine Welt anlegen (200), ohne Login nicht (401). Das
+> Cookie ist `HttpOnly`.
+>
+> **Abweichungen von der Planung:**
+>
+> - **`GET /api/me` liefert `{ account | null, devMode }`** statt 401 ohne Session. Der
+>   Client unterscheidet so „niemand angemeldet" von einem Fehler.
+> - **Der Brute-Force-Schutz** zählt im Speicher, ein Neustart setzt ihn zurück. Für den
+>   Prototyp genügt das.
+> - **Spielrouten sind serverseitig noch offen**, nur die Weltverwaltung ist geschützt.
+>   Die Bindung an Spieler und die Rechte je Dorf kommen mit 19-9, so wie geplant.
 
 ## Kontext
 

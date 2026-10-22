@@ -24,6 +24,7 @@ import {
 } from '@medival/shared';
 import { and, asc, between, desc, eq, inArray, or } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
+import { requireAdmin } from '../auth/plugin.js';
 import {
     firstOrThrow,
     parseInput,
@@ -66,6 +67,15 @@ function requireWorld(manager: WorldManager, id: string): World {
     return world;
 }
 
+/** HTTP-Status der Anmelde- und Rechtefehler (19-8). */
+const AUTH_STATUS: Readonly<Record<string, number | undefined>> = {
+    not_authenticated: 401,
+    invalid_credentials: 401,
+    forbidden: 403,
+    name_taken: 409,
+    too_many_attempts: 429,
+};
+
 export interface RouteOptions {
     /** Entwicklermodus: Pause und Vorspulen (19-3). */
     devMode: boolean;
@@ -85,11 +95,12 @@ export function registerRoutes(
                     .status(503)
                     .header('Retry-After', '1')
                     .send({ error: err.message });
-            // „Nicht gefunden" ist semantisch ein 404, alles andere ein
-            // fehlerhafter Aufruf (400).
+            // „Nicht gefunden" ist semantisch ein 404, Anmeldung und Rechte
+            // haben eigene Codes (19-8), alles andere ist ein fehlerhafter
+            // Aufruf (400).
             const status = err.message.endsWith('_not_found')
                 ? 404
-                : 400;
+                : (AUTH_STATUS[err.message] ?? 400);
             return reply.status(status).send({ error: err.message });
         }
         app.log.error(err);
@@ -103,6 +114,8 @@ export function registerRoutes(
     );
 
     app.post('/api/worlds', (req) => {
+        // Welten anlegen ist Verwaltung, nicht Spiel (19-8).
+        requireAdmin(req);
         // Geparst statt gecastet: vorher lief {"speed":"schnell"} bis in
         // buildTime() durch und schrieb NaN-Zeitstempel in die Welt-Datei
         // (plans/08-no-typecasting.md).
@@ -132,6 +145,7 @@ export function registerRoutes(
         app.post<{ Params: { id: string } }>(
             '/api/worlds/:id/pause',
             (req) => {
+                requireAdmin(req);
                 const world = requireWorld(manager, req.params.id);
                 world.pause();
                 return worldSummary(world, true);
@@ -141,6 +155,7 @@ export function registerRoutes(
         app.post<{ Params: { id: string } }>(
             '/api/worlds/:id/resume',
             (req) => {
+                requireAdmin(req);
                 const world = requireWorld(manager, req.params.id);
                 world.resume();
                 return worldSummary(world, true);
@@ -150,6 +165,7 @@ export function registerRoutes(
         app.post<{ Params: { id: string } }>(
             '/api/worlds/:id/dev/skip',
             (req) => {
+                requireAdmin(req);
                 const world = requireWorld(manager, req.params.id);
                 const body = parseInput(DevSkipRequestSchema, req.body);
                 world.devSkip(Duration.ms(body.ms));
@@ -159,6 +175,7 @@ export function registerRoutes(
     }
 
     app.delete<{ Params: { id: string } }>('/api/worlds/:id', (req) => {
+        requireAdmin(req);
         return { deleted: manager.deleteWorld(Number(req.params.id)) };
     });
 
@@ -619,6 +636,12 @@ export function registerRoutes(
         '/api/worlds/:id/ws',
         { websocket: true },
         (socket: WebSocket, req) => {
+            // Ohne Session kein Live-Kanal (19-8); 4401 nach dem Vorbild
+            // von HTTP 401, im Bereich der anwendungseigenen Codes.
+            if (!req.account) {
+                socket.close(4401, 'not_authenticated');
+                return;
+            }
             const world = manager.getWorld(Number(req.params.id));
             if (!world) {
                 socket.close();

@@ -7,8 +7,11 @@ import { WorldListItem } from './WorldListItem.js';
 
 export const WorldList = observer(function WorldList({
     onOpen,
+    canDelete,
 }: {
     onOpen: (id: number) => void;
+    /** Löschen dürfen nur Admins (19-8). */
+    canDelete: boolean;
 }) {
     const { t } = useTranslation();
     const { lobby } = useStores();
@@ -33,16 +36,22 @@ export const WorldList = observer(function WorldList({
                         key={world.id}
                         world={world}
                         onOpen={() => onOpen(world.id)}
-                        onDelete={() => {
-                            if (
-                                confirm(
-                                    t('lobby.confirmDelete', {
-                                        name: world.name,
-                                    }),
-                                )
-                            )
-                                void lobby.deleteWorld(world.id);
-                        }}
+                        onDelete={
+                            canDelete
+                                ? () => {
+                                      if (
+                                          confirm(
+                                              t('lobby.confirmDelete', {
+                                                  name: world.name,
+                                              }),
+                                          )
+                                      )
+                                          void lobby.deleteWorld(
+                                              world.id,
+                                          );
+                                  }
+                                : undefined
+                        }
                     />
                 ))}
             </ul>

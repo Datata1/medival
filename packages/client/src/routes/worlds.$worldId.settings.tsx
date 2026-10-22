@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { SettingsView } from '../features/world/SettingsView.js';
+import { useStores } from '../stores/StoreContext.js';
 
 export const Route = createFileRoute('/worlds/$worldId/settings')({
     component: SettingsRoute,
@@ -7,5 +8,15 @@ export const Route = createFileRoute('/worlds/$worldId/settings')({
 
 function SettingsRoute() {
     const navigate = useNavigate();
-    return <SettingsView onExit={() => void navigate({ to: '/' })} />;
+    const stores = useStores();
+    return (
+        <SettingsView
+            onExit={() => void navigate({ to: '/' })}
+            onLogout={() =>
+                void stores.auth
+                    .logout()
+                    .then(() => navigate({ to: '/login' }))
+            }
+        />
+    );
 }

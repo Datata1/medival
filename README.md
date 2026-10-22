@@ -49,6 +49,13 @@ pnpm --filter @medival/server start   # → http://localhost:3080
 ```
 
 Spielstände liegen in `./data/` (`MEDIVAL_DATA_DIR` zum Überschreiben).
+
+**Konten.** Wer die Seite öffnet, meldet sich an oder legt ein Konto an. Das **erste
+Konto einer Installation ist Admin** und darf Welten anlegen und löschen sowie im
+Entwicklermodus pausieren und vorspulen. Weitere Admins über `MEDIVAL_ADMINS` (Namen,
+kommagetrennt). Sessions liegen in `data/worlds.sqlite`, im Browser als signiertes
+`httpOnly`-Cookie. Das Signiergeheimnis kommt aus `MEDIVAL_SECRET` oder wird einmalig in
+`data/secret` erzeugt. Hinter HTTPS `MEDIVAL_SECURE_COOKIES=1` setzen.
 Eine Welt sichern = ihre `world_<id>.sqlite` kopieren.
 
 ## Architektur

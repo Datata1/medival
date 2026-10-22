@@ -12,7 +12,9 @@ const de = {
     },
     lobby: {
         title: 'Medival',
-        subtitle: 'Ein beschleunigtes Die-Stämme für einen Spieler',
+        subtitle: 'Eine Die-Stämme-Welt im Browser',
+        signedInAs: 'Angemeldet als {{name}}',
+        adminOnly: 'Welten anlegen und löschen dürfen nur Verwalter.',
         newWorld: 'Neue Welt',
         worldName: 'Weltname',
         create: 'Welt erschaffen',
@@ -32,6 +34,20 @@ const de = {
         barbariansCalm: 'Barbaren: träge',
         barbariansLively: 'Barbaren: lebhaft',
         presetBlitz: 'Blitz (500x)',
+    },
+    auth: {
+        loginTitle: 'Anmelden',
+        registerTitle: 'Konto anlegen',
+        name: 'Name',
+        password: 'Passwort',
+        login: 'Anmelden',
+        register: 'Konto anlegen',
+        logout: 'Abmelden',
+        toRegister: 'Noch kein Konto? Hier anlegen.',
+        toLogin: 'Schon ein Konto? Hier anmelden.',
+        passwordHint: 'Mindestens 8 Zeichen.',
+        firstIsAdmin:
+            'Das erste Konto einer Installation verwaltet die Welten.',
     },
     world: {
         backToLobby: 'Zurück zur Lobby',
@@ -360,6 +376,13 @@ const de = {
         noble: 'Adelsgeschlecht',
     },
     errors: {
+        not_authenticated: 'Bitte zuerst anmelden',
+        invalid_credentials: 'Name oder Passwort stimmt nicht',
+        forbidden: 'Dafür fehlen die Rechte',
+        name_taken: 'Dieser Name ist schon vergeben',
+        too_many_attempts:
+            'Zu viele Fehlversuche — bitte später erneut',
+        catching_up: 'Die Welt holt gerade auf — gleich noch einmal',
         village_not_found: 'Dorf nicht gefunden',
         player_not_found: 'Spieler nicht gefunden',
         world_not_found: 'Welt nicht gefunden',

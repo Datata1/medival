@@ -7,7 +7,11 @@ import {
 import { afterEach, describe, expect, it } from 'vitest';
 import { scheduleBotTick } from '../../src/ai/bot.js';
 import { act } from '../harness/act.js';
-import { createTestApp, type TestApp } from '../harness/app.js';
+import {
+    createTestApp,
+    loginAs,
+    type TestApp,
+} from '../harness/app.js';
 import {
     givenLevels,
     givenPlayer,
@@ -310,12 +314,14 @@ describe('HTTP-App ohne Port', () => {
 
     it('legt eine Welt an und liefert sie aus', async () => {
         api = await createTestApp();
+        const { cookie } = await loginAs(api, 'Verwalter');
         const health = await api.app.inject({ url: '/api/health' });
         expect(health.statusCode).toBe(200);
 
         const created = await api.app.inject({
             method: 'POST',
             url: '/api/worlds',
+            headers: { cookie },
             payload: {
                 name: 'API-Welt',
                 settings: {
@@ -338,9 +344,11 @@ describe('HTTP-App ohne Port', () => {
 
     it('meldet ungültige Einstellungen als 400, nicht als 500', async () => {
         api = await createTestApp();
+        const { cookie } = await loginAs(api, 'Verwalter');
         const res = await api.app.inject({
             method: 'POST',
             url: '/api/worlds',
+            headers: { cookie },
             payload: { settings: { speed: 'schnell' } },
         });
         expect(res.statusCode).toBe(400);
