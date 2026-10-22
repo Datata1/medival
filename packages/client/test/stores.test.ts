@@ -27,7 +27,8 @@ vi.mock('../src/api/client.js', () => ({
         getVillage: vi.fn(),
         build: vi.fn(),
         recruit: vi.fn(),
-        getMap: vi.fn(),
+        getMapTiles: vi.fn(),
+        getMapVillageAt: vi.fn(),
         getMovements: vi.fn(),
         getReports: vi.fn(),
         markReportsRead: vi.fn(),
@@ -43,6 +44,7 @@ const { MovementsStore } = await import(
     '../src/stores/MovementsStore.js'
 );
 const { ReportsStore } = await import('../src/stores/ReportsStore.js');
+const { MapStore } = await import('../src/stores/MapStore.js');
 const { RootStore } = await import('../src/stores/RootStore.js');
 type WorldSocket =
     import('../src/stores/SocketConnection.js').WorldSocket;
@@ -320,7 +322,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
     it('lädt genau das betroffene Dorf neu', async () => {
         mocked.getWorld.mockResolvedValue(worldSummary());
         mocked.getVillage.mockResolvedValue(villageView());
-        mocked.getMap.mockResolvedValue([]);
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
         mocked.getMovements.mockResolvedValue({
             gameTime: 0,
             incoming: [],
@@ -349,7 +351,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
     it('klingt nur beim Bau im eigenen Dorf', async () => {
         mocked.getWorld.mockResolvedValue(worldSummary());
         mocked.getVillage.mockResolvedValue(villageView());
-        mocked.getMap.mockResolvedValue([]);
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
         mocked.getMovements.mockResolvedValue({
             gameTime: 0,
             incoming: [],
@@ -382,7 +384,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
     it('räumt beim Schließen alles ab', async () => {
         mocked.getWorld.mockResolvedValue(worldSummary());
         mocked.getVillage.mockResolvedValue(villageView());
-        mocked.getMap.mockResolvedValue([]);
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
         mocked.getMovements.mockResolvedValue({
             gameTime: 0,
             incoming: [],
@@ -432,7 +434,7 @@ describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
             }),
         );
         mocked.getVillage.mockResolvedValue(villageView());
-        mocked.getMap.mockResolvedValue([]);
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
         mocked.getMovements.mockResolvedValue({
             gameTime: 0,
             incoming: [],
@@ -453,7 +455,7 @@ describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
     it('wählt ohne Wahl weiterhin das erste eigene Dorf', async () => {
         mocked.getWorld.mockResolvedValue(worldSummary());
         mocked.getVillage.mockResolvedValue(villageView());
-        mocked.getMap.mockResolvedValue([]);
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
         mocked.getMovements.mockResolvedValue({
             gameTime: 0,
             incoming: [],
@@ -466,5 +468,118 @@ describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
 
         expect(root.village.villageId).toBe(7);
         root.closeWorld();
+    });
+});
+
+describe('MapStore: Karte in Kacheln (19-7)', () => {
+    /** Antwortet mit leeren Kacheln für genau das angefragte Rechteck. */
+    function serveTiles(
+        villages: { id: number; x: number; y: number }[] = [],
+    ) {
+        mocked.getMapTiles.mockImplementation(
+            async (
+                _world: number,
+                r: {
+                    tx0: number;
+                    ty0: number;
+                    tx1: number;
+                    ty1: number;
+                },
+            ) => {
+                const tiles = [];
+                for (let tx = r.tx0; tx <= r.tx1; tx++)
+                    for (let ty = r.ty0; ty <= r.ty1; ty++)
+                        tiles.push({
+                            tx,
+                            ty,
+                            villages: villages
+                                .filter(
+                                    (v) =>
+                                        Math.floor(v.x / 20) === tx &&
+                                        Math.floor(v.y / 20) === ty,
+                                )
+                                .map((v) => ({
+                                    ...v,
+                                    playerId: null,
+                                    name: 'Dorf',
+                                    points: 10,
+                                })),
+                        });
+                return { tiles };
+            },
+        );
+    }
+
+    it('lädt einen 100×100-Ausschnitt in einer Anfrage und dann nicht erneut', async () => {
+        serveTiles([{ id: 1, x: 510, y: 505 }]);
+        const map = new MapStore();
+        await map.load(1);
+        await map.showArea(450, 450, 549, 549);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
+        expect(mocked.getMapTiles).toHaveBeenLastCalledWith(1, {
+            tx0: 22,
+            ty0: 22,
+            tx1: 27,
+            ty1: 27,
+        });
+        expect(map.tiles.size).toBe(36);
+        expect(map.villageAt(510, 505)?.id).toBe(1);
+
+        // Derselbe Ausschnitt noch einmal: alles im Cache.
+        await map.showArea(450, 450, 549, 549);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
+        // Ein Feld weiter rechts: nur die neue Spalte fehlt — eine Anfrage.
+        await map.showArea(470, 450, 569, 549);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(2);
+    });
+
+    it('lädt die Kachel eines eingetippten Feldes nach', async () => {
+        serveTiles([{ id: 9, x: 123, y: 456 }]);
+        const map = new MapStore();
+        await map.load(1);
+        expect(map.villageAt(123, 456)).toBeNull();
+        await map.ensurePoint(123, 456);
+        expect(map.villageAt(123, 456)?.id).toBe(9);
+        await map.ensurePoint(124, 457);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
+    });
+
+    it('verdrängt die am längsten ungenutzten Kacheln über 400', async () => {
+        serveTiles();
+        const map = new MapStore();
+        await map.load(1);
+        // 12 Ausschnitte à 36 Kacheln nebeneinander = 432 Kacheln.
+        for (let i = 0; i < 12; i++)
+            await map.showArea(i * 120, 0, i * 120 + 119, 119);
+        expect(map.tiles.size).toBe(400);
+        expect(map.isLoadedAt(0, 0)).toBe(false);
+        expect(map.isLoadedAt(11 * 120, 0)).toBe(true);
+    });
+
+    it('drosselt das Nachladen auf einmal je Sekunde', async () => {
+        vi.useFakeTimers();
+        serveTiles();
+        const map = new MapStore();
+        await map.load(1);
+        await map.showArea(0, 0, 99, 99);
+        mocked.getMapTiles.mockClear();
+        // Ein Schwall von zehn Nachrichten: eine Anfrage sofort …
+        for (let i = 0; i < 10; i++) map.reload();
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
+        // … und eine nach Ablauf der Sekunde.
+        await vi.advanceTimersByTimeAsync(1_000);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('fragt dieselben Kacheln nicht doppelt an, solange die Antwort aussteht', async () => {
+        serveTiles();
+        const map = new MapStore();
+        await map.load(1);
+        await Promise.all([
+            map.showArea(0, 0, 99, 99),
+            map.showArea(0, 0, 99, 99),
+        ]);
+        expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
     });
 });

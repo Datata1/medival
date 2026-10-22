@@ -8,6 +8,7 @@ export * from './logic/placement.js';
 export * from './logic/relations.js';
 export * from './logic/rng.js';
 export * from './logic/terrain.js';
+export * from './logic/tiles.js';
 export * from './logic/travel.js';
 export * from './schema/api.js';
 export * from './schema/events.js';

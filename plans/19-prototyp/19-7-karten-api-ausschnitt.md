@@ -1,6 +1,42 @@
 # Ticket 19-7: Karten-API nach Ausschnitt
 
-**Status:** 📋 offen · **Voraussetzung:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md)
+
+> **Ergebnis:** Die Karte wird in Kacheln zu 20×20 Feldern geladen.
+> `GET /map/tiles?tx0&ty0&tx1&ty1` liefert höchstens 6×6 Kacheln, auch leere, samt
+> Stammeskürzel des Besitzers. `GET /map/at?x&y` liefert das Dorf auf einem Feld. Die
+> alte Route `/map` mit allen Dörfern der Welt ist entfernt. Im Client hält `MapStore`
+> einen Kachel-Cache (bis 400 Kacheln, die am längsten ungenutzten fallen raus). Die
+> Kartenansicht meldet den sichtbaren 100×100-Ausschnitt (`showArea`), fehlende Kacheln
+> kommen in einer Anfrage. Gleiche Kacheln werden nicht doppelt angefragt, solange eine
+> Antwort aussteht. Nachladen nach Socket-Nachrichten ist auf einmal je Sekunde gedrosselt.
+> Das eigene Dorf kommt notfalls aus der Weltzusammenfassung, damit die Kamera vor der
+> ersten Kachel weiß, wohin. Die Zielauswahl lädt die Kachel eingetippter Koordinaten
+> nach.
+>
+> **Gemessen:** 6×6 Kacheln mit 1 801 Dörfern (sehr dichter Ausschnitt) in p50 3,1 ms,
+> p95 3,7 ms, 170 KB. Im Browser (Speed 100, 200 Bots, 20 s virtuelle Zeit) gab es
+> 6 Kachelanfragen und keine einzige auf die alte Route. Vorher lud jede
+> `village_updated`-Nachricht die ganze Welt neu.
+>
+> **Tests:** Server (`map-api.test.ts`): genau die Dörfer der Kacheln, Antwortzeit, 7×7 →
+> 400, leere Kacheln jenseits der Karte, Stammeskürzel, `/map/at`, `/map` → 404. Client
+> (`stores.test.ts`): 100×100 in einer Anfrage und danach aus dem Cache, nur die neue
+> Spalte beim Verschieben, Kachel eines eingetippten Feldes, Verdrängen über 400,
+> Drosselung, keine Doppelanfrage.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Keine Gesamtübersicht der Welt** (`/map/overview`), Entscheidung des Nutzers: Die
+>   Übersicht zeigt 100×100 Felder und lädt dieselben Kacheln.
+> - **Keine kachelgenaue Invalidierung** (`map_tile_changed`). Stattdessen wird der
+>   sichtbare Bereich nach `village_updated`/`movement` gedrosselt neu geladen. Genauer
+>   wird es, sobald 19-9 Nachrichten an Empfänger bindet. Bis dahin gehen sie an alle,
+>   und eine Kachel-Liste je Nachricht brächte wenig.
+> - **`/map/at` statt `/map/search?q=`:** Die Zielauswahl sucht nach Koordinaten, nicht
+>   nach Namen.
+> - **Punkte werden nicht auf Zehner gerundet.** Das war nur für die Invalidierung
+>   gedacht, die es so nicht gibt.
 
 ## Kontext
 

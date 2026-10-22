@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ATTITUDES } from '../logic/relations.js';
+import { MAX_TILES_PER_SIDE } from '../logic/tiles.js';
 import {
     BuildingLevelsSchema,
     BuildingTypeSchema,
@@ -193,6 +194,30 @@ export const MapVillageSchema = z.object({
     y: z.number().int(),
     name: z.string(),
     points: z.number().int(),
+    /** Stammeskürzel des Besitzers — die Karte färbt danach (19-7). */
+    tribeTag: z.string().nullable().optional(),
+});
+
+/** Anfrage nach Kacheln: höchstens `MAX_TILES_PER_SIDE` je Richtung. */
+export const MapTilesQuerySchema = z
+    .object({
+        tx0: z.coerce.number().int(),
+        ty0: z.coerce.number().int(),
+        tx1: z.coerce.number().int(),
+        ty1: z.coerce.number().int(),
+    })
+    .refine(
+        (q) =>
+            q.tx1 >= q.tx0 &&
+            q.ty1 >= q.ty0 &&
+            q.tx1 - q.tx0 < MAX_TILES_PER_SIDE &&
+            q.ty1 - q.ty0 < MAX_TILES_PER_SIDE,
+        'Zu großer Kartenausschnitt',
+    );
+
+export const MapPointQuerySchema = z.object({
+    x: z.coerce.number().int(),
+    y: z.coerce.number().int(),
 });
 
 export const MovementInfoSchema = z.object({
@@ -274,7 +299,21 @@ export const SendUnitsResponseSchema = z.object({
 export const DeletedResponseSchema = z.object({ deleted: z.boolean() });
 export const OkResponseSchema = z.object({ ok: z.boolean() });
 export const WorldListSchema = z.array(WorldListEntrySchema);
-export const MapSchema = z.array(MapVillageSchema);
+/** Kacheln eines Ausschnitts (19-7). */
+export const MapTilesResponseSchema = z.object({
+    tiles: z.array(
+        z.object({
+            tx: z.number().int(),
+            ty: z.number().int(),
+            villages: z.array(MapVillageSchema),
+        }),
+    ),
+});
+
+/** Das Dorf auf einem Feld, falls dort eins steht (Zielauswahl, 19-7). */
+export const MapVillageAtResponseSchema = z.object({
+    village: MapVillageSchema.nullable(),
+});
 export const ReportListSchema = z.array(ReportSchema);
 
 /** Nachrichten, die der Server über die WebSocket-Verbindung pusht. */
