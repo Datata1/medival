@@ -1,4 +1,5 @@
 import {
+    type BuildingType,
     MAX_TILES_PER_SIDE,
     type MapVillage,
     type Resources,
@@ -343,6 +344,7 @@ export class MapStore {
         target: number,
         kind: 'attack' | 'support',
         units: Units,
+        catapultTarget?: BuildingType,
     ): Promise<boolean> {
         const worldId = this.worldId;
         if (worldId === null) return false;
@@ -357,6 +359,7 @@ export class MapStore {
                 target,
                 kind,
                 units,
+                catapultTarget,
             );
             this.onActionResult?.(true);
             return true;

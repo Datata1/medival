@@ -39,6 +39,8 @@ export const SendIntentSchema = z.object({
     targetVillageId: z.number().int().positive(),
     movement: z.enum(['attack', 'support']),
     units: UnitsSchema,
+    /** Ziel mitgeschickter Katapulte (19-11). */
+    catapultTarget: z.enum(BUILDING_ORDER).optional(),
 });
 
 /** Rohstoffe liefern (Plan 16). */

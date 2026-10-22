@@ -78,6 +78,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         recruitedAt: 'stable',
         attackClass: 'cavalry',
     },
+    // Seit 19-11 in der Werkstatt statt der Kaserne, wie in Tribal Wars.
     ram: {
         attack: 2,
         defense: 20,
@@ -87,7 +88,23 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         pop: 5,
         cost: { wood: 300, clay: 200, iron: 200 },
         recruitTimeS: 4800,
-        recruitedAt: 'barracks',
+        recruitedAt: 'workshop',
+        attackClass: 'infantry',
+    },
+    /**
+     * Katapult (plans/19-prototyp/19-11): beschießt beim Angriff ein Gebäude,
+     * das beim Abschicken gewählt wird. Werte nach Tribal Wars.
+     */
+    catapult: {
+        attack: 100,
+        defense: 100,
+        defenseCavalry: 50,
+        speedMinPerField: 30,
+        carry: 0,
+        pop: 8,
+        cost: { wood: 320, clay: 400, iron: 100 },
+        recruitTimeS: 7200,
+        recruitedAt: 'workshop',
         attackClass: 'infantry',
     },
     noble: {
@@ -112,6 +129,7 @@ export const UNIT_ORDER = [
     'light_cavalry',
     'heavy_cavalry',
     'ram',
+    'catapult',
     'noble',
 ] as const satisfies readonly UnitType[];
 

@@ -255,6 +255,7 @@ export function planBot(snapshot: BotSnapshot): {
             targetVillageId: attack.targetVillageId,
             movement: 'attack',
             units: attack.units,
+            catapultTarget: attack.catapultTarget,
         });
     }
 

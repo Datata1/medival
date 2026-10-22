@@ -76,6 +76,7 @@ function runIntent(world: World, intent: Intent): void {
                 intent.targetVillageId,
                 intent.movement,
                 intent.units,
+                intent.catapultTarget,
             );
             break;
     }

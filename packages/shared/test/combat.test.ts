@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+    CATAPULTS_PER_LEVEL,
+    catapultDamage,
     createRng,
     Duration,
     isScoutMission,
@@ -206,5 +208,26 @@ describe('Spähkampf (19-10)', () => {
             rng: () => 0.5,
         });
         expect(r.attackerWon).toBe(false);
+    });
+});
+
+describe('Katapulte (19-11)', () => {
+    it('senken Stufe für Stufe nach der Tabelle', () => {
+        // Stufe 3 → 2 kostet 2, 2 → 1 kostet 2, 1 → 0 kostet 2.
+        expect(catapultDamage(6, 'barracks', 3, true)).toBe(0);
+        expect(catapultDamage(5, 'barracks', 3, true)).toBe(1);
+        expect(catapultDamage(1, 'barracks', 3, true)).toBe(3);
+        expect(CATAPULTS_PER_LEVEL).toHaveLength(30);
+    });
+
+    it('lassen Hauptgebäude, Bauernhof und Speicher auf Stufe 1', () => {
+        expect(catapultDamage(500, 'headquarters', 5, true)).toBe(1);
+        expect(catapultDamage(500, 'farm', 5, true)).toBe(1);
+        expect(catapultDamage(500, 'barracks', 5, true)).toBe(0);
+    });
+
+    it('wirken bei verlorenem Kampf nur zur Hälfte', () => {
+        expect(catapultDamage(4, 'barracks', 3, false)).toBe(2);
+        expect(catapultDamage(4, 'barracks', 3, true)).toBe(1);
     });
 });

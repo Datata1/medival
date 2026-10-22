@@ -1,4 +1,7 @@
 import {
+    BUILDING_ORDER,
+    type BuildingType,
+    DEFAULT_CATAPULT_TARGET,
     type MapVillage,
     travelTime,
     UNIT_ORDER,
@@ -26,6 +29,9 @@ export const SendUnitsForm = observer(function SendUnitsForm({
     const { t } = useTranslation();
     const { map, village, world } = useStores();
     const [counts, setCounts] = useState<Record<string, string>>({});
+    const [catapultTarget, setCatapultTarget] = useState<BuildingType>(
+        DEFAULT_CATAPULT_TARGET,
+    );
 
     const homeUnits: Units = village.view?.units ?? {};
     const unitSpeed = world.summary?.settings.unitSpeed ?? 1;
@@ -57,6 +63,9 @@ export const SendUnitsForm = observer(function SendUnitsForm({
             target.id,
             kind,
             chosen,
+            kind === 'attack' && chosen.catapult
+                ? catapultTarget
+                : undefined,
         );
         if (sent) {
             setCounts({});
@@ -108,6 +117,32 @@ export const SendUnitsForm = observer(function SendUnitsForm({
                     </Button>
                 </div>
             ))}
+            {!targetIsOwn && (chosen.catapult ?? 0) > 0 && (
+                <div className="flex flex-wrap items-center gap-2 py-0.5">
+                    <label
+                        className="min-w-40"
+                        htmlFor="send-catapult-target"
+                    >
+                        {t('map.catapultTarget')}
+                    </label>
+                    <select
+                        id="send-catapult-target"
+                        value={catapultTarget}
+                        onChange={(e) => {
+                            const picked = BUILDING_ORDER.find(
+                                (b) => b === e.target.value,
+                            );
+                            if (picked) setCatapultTarget(picked);
+                        }}
+                    >
+                        {BUILDING_ORDER.map((b) => (
+                            <option key={b} value={b}>
+                                {t(`buildings.${b}`)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
             {travel !== null && (
                 <p className="text-ink-light">
                     {t('map.travelTime', {

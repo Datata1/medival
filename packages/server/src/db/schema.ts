@@ -120,6 +120,10 @@ export const movements = sqliteTable(
         departureGameTime: integer('departure_game_time').notNull(),
         arrivalGameTime: integer('arrival_game_time').notNull(),
         carriesJson: text('carries_json').notNull().default('{}'),
+        /** Ziel der Katapulte eines Angriffs (19-11). */
+        catapultTarget: text('catapult_target', {
+            enum: BUILDING_ORDER,
+        }),
     },
     (t) => [index('idx_movements_target').on(t.targetVillageId)],
 );

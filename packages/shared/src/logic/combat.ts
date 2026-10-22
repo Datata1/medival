@@ -3,6 +3,10 @@ import {
     WALL_DEFENSE_FACTOR_PER_LEVEL,
 } from '../data/buildings.js';
 import {
+    CATAPULTS_PER_LEVEL,
+    MIN_LEVEL_AFTER_CATAPULTS,
+} from '../data/siege.js';
+import {
     NOBLE_LOYALTY_MAX,
     NOBLE_LOYALTY_MIN,
     SPY_DEFENSE_FACTOR,
@@ -11,7 +15,12 @@ import {
     UNITS,
 } from '../data/units.js';
 import { entriesOf } from '../lib/objects.js';
-import type { BattleResult, Units, UnitType } from '../types.js';
+import type {
+    BattleResult,
+    BuildingType,
+    Units,
+    UnitType,
+} from '../types.js';
 import { type Rng, randInt } from './rng.js';
 
 export const LUCK_RANGE = 0.15;
@@ -256,4 +265,32 @@ export function spyTier(survivors: number, sent: number): SpyTier {
     if (share >= SPY_TIER_UNITS_AWAY) return 3;
     if (share >= SPY_TIER_BUILDINGS) return 2;
     return 1;
+}
+
+/**
+ * Wie weit Katapulte ein Gebäude senken (plans/19-prototyp/19-11).
+ *
+ * Stufe für Stufe nach `CATAPULTS_PER_LEVEL`: Reichen die Katapulte für die
+ * aktuelle Stufe, fällt sie, und die verbrauchten fehlen für die nächste. Bei
+ * verlorenem Kampf wirkt nur die Hälfte — wie beim Rammbock, dessen halbe
+ * Wirkung schon während des Gefechts zählt. Liefert die neue Stufe.
+ */
+export function catapultDamage(
+    catapults: number,
+    building: BuildingType,
+    level: number,
+    attackerWon: boolean,
+): number {
+    let left = attackerWon ? catapults : Math.floor(catapults / 2);
+    let current = level;
+    const floor = MIN_LEVEL_AFTER_CATAPULTS[building] ?? 0;
+    while (current > floor) {
+        const need =
+            CATAPULTS_PER_LEVEL[current - 1] ??
+            Number.POSITIVE_INFINITY;
+        if (left < need) break;
+        left -= need;
+        current--;
+    }
+    return current;
 }

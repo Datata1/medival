@@ -1,6 +1,52 @@
 # Ticket 19-11: Werkstatt, Katapult, Rammbock-Umzug
 
-**Status:** 📋 offen · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md) · **Vor:** [19-13](19-13-schmiede-versammlungsplatz-versteck.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md) · **Vor:** [19-13](19-13-schmiede-versammlungsplatz-versteck.md)
+
+> **Ergebnis:**
+>
+> - **Gebäude `workshop`** (Werkstatt): bis Stufe 15, verlangt Hauptgebäude 10. Rammbock
+>   und neues **Katapult** entstehen dort, in einer eigenen Schleife neben Kaserne und
+>   Stall. Ohne Werkstatt meldet die Rekrutierung `workshop_missing`.
+> - **Katapultschaden** (`catapultDamage`, pur): Stufe für Stufe nach
+>   `CATAPULTS_PER_LEVEL` (`shared/src/data/siege.ts`). Verliert der Angreifer, wirkt nur
+>   die Hälfte. Hauptgebäude, Bauernhof und Speicher fallen nie unter Stufe 1. Der Schuss
+>   kommt nach den Rammen, beim Wall also auf die schon gerammte Stufe.
+> - **Ziel beim Abschicken:** `catapultTarget` im Sendeauftrag und in `movements`,
+>   ohne Angabe das Hauptgebäude. Das Sendeformular zeigt die Auswahl, sobald Katapulte
+>   dabei sind. Beide Berichte nennen den Schaden (`buildingDamage`).
+> - **Laufender Ausbau** des beschossenen Gebäudes baut auf der neuen Stufe weiter: Wer
+>   10 → 11 baut und auf 7 beschossen wird, hat danach Stufe 8.
+> - **Bots:** `raider` schießt auf die Kaserne, alle anderen auf den Wall. Katapulte
+>   sind 5 % der `raider`-Mischung.
+> - **Migrationen:** Spalte `movements.catapult_target`, fehlende Gebäudezeilen (Stufe 0)
+>   für jeden Typ aus `BUILDING_ORDER` (dient auch 19-13/19-14), `CHECK`-Listen über
+>   `refreshCheckLists` aus 19-10. Ein alter Rammbock-Auftrag, der hinter Kasernen-
+>   aufträgen wartete, startet jetzt von selbst in der Werkstatt (`settleRecruits`).
+> - **Client:** Werkstatt auf dem Dorfplatz und in der Dorfnavigation, Rekrutierung in
+>   der Werkstatt, Katapultziel im Sendeformular, Schaden im Bericht, Sprites
+>   `building.workshop`, `yard.workshop`, `unit.catapult`, Texte.
+>
+> **Tests:** `shared/test/combat.test.ts` prüft Tabelle, Mindeststufe und halben Schaden.
+> `test/integration/siege.test.ts`: 12 Katapulte schießen die Kaserne von 10 auf 7,
+> Punkte sinken, beide Berichte nennen den Schaden. 30 Katapulte ohne Ziel lassen das
+> Hauptgebäude auf 1. Ein laufender Ausbau endet auf beschossener Stufe + 1. Rammen
+> verlangen die Werkstatt und werden fertig, während die Kaserne noch Speere baut. Ein
+> alter wartender Rammbock-Auftrag läuft an. Eine alte Welt ohne Werkstatt-Zeile
+> bekommt sie beim Öffnen.
+>
+> **Im Browser:** Die Spielerin hat Werkstatt 3, sieht sie auf dem Dorfplatz und kann
+> dort Rammen und Katapulte rekrutieren. 10 Katapulte mit 300 Äxten schießen das
+> Hauptgebäude eines Barbarendorfs von 5 auf 1, genau nach Tabelle. Der Bericht zeigt
+> „Katapulte trafen Hauptgebäude: Stufe 5 → 1" (Screenshot geprüft).
+>
+> **Abweichungen von der Planung:**
+>
+> - **Fehlercode `workshop_missing`** statt `requirements_missing`, passend zu
+>   `barracks_missing` und `stable_missing`.
+> - **Szenario mit 12 statt 50 Katapulten:** 50 würden die Kaserne ganz abreißen. Mit 12
+>   prüft der Test eine genaue Zwischenstufe.
+> - **Migration ohne Kopie aus `data/`:** Der Test legt den alten Auftrag per SQL an,
+>   so wie er vor 19-11 in der Schlange stand.
 
 ## Kontext
 

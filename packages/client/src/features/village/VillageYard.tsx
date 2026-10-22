@@ -18,6 +18,7 @@ const BUILDING_SLOTS: Record<BuildingType, { x: number; y: number }> = {
     headquarters: { x: 50, y: 45 },
     barracks: { x: 27, y: 25 },
     stable: { x: 73, y: 25 },
+    workshop: { x: 15, y: 78 },
     warehouse: { x: 15, y: 50 },
     farm: { x: 85, y: 50 },
     market: { x: 28, y: 72 },

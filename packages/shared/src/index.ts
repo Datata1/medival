@@ -1,4 +1,5 @@
 export * from './data/buildings.js';
+export * from './data/siege.js';
 export * from './data/units.js';
 export * from './lib/objects.js';
 export * from './logic/combat.js';
@@ -49,6 +50,7 @@ export const STARTING_BUILDINGS = {
     farm: 1,
     barracks: 0,
     stable: 0,
+    workshop: 0,
     wall: 0,
     market: 0,
     academy: 0,

@@ -1,6 +1,7 @@
 import {
     attackMargin,
     attitudeOf,
+    type BuildingType,
     distance,
     entriesOf,
     travelTime,
@@ -59,6 +60,17 @@ export interface AttackPlan {
     kind: 'attack';
     targetVillageId: number;
     units: Units;
+    /** Wenn Katapulte mitgehen: was sie beschießen (19-11). */
+    catapultTarget?: BuildingType;
+}
+
+/**
+ * Was Katapulte eines Bots beschießen: `raider` die Kaserne — wer keine
+ * Truppen mehr nachziehen kann, ist als Gegner erledigt —, alle anderen den
+ * Wall, damit der nächste Angriff leichter durchkommt.
+ */
+function catapultTargetFor(personality: Personality): BuildingType {
+    return personality === 'raider' ? 'barracks' : 'wall';
 }
 
 export interface SupportPlan {
@@ -167,6 +179,12 @@ export function decideAttack(
                     kind: 'attack',
                     targetVillageId: target.villageId,
                     units: force,
+                    ...((force.catapult ?? 0) > 0
+                        ? {
+                              catapultTarget:
+                                  catapultTargetFor(personality),
+                          }
+                        : {}),
                 },
                 score,
             };

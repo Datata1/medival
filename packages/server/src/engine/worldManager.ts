@@ -129,6 +129,14 @@ function migrateWorldDb(sqlite: Database.Database): void {
         `);
     }
 
+    // Plan 19-11: Katapultziel je Bewegung; für jedes Gebäude eine Zeile in
+    // jedem Dorf — ein neuer Gebäudetyp hätte sonst keine, und ein Ausbau
+    // liefe als UPDATE ins Leere.
+    if (!columnsOf(sqlite, 'movements').includes('catapult_target'))
+        sqlite.exec(
+            'ALTER TABLE movements ADD COLUMN catapult_target TEXT',
+        );
+
     // Zuletzt (19-10): CHECK-Listen auf den Stand von UNIT_ORDER bzw.
     // BUILDING_ORDER bringen — nach allen Spaltenmigrationen oben, damit die
     // Neuanlage die bereits umgerechneten Spalten übernimmt.
@@ -138,6 +146,10 @@ function migrateWorldDb(sqlite: Database.Database): void {
         buildings: BUILDING_ORDER,
         build_queue: BUILDING_ORDER,
     });
+    const addRows = sqlite.prepare(
+        'INSERT OR IGNORE INTO buildings (village_id, type, level) SELECT id, ?, 0 FROM villages',
+    );
+    for (const type of BUILDING_ORDER) addRows.run(type);
 }
 
 function loadSecret(dataDir: string): string {

@@ -60,6 +60,18 @@ function BattleDetail({ report }: { report: BattleReport }) {
                     })}
                 </p>
             )}
+            {p.buildingDamage &&
+                p.buildingDamage.from !== p.buildingDamage.to && (
+                    <p>
+                        {t('reports.buildingDamaged', {
+                            building: t(
+                                `buildings.${p.buildingDamage.building}`,
+                            ),
+                            before: p.buildingDamage.from,
+                            after: p.buildingDamage.to,
+                        })}
+                    </p>
+                )}
             {p.loyaltyBefore !== p.loyaltyAfter && (
                 <p>
                     {t('reports.loyalty', {
