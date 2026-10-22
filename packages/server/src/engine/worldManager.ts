@@ -103,6 +103,10 @@ function migrateWorldDb(sqlite: Database.Database): void {
     }
 }
 
+function villageCount(sqlite: Database.Database): number {
+    return sqlite.prepare('SELECT id FROM villages').all().length;
+}
+
 function columnsOf(sqlite: Database.Database, table: string): string[] {
     return sqlite
         .prepare(`PRAGMA table_info(${table})`)
@@ -130,6 +134,11 @@ export class WorldManager {
             this.meta.exec(
                 'ALTER TABLE worlds ADD COLUMN epoch_zero_ms INTEGER',
             );
+        // Plan 19-6: Zähler der Ansiedlungen.
+        if (!columnsOf(this.meta, 'worlds').includes('settled_count'))
+            this.meta.exec(
+                'ALTER TABLE worlds ADD COLUMN settled_count INTEGER',
+            );
         this.persistTimer = setInterval(() => {
             for (const w of this.worlds.values())
                 if (w.clock.running) w.persist();
@@ -143,7 +152,7 @@ export class WorldManager {
     }
 
     listWorlds(): Array<
-        Omit<WorldMeta, 'rngState' | 'epochZeroMs'> & {
+        Omit<WorldMeta, 'rngState' | 'epochZeroMs' | 'settledCount'> & {
             createdAt: number;
         }
     > {
@@ -218,7 +227,7 @@ export class WorldManager {
         sqlite.pragma('journal_mode = WAL');
         sqlite.exec(WORLD_DDL);
         const db = drizzle(sqlite);
-        generateMap(db, settings, createRng(seed));
+        const settledCount = generateMap(db, settings, createRng(seed));
 
         const world = new World(
             {
@@ -230,6 +239,7 @@ export class WorldManager {
                 gameTimeMs: 0,
                 rngState: seed,
                 epochZeroMs: null,
+                settledCount,
             },
             sqlite,
             db,
@@ -271,6 +281,9 @@ export class WorldManager {
                 gameTimeMs: row.game_time_ms,
                 rngState: row.rng_state,
                 epochZeroMs: row.epoch_zero_ms ?? null,
+                // Vor 19-6 gab es keinen Zähler: Die Dorfzahl ist dann die
+                // beste Schätzung, wie weit der Kreis schon reicht.
+                settledCount: row.settled_count ?? villageCount(sqlite),
             },
             sqlite,
             db,
@@ -313,6 +326,10 @@ export class WorldManager {
     private persistMeta(id: number, patch: MetaPatch): void {
         const sets: string[] = [];
         const args: unknown[] = [];
+        if (patch.settledCount !== undefined) {
+            sets.push('settled_count = ?');
+            args.push(patch.settledCount);
+        }
         if (patch.epochZeroMs != null) {
             sets.push('epoch_zero_ms = ?');
             args.push(Math.round(patch.epochZeroMs));

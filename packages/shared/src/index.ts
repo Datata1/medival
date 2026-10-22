@@ -4,6 +4,7 @@ export * from './lib/objects.js';
 export * from './logic/combat.js';
 export * from './logic/continent.js';
 export * from './logic/formulas.js';
+export * from './logic/placement.js';
 export * from './logic/relations.js';
 export * from './logic/rng.js';
 export * from './logic/terrain.js';
@@ -25,9 +26,11 @@ import type { WorldSettings } from './types.js';
 export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     speed: 1,
     unitSpeed: 1,
-    mapSize: 100,
+    mapSize: 1000,
     botCount: 30,
     barbarianCount: 80,
+    settlementDensity: 0.15,
+    barbariansPerSettler: 2,
     barbarianAttemptsPerHour: 1,
     barbarianMaxPoints: 1500,
     victoryVillageShare: 0.6,

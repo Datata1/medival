@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
     Duration,
     farmCapacity,
+    settlementCapacity,
     terrainAt,
     totalBuildingPop,
 } from '@medival/shared';
@@ -100,24 +101,43 @@ describe('world creation', () => {
         }
     });
 
-    it('legt auch eine randvolle kleine Karte an', () => {
-        // 20×20 erlaubt 100 Dörfer. Die Bots halten zusätzlich Abstand 8 zum
-        // Zentrum, es bleibt also kaum Fläche übrig — genau der Fall, in dem
-        // die Geländesperre `pickFreeSpot` aufgeben lassen könnte.
+    it('legt eine Karte genau an ihrer Kapazitätsgrenze an', () => {
+        /*
+         * Seit 19-6 entscheidet der Siedlungskreis, nicht die Kartenfläche:
+         * Auf 20×20 fasst er bei der höchsten Dichte (0,2) und Mindestabstand
+         * 1 genau `settlementCapacity(20, 0.2)` = 40 Dörfer. Genau der Fall, in
+         * dem Gelände und Abstand die Platzsuche aufgeben lassen könnten.
+         * Vorher prüfte dieser Test 100 Dörfer über die ganze Fläche.
+         */
+        const capacity = settlementCapacity(20, 0.2);
+        expect(capacity).toBe(40);
         for (const seed of [893, 813, 748, 4711]) {
             const world = manager.createWorld(`Enge ${seed}`, {
                 speed: 100,
                 mapSize: 20,
-                botCount: 20,
-                barbarianCount: 79,
+                settlementDensity: 0.2,
+                botCount: 10,
+                barbarianCount: capacity - 11,
                 barbarianAttemptsPerHour: 0,
                 seed,
             });
             const count = world.sqlite
                 .prepare('SELECT COUNT(*) AS n FROM villages')
                 .get() as { n: number };
-            expect(count.n, `Seed ${seed}`).toBe(100);
+            expect(count.n, `Seed ${seed}`).toBe(capacity);
         }
+    });
+
+    it('lehnt mehr Dörfer ab, als der Siedlungskreis fasst', () => {
+        expect(() =>
+            manager.createWorld('Zu eng', {
+                mapSize: 20,
+                settlementDensity: 0.2,
+                botCount: 10,
+                barbarianCount: 40,
+                seed: 1,
+            }),
+        ).toThrow(/Zu viele Dörfer/);
     });
 });
 
