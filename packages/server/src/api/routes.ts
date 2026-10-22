@@ -10,14 +10,19 @@ import {
     distance,
     FoundTribeRequestSchema,
     InvitePlayerRequestSchema,
+    MapPointQuerySchema,
+    MapTilesQuerySchema,
     NumericIdSchema,
     PLAYER_ID,
     RecruitRequestSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
+    TILE_SIZE,
+    tileKey,
+    tileOf,
     UnitsSchema,
 } from '@medival/shared';
-import { desc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, between, desc, eq, inArray, or } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import {
     firstOrThrow,
@@ -157,21 +162,53 @@ export function registerRoutes(
         return { deleted: manager.deleteWorld(Number(req.params.id)) };
     });
 
+    /*
+     * Karte in Kacheln (plans/19-prototyp/19-7). Vorher lieferte `/map` alle
+     * Dörfer der Welt in einer Antwort; auf 1000×1000 mit zehntausenden
+     * Dörfern wären das Megabytes je Abruf.
+     */
     app.get<{ Params: { id: string } }>(
-        '/api/worlds/:id/map',
+        '/api/worlds/:id/map/tiles',
         (req) => {
             const world = requireWorld(manager, req.params.id);
-            return world.db
-                .select({
-                    id: villages.id,
-                    playerId: villages.playerId,
-                    x: villages.x,
-                    y: villages.y,
-                    name: villages.name,
-                    points: villages.points,
-                })
-                .from(villages)
-                .all();
+            const q = parseInput(MapTilesQuerySchema, req.query);
+            const x0 = q.tx0 * TILE_SIZE;
+            const y0 = q.ty0 * TILE_SIZE;
+            const rows = mapVillagesInBox(
+                world,
+                x0,
+                y0,
+                (q.tx1 + 1) * TILE_SIZE - 1,
+                (q.ty1 + 1) * TILE_SIZE - 1,
+            );
+            const byTile = new Map<string, typeof rows>();
+            for (const v of rows) {
+                const { tx, ty } = tileOf(v.x, v.y);
+                const key = tileKey(tx, ty);
+                byTile.set(key, [...(byTile.get(key) ?? []), v]);
+            }
+            // Auch leere Kacheln: Der Client merkt sich, dass dort nichts ist.
+            const tiles = [];
+            for (let tx = q.tx0; tx <= q.tx1; tx++)
+                for (let ty = q.ty0; ty <= q.ty1; ty++)
+                    tiles.push({
+                        tx,
+                        ty,
+                        villages: byTile.get(tileKey(tx, ty)) ?? [],
+                    });
+            return { tiles };
+        },
+    );
+
+    // Das Dorf auf einem Feld — für die Zielauswahl nach Koordinaten.
+    app.get<{ Params: { id: string } }>(
+        '/api/worlds/:id/map/at',
+        (req) => {
+            const world = requireWorld(manager, req.params.id);
+            const { x, y } = parseInput(MapPointQuerySchema, req.query);
+            return {
+                village: mapVillagesInBox(world, x, y, x, y)[0] ?? null,
+            };
         },
     );
 
@@ -594,6 +631,37 @@ export function registerRoutes(
             socket.on('close', unsubscribe);
         },
     );
+}
+
+/** Kartendörfer im Rechteck, samt Stammeskürzel des Besitzers (19-7). */
+function mapVillagesInBox(
+    world: World,
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+) {
+    return world.db
+        .select({
+            id: villages.id,
+            playerId: villages.playerId,
+            x: villages.x,
+            y: villages.y,
+            name: villages.name,
+            points: villages.points,
+            tribeTag: tribes.tag,
+        })
+        .from(villages)
+        .leftJoin(players, eq(players.id, villages.playerId))
+        .leftJoin(tribes, eq(tribes.id, players.tribeId))
+        .where(
+            and(
+                between(villages.x, x0, x1),
+                between(villages.y, y0, y1),
+            ),
+        )
+        .orderBy(asc(villages.id))
+        .all();
 }
 
 function worldSummary(world: World, devMode: boolean) {

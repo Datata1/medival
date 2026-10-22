@@ -23,7 +23,7 @@ interface MiniScene {
 }
 
 /** Ausschnitt → Bildpunkte: quadratisch, mittig im Rahmen. */
-function fit(width: number, height: number, span: number) {
+function fitWindow(width: number, height: number, span: number) {
     const scale = Math.min(width, height) / span;
     return {
         scale,
@@ -44,7 +44,7 @@ function drawMini(
     if (!scene) return;
 
     const { window: win, mapSize } = scene;
-    const { scale, left, top } = fit(width, height, win.span);
+    const { scale, left, top } = fitWindow(width, height, win.span);
     const px = (x: number) => left + (x - win.x0) * scale;
     const py = (y: number) => top + (y - win.y0) * scale;
 
@@ -203,7 +203,7 @@ export function MiniMap({
                 const canvas = canvasRef.current;
                 if (!canvas || !win) return;
                 const rect = canvas.getBoundingClientRect();
-                const { scale, left, top } = fit(
+                const { scale, left, top } = fitWindow(
                     rect.width,
                     rect.height,
                     win.span,

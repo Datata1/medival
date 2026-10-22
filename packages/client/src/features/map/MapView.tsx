@@ -1,10 +1,13 @@
+import { type MapVillage, PLAYER_ID } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { SpriteId } from '../../assets/registry.js';
 import { Button } from '../../components/Button.js';
 import { Card } from '../../components/Card.js';
 import { Icon } from '../../components/Icon.js';
 import { useStores } from '../../stores/StoreContext.js';
+import { miniWindow } from './derive.js';
 import { MapCanvas, type MapScene } from './MapCanvas.js';
 import { MiniMap } from './MiniMap.js';
 import { MovementsPanel } from './MovementsPanel.js';
@@ -80,10 +83,19 @@ export const MapView = observer(function MapView() {
     const { map, world, village, movements } = useStores();
 
     const activeVillageId = village.villageId;
-    const home =
+    /*
+     * Das aktive Dorf aus den Kacheln — oder, solange seine Kachel noch nicht
+     * geladen ist, aus der Weltzusammenfassung. Ohne diesen Rückfall wüsste
+     * die Kamera nicht, wohin, und ohne Kamera lädt keine Kachel (19-7).
+     */
+    const own = world.playerVillages.find(
+        (v) => v.id === activeVillageId,
+    );
+    const home: MapVillage | undefined =
         activeVillageId === null
             ? undefined
-            : map.villageById(activeVillageId);
+            : (map.villageById(activeVillageId) ??
+              (own ? { ...own, playerId: PLAYER_ID } : undefined));
     const mapSize = world.summary?.settings.mapSize ?? 100;
     const sprites = useSpriteAtlas(MAP_SPRITE_IDS);
     const {
@@ -97,6 +109,27 @@ export const MapView = observer(function MapView() {
     } = useMapCamera(home, map.list, mapSize, (target) =>
         map.select(target),
     );
+
+    /*
+     * Dem Store melden, was zu sehen ist: der Ausschnitt der Übersicht, der
+     * die Nahansicht einschließt. Der Effekt synchronisiert den Store mit der
+     * Kamera, die als React-State im Kamera-Hook lebt; geladen wird nur, was
+     * im Cache fehlt.
+     */
+    const win = camera ? miniWindow(camera, mapSize) : null;
+    const winX = win?.x0;
+    const winY = win?.y0;
+    const winSpan = win?.span;
+    useEffect(() => {
+        if (winX === undefined || winY === undefined || !winSpan)
+            return;
+        void map.showArea(
+            winX,
+            winY,
+            winX + winSpan - 1,
+            winY + winSpan - 1,
+        );
+    }, [map, winX, winY, winSpan]);
 
     const scene: MapScene | null = camera
         ? {

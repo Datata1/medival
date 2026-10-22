@@ -1,4 +1,4 @@
-import type { MapVillage } from '@medival/shared';
+import { type MapVillage, PLAYER_ID } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +24,7 @@ export const TargetPicker = observer(function TargetPicker({
     ) => ReactNode;
 }) {
     const { t } = useTranslation();
-    const { map, village } = useStores();
+    const { map, village, world } = useStores();
 
     const [coords, setCoords] = useState(() => {
         const selected = map.selected;
@@ -33,6 +33,24 @@ export const TargetPicker = observer(function TargetPicker({
             : { x: '', y: '' };
     });
 
+    /*
+     * Seit 19-7 kennt der Store nur die Kacheln, die schon gezeigt wurden.
+     * Wer Koordinaten eintippt, lädt die Kachel des Feldes nach — im
+     * Ereignis, nicht beim Rendern.
+     */
+    const changeCoords = (next: { x: string; y: string }) => {
+        setCoords(next);
+        const nx = Number(next.x);
+        const ny = Number(next.y);
+        if (
+            next.x.trim() !== '' &&
+            next.y.trim() !== '' &&
+            Number.isInteger(nx) &&
+            Number.isInteger(ny)
+        )
+            void map.ensurePoint(nx, ny);
+    };
+
     const x = Number(coords.x);
     const y = Number(coords.y);
     const complete =
@@ -40,13 +58,17 @@ export const TargetPicker = observer(function TargetPicker({
         coords.y.trim() !== '' &&
         Number.isFinite(x) &&
         Number.isFinite(y);
-    const target = complete
-        ? (map.list.find((v) => v.x === x && v.y === y) ?? null)
-        : null;
-    const home =
+    // Nur geladene Kacheln sind bekannt; eine fehlende lädt `setCoords`.
+    const target = complete ? map.villageAt(x, y) : null;
+    // Ohne geladene Kachel aus der Weltzusammenfassung (19-7).
+    const own = world.playerVillages.find(
+        (v) => v.id === village.villageId,
+    );
+    const home: MapVillage | undefined =
         village.villageId === null
             ? undefined
-            : map.villageById(village.villageId);
+            : (map.villageById(village.villageId) ??
+              (own ? { ...own, playerId: PLAYER_ID } : undefined));
     const isHome = target !== null && target.id === village.villageId;
 
     return (
@@ -62,7 +84,7 @@ export const TargetPicker = observer(function TargetPicker({
                     placeholder="X"
                     value={coords.x}
                     onChange={(e) =>
-                        setCoords((c) => ({ ...c, x: e.target.value }))
+                        changeCoords({ ...coords, x: e.target.value })
                     }
                 />
                 <input
@@ -72,7 +94,7 @@ export const TargetPicker = observer(function TargetPicker({
                     placeholder="Y"
                     value={coords.y}
                     onChange={(e) =>
-                        setCoords((c) => ({ ...c, y: e.target.value }))
+                        changeCoords({ ...coords, y: e.target.value })
                     }
                 />
                 {target && !isHome && (

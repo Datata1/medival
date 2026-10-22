@@ -2,13 +2,15 @@ import {
     type BuildingType,
     DeletedResponseSchema,
     DiplomacyViewSchema,
-    MapSchema,
+    MapTilesResponseSchema,
+    MapVillageAtResponseSchema,
     MovementsResponseSchema,
     OkResponseSchema,
     PlayerProfileSchema,
     ReportListSchema,
     type Resources,
     SendUnitsResponseSchema,
+    type TileRange,
     type Units,
     type UnitType,
     VillageViewSchema,
@@ -169,8 +171,16 @@ export const api = {
             `/api/worlds/${worldId}/players/${playerId}`,
             PlayerProfileSchema,
         ),
-    getMap: (worldId: number) =>
-        request(`/api/worlds/${worldId}/map`, MapSchema),
+    getMapTiles: (worldId: number, range: TileRange) =>
+        request(
+            `/api/worlds/${worldId}/map/tiles?tx0=${range.tx0}&ty0=${range.ty0}&tx1=${range.tx1}&ty1=${range.ty1}`,
+            MapTilesResponseSchema,
+        ),
+    getMapVillageAt: (worldId: number, x: number, y: number) =>
+        request(
+            `/api/worlds/${worldId}/map/at?x=${x}&y=${y}`,
+            MapVillageAtResponseSchema,
+        ),
     getMovements: (worldId: number) =>
         request(
             `/api/worlds/${worldId}/movements`,
