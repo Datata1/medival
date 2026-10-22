@@ -4,8 +4,8 @@ import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import type { SpriteId } from '../../assets/registry.js';
+import { Arrival } from '../../components/Arrival.js';
 import { Card } from '../../components/Card.js';
-import { Countdown } from '../../components/Countdown.js';
 import { Icon } from '../../components/Icon.js';
 import { useStores } from '../../stores/StoreContext.js';
 import { movementRows } from './derive.js';
@@ -78,8 +78,8 @@ export const VillageMovementsCard = observer(
                                         ? `(${movement.origin.x}|${movement.origin.y})`
                                         : ''}
                                 </span>
-                                <Countdown
-                                    until={movement.arrivalGameTime}
+                                <Arrival
+                                    at={movement.arrivalGameTime}
                                 />
                             </li>
                         ))}

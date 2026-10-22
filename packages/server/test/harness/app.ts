@@ -16,12 +16,15 @@ export interface TestApp {
     dispose(): Promise<void>;
 }
 
-export async function createTestApp(): Promise<TestApp> {
+export async function createTestApp(
+    options: { devMode?: boolean } = {},
+): Promise<TestApp> {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-api-'));
     const manager = new WorldManager(dir);
     const app = await buildApp(manager, {
         logger: false,
         serveClient: false,
+        devMode: options.devMode ?? false,
     });
     let disposed = false;
     return {

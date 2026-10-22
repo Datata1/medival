@@ -15,6 +15,11 @@ export interface AppOptions {
     logger?: boolean;
     /** Gebautes Frontend ausliefern, falls vorhanden (Produktion/Docker). */
     serveClient?: boolean;
+    /**
+     * Entwicklermodus: Pause und Vorspulen (plans/19-prototyp/19-3). Standard
+     * aus der Umgebung, `MEDIVAL_DEV=1`; `pnpm dev` setzt das.
+     */
+    devMode?: boolean;
 }
 
 /**
@@ -47,6 +52,8 @@ export async function buildApp(
         });
     }
 
-    registerRoutes(app, manager);
+    registerRoutes(app, manager, {
+        devMode: options.devMode ?? process.env.MEDIVAL_DEV === '1',
+    });
     return app;
 }

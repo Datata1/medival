@@ -1,7 +1,7 @@
 import type { Report } from '@medival/shared';
 import { useTranslation } from 'react-i18next';
+import { ClockTime } from '../../components/ClockTime.js';
 import { Icon } from '../../components/Icon.js';
-import { formatGameTime } from '../../lib/format.js';
 
 export function ReportRow({
     report,
@@ -41,7 +41,7 @@ export function ReportRow({
                 )}
             </span>
             <span className="text-ink-light">
-                {formatGameTime(report.createdGameTime)}
+                <ClockTime at={report.createdGameTime} />
             </span>
         </button>
     );

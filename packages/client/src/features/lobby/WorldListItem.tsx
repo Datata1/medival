@@ -18,7 +18,7 @@ export function WorldListItem({
             ? t('lobby.statusRunning')
             : world.status === 'paused'
               ? t('lobby.statusPaused')
-              : world.status;
+              : t('lobby.statusEnded');
     return (
         <li className="flex items-center justify-between gap-4 border-oak border-b py-2.5 last:border-b-0">
             <div>

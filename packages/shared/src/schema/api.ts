@@ -132,6 +132,13 @@ export const WorldSummarySchema = z.object({
     status: WorldStatusSchema,
     settings: WorldSettingsSchema,
     gameTime: GameTimeSchema,
+    /**
+     * Wanduhrzeit (Epoch-ms), zu der die Spielzeit 0 war (19-3). Eine
+     * Ankunft um Spielzeit t ist um `epochZeroMs + t` — in Uhrzeit.
+     */
+    epochZeroMs: z.number().finite(),
+    /** Server läuft im Entwicklermodus: Pause und Vorspulen verfügbar. */
+    devMode: z.boolean(),
     playerVillages: z.array(
         villageRef.extend({ points: z.number().int() }),
     ),
@@ -312,3 +319,12 @@ export type WorldMessage = z.infer<typeof WorldMessageSchema>;
 export type Tribe = z.infer<typeof TribeSchema>;
 export type DiplomacyView = z.infer<typeof DiplomacyViewSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
+
+/** Vorspulen im Entwicklermodus (19-3): höchstens eine Woche je Aufruf. */
+export const DevSkipRequestSchema = z.object({
+    ms: z
+        .number()
+        .int()
+        .positive()
+        .max(7 * 24 * 3_600_000),
+});

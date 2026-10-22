@@ -74,9 +74,12 @@ und zurückgeschrieben: Ressourcen (`settleResources`), Loyalität (`settleLoyal
 Ansehen zwischen Spielern (`settleStanding`). Was niemand abfragt, kostet nichts — bei 31
 Spielern wären es sonst bis zu 930 Beziehungspaare pro Tick.
 
-**Zeit.** Jede Welt hat eine eigene Spielzeit-Uhr (persistiert in `data/worlds.sqlite`,
-intern monoton via `performance.now`). Alle Events tragen Spielzeit-Stempel — dadurch sind
-Pause, Neustart und Zeitraffer verlustfrei. Zeitwerte sind in `@medival/shared` als
+**Zeit.** Spielzeit läuft an der Wanduhr: Jede Welt speichert, zu welcher Uhrzeit ihre
+Spielzeit 0 war (`data/worlds.sqlite`, intern monoton via `performance.now`). Ein
+Serverausfall hält die Welt nicht an — nach dem Neustart wird das Verpasste zu seiner
+ursprünglichen Zeit abgerechnet. Alle Events tragen ganzzahlige Spielzeit-Stempel; vor
+jedem Zugriff werden fällige Events nachgeholt. Pause und Vorspulen gibt es nur im
+Entwicklermodus (`MEDIVAL_DEV=1`, von `pnpm dev` gesetzt). Zeitwerte sind in `@medival/shared` als
 `GameTime` (Zeitpunkt) und `Duration` (Zeitspanne) typisiert; rohe Millisekunden-Rechnung
 gibt es außerhalb dieses Moduls nicht.
 

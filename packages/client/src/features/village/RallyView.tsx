@@ -2,8 +2,8 @@ import type { MovementInfo, Units } from '@medival/shared';
 import { entriesOf, MOVEMENT_KINDS } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { Arrival } from '../../components/Arrival.js';
 import { Card } from '../../components/Card.js';
-import { Countdown } from '../../components/Countdown.js';
 import { Icon } from '../../components/Icon.js';
 import { Table, Td, Th } from '../../components/Table.js';
 import { useStores } from '../../stores/StoreContext.js';
@@ -50,7 +50,7 @@ function MovementRow({
             </Td>
             <Td>{describe(movement.units)}</Td>
             <Td className="whitespace-nowrap tabular-nums">
-                <Countdown until={movement.arrivalGameTime} />
+                <Arrival at={movement.arrivalGameTime} />
             </Td>
         </tr>
     );

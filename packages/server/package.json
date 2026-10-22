@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "type": "module",
     "scripts": {
-        "dev": "tsx watch src/index.ts",
+        "dev": "MEDIVAL_DEV=1 tsx watch src/index.ts",
         "start": "tsx src/index.ts",
         "test": "vitest run",
         "test:integration": "vitest run --project integration",

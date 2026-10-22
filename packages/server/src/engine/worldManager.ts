@@ -18,7 +18,7 @@ import {
 } from '../db/rowSchemas.js';
 import { EngineHealth } from './health.js';
 import { generateMap } from './mapgen.js';
-import { World, type WorldMeta } from './world.js';
+import { type MetaPatch, World, type WorldMeta } from './world.js';
 
 /** Additive migrations for world DBs created by older versions. */
 function migrateWorldDb(sqlite: Database.Database): void {
@@ -125,6 +125,11 @@ export class WorldManager {
         this.meta = new Database(path.join(dataDir, 'worlds.sqlite'));
         this.meta.pragma('journal_mode = WAL');
         this.meta.exec(META_DDL);
+        // Plan 19-3: Spielzeit an der Wanduhr.
+        if (!columnsOf(this.meta, 'worlds').includes('epoch_zero_ms'))
+            this.meta.exec(
+                'ALTER TABLE worlds ADD COLUMN epoch_zero_ms INTEGER',
+            );
         this.persistTimer = setInterval(() => {
             for (const w of this.worlds.values())
                 if (w.clock.running) w.persist();
@@ -138,7 +143,9 @@ export class WorldManager {
     }
 
     listWorlds(): Array<
-        Omit<WorldMeta, 'rngState'> & { createdAt: number }
+        Omit<WorldMeta, 'rngState' | 'epochZeroMs'> & {
+            createdAt: number;
+        }
     > {
         const rows = this.meta
             .prepare('SELECT * FROM worlds ORDER BY id DESC')
@@ -222,6 +229,7 @@ export class WorldManager {
                 status,
                 gameTimeMs: 0,
                 rngState: seed,
+                epochZeroMs: null,
             },
             sqlite,
             db,
@@ -229,6 +237,8 @@ export class WorldManager {
         );
         startBarbarianTicks(world);
         startBotTicks(world);
+        // Den Nullpunkt sofort festhalten — nicht erst im 15-s-Intervall.
+        world.persist();
         this.worlds.set(id, world);
         return world;
     }
@@ -260,6 +270,7 @@ export class WorldManager {
                 status: row.status,
                 gameTimeMs: row.game_time_ms,
                 rngState: row.rng_state,
+                epochZeroMs: row.epoch_zero_ms ?? null,
             },
             sqlite,
             db,
@@ -299,14 +310,13 @@ export class WorldManager {
         return path.join(this.dataDir, `world_${id}.sqlite`);
     }
 
-    private persistMeta(
-        id: number,
-        patch: Partial<
-            Pick<WorldMeta, 'status' | 'gameTimeMs' | 'rngState'>
-        >,
-    ): void {
+    private persistMeta(id: number, patch: MetaPatch): void {
         const sets: string[] = [];
         const args: unknown[] = [];
+        if (patch.epochZeroMs != null) {
+            sets.push('epoch_zero_ms = ?');
+            args.push(Math.round(patch.epochZeroMs));
+        }
         if (patch.status !== undefined) {
             sets.push('status = ?');
             args.push(patch.status);
