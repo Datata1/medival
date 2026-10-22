@@ -55,6 +55,12 @@ export interface VillageSnapshot {
     popInUse: number;
     /** Steht schon etwas in der Bauschleife? */
     queueLength: number;
+    /**
+     * Wann der früheste Auftrag der Bauschleife fertig wird — `null` bei
+     * leerer Schleife (plans/19-prototyp/19-4). Ist die Schleife voll, ist
+     * das der Zeitpunkt, an dem sich Nachdenken wieder lohnt.
+     */
+    queueFreeAt?: number | null;
     /** Freie Transportkapazität des Marktplatzes (Plan 16). */
     merchantsFree: number;
     /** Steht schon etwas in der Rekrutierungsschleife (Plan 17)? */
@@ -68,13 +74,33 @@ export interface BuildChoice {
     /** `null`, wenn sofort bezahlbar. */
     waitFor: Duration | null;
     /** Warum dieses Gebäude — für Tests und spätere Diagnose. */
-    reason: 'farm' | 'warehouse' | 'economy' | 'personality';
+    reason:
+        | 'farm'
+        | 'farm_forecast'
+        | 'warehouse'
+        | 'store_horizon'
+        | 'economy'
+        | 'personality';
 }
 
 /** Ab dieser Auslastung des Bauernhofs blockiert die Bevölkerung alles Weitere. */
 const FARM_TIGHT = 0.85;
+/**
+ * Mit Kaserne früher: Truppen brauchen Platz, und ein voller Hof stoppt die
+ * Rekrutierung, lange bevor er den Bau stoppt (plans/19-prototyp/19-4).
+ */
+const FARM_FORECAST = 0.7;
+/**
+ * Läuft das leere Lager schneller voll als in dieser **Spielzeit** (bei Speed
+ * 1), wird es ausgebaut (plans/19-prototyp/19-4). In Spielzeit gerechnet,
+ * nicht in Echtzeit — das unterscheidet die Regel vom Irrweg aus Plan 15
+ * (1,5 h Echtzeit-Produktion verlangten bei Speed 200 Speicher 12 vor dem
+ * ersten Holzfäller). Startminen füllen ein Lager in ~33 Spielstunden; die
+ * Regel greift erst ab Rohstoffgebäuden um Stufe 17.
+ */
+const STORE_FILL_HORIZON_HOURS = 3;
 /** Nicht endlos aufreihen — der Rest wird beim nächsten Tick entschieden. */
-const QUEUE_LIMIT = 2;
+export const QUEUE_LIMIT = 2;
 
 function nextLevel(
     village: VillageSnapshot,
@@ -110,6 +136,23 @@ function choice(
     );
     if (waitFor === null) return null;
     return { building, level, cost, waitFor, reason };
+}
+
+/**
+ * In wie vielen Spielstunden (Speed 1) das leere Lager beim schnellsten
+ * Rohstoff voll ist. `ratesPerHour` ist schon mit dem Speed skaliert.
+ */
+function storeFillGameHours(
+    village: VillageSnapshot,
+    speed: number,
+): number {
+    const fastest = Math.max(
+        village.ratesPerHour.wood,
+        village.ratesPerHour.clay,
+        village.ratesPerHour.iron,
+    );
+    if (!(fastest > 0)) return Number.POSITIVE_INFINITY;
+    return (village.capacity / fastest) * speed;
 }
 
 /** Passen die Kosten überhaupt ins Lager? */
@@ -208,13 +251,22 @@ function isBuilding(value: string): value is BuildingType {
 export function decideBuild(
     village: VillageSnapshot,
     personality: Personality,
+    /** Weltgeschwindigkeit — für den Speicher-Horizont in Spielzeit. */
+    speed = 1,
 ): BuildChoice | null {
     if (village.queueLength >= QUEUE_LIMIT) return null;
 
-    // 1. Bauernhof, wenn die Bevölkerung klemmt.
+    // 1. Bauernhof, wenn die Bevölkerung klemmt — mit Kaserne schon früher.
     const farmMax = farmCapacity(village.levels.farm);
     if (village.popInUse >= farmMax * FARM_TIGHT) {
         const farm = choice(village, 'farm', 'farm');
+        if (farm) return farm;
+    }
+    if (
+        village.levels.barracks >= 1 &&
+        village.popInUse >= farmMax * FARM_FORECAST
+    ) {
+        const farm = choice(village, 'farm', 'farm_forecast');
         if (farm) return farm;
     }
 
@@ -241,6 +293,12 @@ export function decideBuild(
     const wanted = bestEconomyChoice(village, true);
     if (wanted && !fitsInStore(wanted.cost, village.capacity)) {
         const warehouse = choice(village, 'warehouse', 'warehouse');
+        if (warehouse) return warehouse;
+    }
+
+    // 2b. Speicher, wenn er bei dieser Produktion zu schnell vollläuft.
+    if (storeFillGameHours(village, speed) < STORE_FILL_HORIZON_HOURS) {
+        const warehouse = choice(village, 'warehouse', 'store_horizon');
         if (warehouse) return warehouse;
     }
 

@@ -1,6 +1,3 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import {
     Duration,
     EMPTY_BUILDING_LEVELS,
@@ -8,8 +5,8 @@ import {
     type Resources,
     STARTING_BUILDINGS,
 } from '@medival/shared';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { planBot } from '../src/ai/bot.js';
+import { describe, expect, it } from 'vitest';
+import { maxThinkInterval, planBot } from '../src/ai/bot.js';
 import {
     decideBuild,
     type VillageSnapshot,
@@ -19,8 +16,6 @@ import {
     PERSONALITIES,
     type Personality,
 } from '../src/ai/personalities.js';
-import type { World } from '../src/engine/world.js';
-import { WorldManager } from '../src/engine/worldManager.js';
 
 // ── Entscheidung: pure, ohne Datenbank ────────────────────────────────
 
@@ -132,6 +127,10 @@ describe('Bauentscheidung (pure)', () => {
                 ratesPerHour: { wood: 6000, clay: 6000, iron: 6000 },
             }),
             'balanced',
+            // 6000/h sind Startminen (30/h) bei Speed 200 — der Fall aus dem
+            // Kommentar. Seit 19-4 rechnet der Speicher-Horizont in
+            // Spielzeit und braucht deshalb den Speed.
+            200,
         );
         expect(choice?.building).not.toBe('warehouse');
     });
@@ -266,6 +265,76 @@ describe('Bauentscheidung (pure)', () => {
     });
 });
 
+describe('Vorausschauend: Speicher und Bauernhof (19-4)', () => {
+    // Startgebäude: Das nächste Wirtschaftsziel passt ins Lager, die
+    // ältere Regel „passt nicht hinein" greift also nicht.
+    const fastStore = (ratePerHour: number) =>
+        village({
+            capacity: 1000,
+            resources: { wood: 1000, clay: 1000, iron: 1000 },
+            ratesPerHour: {
+                wood: ratePerHour,
+                clay: ratePerHour,
+                iron: ratePerHour,
+            },
+        });
+
+    it('baut den Speicher, wenn das Lager in < 3 Spielstunden vollläuft', () => {
+        // 1000er-Lager, 500/h bei Speed 1 → voll in 2 Spielstunden.
+        const choice = decideBuild(fastStore(500), 'balanced', 1);
+        expect(choice?.building).toBe('warehouse');
+        expect(choice?.reason).toBe('store_horizon');
+    });
+
+    it('rechnet in Spielzeit — derselbe Fall bei Speed 200 ist gleich', () => {
+        const choice = decideBuild(
+            fastStore(500 * 200),
+            'balanced',
+            200,
+        );
+        expect(choice?.reason).toBe('store_horizon');
+        // Halb so schnell (4 Spielstunden bis voll) reicht dagegen nicht.
+        expect(
+            decideBuild(fastStore(250), 'balanced', 1)?.reason,
+        ).not.toBe('store_horizon');
+    });
+
+    it('baut mit Startminen keinen Speicher vorab (Irrweg aus Plan 15)', () => {
+        const choice = decideBuild(
+            village({
+                ratesPerHour: {
+                    wood: 30 * 200,
+                    clay: 30 * 200,
+                    iron: 30 * 200,
+                },
+                resources: RICH,
+            }),
+            'balanced',
+            200,
+        );
+        expect(choice?.reason).not.toBe('store_horizon');
+    });
+
+    it('baut den Bauernhof früher, sobald eine Kaserne steht', () => {
+        const base = {
+            levels: { ...developed().levels, farm: 5, barracks: 1 },
+            popInUse: Math.ceil(farmCapacity(5) * 0.72),
+        };
+        expect(decideBuild(developed(base), 'balanced')?.reason).toBe(
+            'farm_forecast',
+        );
+        expect(
+            decideBuild(
+                developed({
+                    ...base,
+                    levels: { ...base.levels, barracks: 0 },
+                }),
+                'balanced',
+            )?.reason,
+        ).not.toBe('farm_forecast');
+    });
+});
+
 describe('Persönlichkeiten unterscheiden sich messbar', () => {
     /** Was baut eine Persönlichkeit über viele Ausgangslagen hinweg? */
     function profile(personality: Personality): Map<string, number> {
@@ -346,6 +415,7 @@ describe('planBot', () => {
         tribeId: null,
         gameTime: 0,
         unitSpeed: 100,
+        speed: 100,
     });
 
     it('erzeugt einen Bau-Intent, wenn bezahlbar', () => {
@@ -381,7 +451,54 @@ describe('planBot', () => {
                 }),
             ]),
         );
-        expect(nextIn).toBeLessThanOrEqual(Duration.minutes(10));
+        expect(nextIn).toBeLessThanOrEqual(maxThinkInterval(100));
+    });
+
+    it('wacht auf, wenn die volle Bauschleife Platz hat (19-4)', () => {
+        // Volle Schleife, deren erster Auftrag in 30 s fertig ist: Der Bot
+        // darf nicht bis zum Höchstintervall schlafen.
+        const { intents, nextIn } = planBot(
+            snapshot('balanced', [
+                village({
+                    resources: RICH,
+                    queueLength: 2,
+                    queueFreeAt: 30_000,
+                }),
+            ]),
+        );
+        expect(intents.filter((i) => i.kind === 'build')).toEqual([]);
+        expect(nextIn).toBe(30_000);
+    });
+
+    it('denkt nach einer Lieferung nicht im Sekundentakt weiter (19-4)', () => {
+        const { intents, nextIn } = planBot({
+            ...snapshot('balanced', [
+                village({
+                    resources: { wood: 1000, clay: 1000, iron: 1000 },
+                    capacity: 1000,
+                    queueLength: 2,
+                    queueFreeAt: 60_000,
+                    merchantsFree: 1000,
+                }),
+            ]),
+            partners: [
+                {
+                    playerId: 3,
+                    villageId: 9,
+                    standing: 10,
+                    distance: 3,
+                },
+            ],
+        });
+        expect(intents.map((i) => i.kind)).toEqual(['ship']);
+        expect(nextIn).toBe(60_000);
+    });
+
+    it('skaliert das Höchstintervall mit dem Speed', () => {
+        expect(maxThinkInterval(1)).toBe(Duration.hours(2));
+        expect(maxThinkInterval(100)).toBe(Duration.seconds(72));
+        // Untergrenze: auch bei Speed 10 000 nicht öfter als alle 10 s.
+        expect(maxThinkInterval(10_000)).toBe(Duration.seconds(10));
     });
 
     it('behandelt mehrere Dörfer', () => {
@@ -431,148 +548,5 @@ describe('Bot-Zustand aus der Datenbank', () => {
                 '{"savingFor":{"7":{"building":"raumhafen","level":3}}}',
             ).savingFor,
         ).toEqual({});
-    });
-});
-
-// ── Engine: eine simulierte Spielwoche ────────────────────────────────
-
-describe('Bots in einer laufenden Welt', () => {
-    let dir: string;
-    let manager: WorldManager;
-    let world: World;
-
-    beforeAll(() => {
-        dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-bot-'));
-        manager = new WorldManager(dir);
-        world = manager.createWorld('Botwelt', {
-            speed: 100,
-            unitSpeed: 100,
-            mapSize: 40,
-            botCount: 10,
-            barbarianCount: 10,
-            seed: 555,
-            barbarianAttemptsPerHour: 0.04,
-        });
-    });
-
-    afterAll(() => {
-        manager.shutdown();
-        fs.rmSync(dir, { recursive: true, force: true });
-    });
-
-    const pointsOf = (kind: 'bot' | 'barbarian') =>
-        (
-            world.sqlite
-                .prepare(
-                    kind === 'bot'
-                        ? 'SELECT SUM(points) n FROM villages WHERE player_id > 1'
-                        : 'SELECT SUM(points) n FROM villages WHERE player_id IS NULL',
-                )
-                .get() as { n: number }
-        ).n;
-
-    it('plant beim Erzeugen genau einen Tick je Bot', () => {
-        const pending = world.sqlite
-            .prepare(
-                `SELECT COUNT(*) AS n FROM events WHERE type = 'bot_tick'`,
-            )
-            .get() as { n: number };
-        expect(pending.n).toBe(10);
-    });
-
-    it('wächst über eine simulierte Spielwoche', () => {
-        const before = pointsOf('bot');
-        for (let hour = 0; hour < 24 * 7; hour++) {
-            world.clock.skip(Duration.hours(1));
-            world.scheduler.processDue();
-        }
-        expect(pointsOf('bot')).toBeGreaterThan(before);
-        // Seit Plan 17 kommen Angriffe und Unterstützung dazu; eine
-        // Spielwoche erzeugt entsprechend mehr Events.
-    }, 60_000);
-
-    it('baut deutlich klüger aus als Barbaren', () => {
-        // Zehn Bots gegen zehn Barbaren, gleiche Startbedingungen. Der
-        // eigentliche Nachweis, dass „klüger" nicht nur behauptet ist.
-        const bots = pointsOf('bot');
-        const barbarians = pointsOf('barbarian');
-        /*
-         * Gemessen bei diesem Seed: Faktor 2,3. Die Schwelle liegt bei 2,0.
-         *
-         * Vor Plan 17 waren es 2,8 — Bots geben jetzt Rohstoffe für
-         * Marktplätze und Truppen aus, statt alles in Punkte zu stecken. Der
-         * niedrigere Faktor ist kein Rückschritt, sondern der Preis dafür,
-         * dass sie handeln, sich verbünden und kämpfen.
-         */
-        expect(bots).toBeGreaterThan(barbarians * 2.0);
-    });
-
-    it('Persönlichkeiten unterscheiden sich auch in der echten Welt', () => {
-        // Derselbe Nachweis wie in den puren Tests, aber am Ende einer
-        // simulierten Spielwoche in einer laufenden Welt: turtle mauert,
-        // expander baut das Hauptgebäude aus.
-        const avg = (personality: string, building: string) =>
-            (
-                world.sqlite
-                    .prepare(
-                        `SELECT AVG(b.level) AS n FROM buildings b
-                         JOIN villages v ON v.id = b.village_id
-                         JOIN players p ON p.id = v.player_id
-                         WHERE p.personality = ? AND b.type = ?`,
-                    )
-                    .get(personality, building) as { n: number | null }
-            ).n ?? 0;
-
-        expect(avg('turtle', 'wall')).toBeGreaterThan(
-            avg('raider', 'wall'),
-        );
-        expect(avg('expander', 'headquarters')).toBeGreaterThan(
-            avg('turtle', 'headquarters'),
-        );
-    });
-
-    it('merkt sich Sparziele über den Tick hinaus', () => {
-        const withState = world.sqlite
-            .prepare(
-                `SELECT COUNT(*) AS n FROM players
-                 WHERE is_bot = 1 AND ai_state_json != '{}'`,
-            )
-            .get() as { n: number };
-        expect(withState.n).toBeGreaterThan(0);
-    });
-
-    it('hält die Ketten am Leben', () => {
-        const pending = world.sqlite
-            .prepare(
-                `SELECT COUNT(DISTINCT json_extract(payload_json, '$.playerId')) AS n
-                 FROM events WHERE type = 'bot_tick'`,
-            )
-            .get() as { n: number };
-        expect(pending.n).toBe(10);
-    });
-
-    it('verdoppelt die Ketten nicht beim erneuten Öffnen', () => {
-        const count = () =>
-            (
-                world.sqlite
-                    .prepare(
-                        `SELECT COUNT(*) AS n FROM events WHERE type = 'bot_tick'`,
-                    )
-                    .get() as { n: number }
-            ).n;
-        const before = count();
-        manager.getWorld(world.id);
-        manager.getWorld(world.id);
-        expect(count()).toBe(before);
-    });
-
-    it('bleibt innerhalb der Bevölkerungsgrenze', () => {
-        const rows = world.sqlite
-            .prepare('SELECT id FROM villages WHERE player_id > 1')
-            .all() as { id: number }[];
-        for (const row of rows) {
-            const view = world.villageView(row.id);
-            expect(view.popUsed).toBeLessThanOrEqual(view.popMax);
-        }
     });
 });

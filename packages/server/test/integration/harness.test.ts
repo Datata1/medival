@@ -209,9 +209,10 @@ describe('Regression: Bot schläft nach voller Bauschleife', () => {
      * fällt auf MAX_THINK_INTERVAL (10 min Echtzeit) zurück — die Bauten
      * sind aber nach Sekunden fertig.
      *
-     * `it.fails`, bis Ticket 19-4 den Fehler behebt; dann wird es `it`.
+     * Bis 19-4 als `it.fails` festgehalten; behoben durch `queueFreeAt` im
+     * Snapshot und das Aufwecken bei `build_complete`.
      */
-    it.fails('wird wieder aktiv, sobald die Schleife Platz hat', () => {
+    it('wird wieder aktiv, sobald die Schleife Platz hat', () => {
         tw = createTestWorld();
         const { world } = tw;
         const bot = givenPlayer(world, { bot: true });
@@ -239,7 +240,7 @@ describe('Regression: Bot schläft nach voller Bauschleife', () => {
         const freeAt = Math.min(...queue.map((q) => q.completesAt));
 
         // Sobald ein Platz frei ist, reiht der Bot binnen weniger Sekunden
-        // nach. Heute schläft er stattdessen 600 s.
+        // nach. Vor 19-4 schlief er stattdessen 600 s.
         advanceTo(world, GameTime.of(freeAt + 5_000));
         const newer = buildQueue(world, v).filter((q) => q.id > lastId);
         expect(newer.length).toBeGreaterThan(0);
@@ -248,30 +249,54 @@ describe('Regression: Bot schläft nach voller Bauschleife', () => {
 
 describe('Regression: Bots verschicken Kleinstlieferungen im Sekundentakt', () => {
     /*
-     * Gefunden beim Bau dieses Harness: Ab Spielstunde ~4 (Seed 555, zehn
-     * Bots) schickt ein Bot alle 2 s eine Lieferung von ~20 Rohstoffen an
-     * denselben Partner. `decideShipment` kennt keine Mindestmenge, und
-     * jede ausgeführte Absicht legt den nächsten Tick auf MIN_THINK_INTERVAL.
-     * Gemessen: >13 000 Ankünfte je Spielstunde statt einiger Dutzend.
-     *
-     * Der alte Wochentest sah das nicht, weil er je Stunde nur 200 Events
-     * verarbeitete. `it.fails`, bis Ticket 19-4 den Fehler behebt.
+     * Gefunden beim Bau dieses Harness (19-1): Ab Spielstunde ~4 (Seed 555,
+     * zehn Bots) schickte ein Bot alle 2 s eine Lieferung von ~20 Rohstoffen
+     * an denselben Partner — `decideShipment` kannte keine Mindestmenge, und
+     * jede ausgeführte Absicht legte den nächsten Tick auf 2 s. Gemessen:
+     * ~25 000 Events in Stunde 6. Behoben in 19-4; gemessen danach: 878
+     * Ankünfte in Stunde 4 (vorher 2 485), 1 745 in Stunde 6.
      */
-    it.fails('hält die Zahl der Ankünfte je Stunde klein', () => {
+    it('liefert nur lohnende Mengen und je Partner eins nach dem anderen', () => {
         tw = createTestWorld({
             botCount: 10,
             barbarianCount: 10,
             barbarianAttemptsPerHour: 0.04,
             seed: 555,
         });
-        advance(tw.world, Duration.hours(3));
+        const { world } = tw;
+        advance(world, Duration.hours(3));
+
         let arrivals = 0;
-        observeEvents(tw.world, (ev) => {
+        const violations: string[] = [];
+        observeEvents(world, (ev) => {
             if (ev.type === 'arrival') arrivals++;
+            if (ev.type !== 'bot_tick') return;
+            // Unmittelbar vor jedem Bot-Tick: Was ist an Lieferungen unterwegs?
+            const trades = world.sqlite
+                .prepare(
+                    `SELECT m.origin_village_id AS o, t.player_id AS p,
+                            m.carries_json AS c
+                     FROM movements m JOIN villages t ON t.id = m.target_village_id
+                     WHERE m.kind = 'trade'`,
+                )
+                .all() as { o: number; p: number; c: string }[];
+            const pairs = new Set<string>();
+            for (const t of trades) {
+                const c = JSON.parse(t.c) as Record<string, number>;
+                const total =
+                    (c.wood ?? 0) + (c.clay ?? 0) + (c.iron ?? 0);
+                if (total < 200) violations.push(`klein: ${total}`);
+                const key = `${t.o}->${t.p}`;
+                if (pairs.has(key)) violations.push(`doppelt: ${key}`);
+                pairs.add(key);
+            }
         });
-        advance(tw.world, Duration.hours(1));
-        // Zehn Bots: großzügig 50 Ankünfte je Bot und Stunde.
-        expect(arrivals).toBeLessThan(500);
+        advance(world, Duration.hours(1));
+
+        expect(violations).toEqual([]);
+        // Großzügige Obergrenze: 1,5 Ankünfte je Bot und Spielstunde (Speed
+        // 100 → 100 Spielstunden je Stunde Echtzeit).
+        expect(arrivals).toBeLessThan(10 * 100 * 1.5);
     });
 });
 

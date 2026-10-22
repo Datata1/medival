@@ -1,5 +1,5 @@
 import { GameTime } from '@medival/shared';
-import { asc, eq, lte } from 'drizzle-orm';
+import { asc, eq, lte, sql } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { events } from '../db/schema.js';
 import type { GameClock } from './clock.js';
@@ -62,6 +62,22 @@ export class Scheduler {
             })
             .run();
         this.arm();
+    }
+
+    /**
+     * Zieht ein ausstehendes Event auf `due` vor — nie nach hinten
+     * (plans/19-prototyp/19-4). Für `wakeBot`: Ein Bot bekommt keinen zweiten
+     * Tick, sein vorhandener wird früher fällig.
+     */
+    pullForward(id: number, due: GameTime): void {
+        this.db
+            .update(events)
+            .set({
+                dueGameTime: sql`MIN(${events.dueGameTime}, ${due})`,
+            })
+            .where(eq(events.id, id))
+            .run();
+        if (!this.processing) this.arm();
     }
 
     /** Game time of the oldest pending event, or null if the queue is empty. */

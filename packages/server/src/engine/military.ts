@@ -22,6 +22,7 @@ import {
     warehouseCapacity,
 } from '@medival/shared';
 import { and, asc, eq } from 'drizzle-orm';
+import { wakeBot } from '../ai/bot.js';
 import {
     firstOrThrow,
     parseJsonColumn,
@@ -341,6 +342,10 @@ export function sendUnits(
         originVillageId: originId,
         targetVillageId: targetId,
     });
+    // Das Ziel sieht den Angriff kommen (19-4) — ein Bot soll darauf
+    // reagieren können, nicht erst beim nächsten regulären Tick.
+    if (kind === 'attack')
+        wakeBot(world, world.getVillageRow(targetId).playerId);
     return { arrivalGameTime };
 }
 
@@ -349,6 +354,9 @@ export function handleArrival(
     payload: { movementId: number },
 ): void {
     const affected: number[] = [];
+    // Wer von dieser Ankunft erfährt — vor dem Kampf gelesen, damit bei einer
+    // Eroberung auch der alte Besitzer geweckt wird (19-4).
+    const toWake = new Set<number | null>();
     world.sqlite.transaction(() => {
         const m = world.db
             .select()
@@ -356,6 +364,8 @@ export function handleArrival(
             .where(eq(movements.id, payload.movementId))
             .all()[0];
         if (!m) return;
+        toWake.add(world.getVillageRow(m.originVillageId).playerId);
+        toWake.add(world.getVillageRow(m.targetVillageId).playerId);
         world.db.delete(movements).where(eq(movements.id, m.id)).run();
         const units = parseJsonColumn(
             UnitsSchema,
@@ -429,6 +439,7 @@ export function handleArrival(
     })();
     for (const id of affected)
         world.broadcast({ type: 'village_updated', villageId: id });
+    for (const playerId of toWake) wakeBot(world, playerId);
 }
 
 function resolveAttackArrival(

@@ -37,7 +37,7 @@ import type { Database as SqliteDatabase } from 'better-sqlite3';
 import { and, asc, eq } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { handleBarbarianTick } from '../ai/barbarian.js';
-import { handleBotTick } from '../ai/bot.js';
+import { handleBotTick, wakeBot } from '../ai/bot.js';
 import {
     firstOrThrow,
     parseJsonColumn,
@@ -691,5 +691,8 @@ export class World {
                 .run();
         })();
         this.broadcast({ type: 'build_complete', villageId });
+        // Die Schleife hat Platz: Ein Bot entscheidet jetzt, nicht erst beim
+        // nächsten regulären Tick (19-4).
+        wakeBot(this, this.getVillageRow(villageId).playerId);
     }
 }

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-    type Duration,
+    Duration,
     type DurationLike,
     GameTime,
     type WorldSettings,
@@ -85,6 +85,16 @@ export function advanceTo(world: World, target: GameTime): number {
     }
     if (target > world.clock.now()) world.clock.setTo(target);
     return count;
+}
+
+/**
+ * `n` Spielwochen: 168 Spielstunden bei Speed 1, bei Speed 100 also 1,68
+ * Stunden Echtzeit. Die Wochentests vor 19-4 spulten 168 *Echt*stunden vor
+ * — bei Speed 100 rund 700 Spielwochen, von denen sie nur einen Bruchteil
+ * tatsächlich abarbeiteten.
+ */
+export function gameWeeks(world: World, n: number): Duration {
+    return Duration.hours((168 * n) / world.settings.speed);
 }
 
 /** Lässt die Welt um `d` weiterlaufen. */
