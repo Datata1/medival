@@ -74,6 +74,44 @@ function migrateWorldDb(sqlite: Database.Database): void {
     if (!playerCols.some((c) => c.name === 'tribe_id')) {
         sqlite.exec('ALTER TABLE players ADD COLUMN tribe_id INTEGER');
     }
+
+    // Plan 19-2: feste Reihenfolge bei Gleichstand, ganze Millisekunden.
+    if (!columnsOf(sqlite, 'events').includes('priority')) {
+        sqlite.exec(
+            'ALTER TABLE events ADD COLUMN priority INTEGER NOT NULL DEFAULT 50',
+        );
+    }
+    sqlite.exec(`
+        CREATE INDEX IF NOT EXISTS idx_events_order ON events(due_game_time, priority, id);
+        UPDATE events SET due_game_time = CAST(ROUND(due_game_time) AS INTEGER)
+          WHERE due_game_time != CAST(ROUND(due_game_time) AS INTEGER);
+    `);
+
+    // Plan 19-2: Rekrutierung faul abgerechnet. Aus „nächste Einheit fertig
+    // um" wird „Produktion der offenen Einheiten begann um"; ein Auftrag,
+    // dessen nächste Einheit um t fertig wird, begann also um t − perUnitMs.
+    if (!columnsOf(sqlite, 'recruit_queue').includes('started_at')) {
+        sqlite.exec(`
+            ALTER TABLE recruit_queue ADD COLUMN started_at INTEGER;
+            UPDATE recruit_queue SET
+              per_unit_ms = MAX(1, CAST(ROUND(per_unit_ms) AS INTEGER)),
+              started_at = CASE WHEN next_unit_done_at > 0
+                THEN MAX(0, CAST(ROUND(next_unit_done_at - per_unit_ms) AS INTEGER))
+                ELSE NULL END;
+            ALTER TABLE recruit_queue DROP COLUMN next_unit_done_at;
+        `);
+    }
+}
+
+function columnsOf(sqlite: Database.Database, table: string): string[] {
+    return sqlite
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .map(
+            (row) =>
+                parseRow(TableColumnSchema, row, 'PRAGMA table_info')
+                    .name,
+        );
 }
 
 export class WorldManager {
@@ -126,7 +164,18 @@ export class WorldManager {
         });
     }
 
-    createWorld(name: string, settingsPartial: unknown): World {
+    createWorld(
+        name: string,
+        settingsPartial: unknown,
+        /**
+         * Pausiert anlegen: Die Uhr läuft keine einzige Millisekunde. Für
+         * Testwelten, die exakt bei Spielzeit 0 beginnen müssen — sonst
+         * hängt ihr Startzustand davon ab, wie schnell die Maschine ist
+         * (plans/19-prototyp/19-2).
+         */
+        options: { paused?: boolean } = {},
+    ): World {
+        const status = options.paused ? 'paused' : 'running';
         // Die Grenze liegt hier, nicht erst in der HTTP-Route: Der Manager ist
         // die öffentliche Schnittstelle zum Anlegen einer Welt und prüft die
         // gemergten Einstellungen als Ganzes — Feldgrenzen und Invarianten
@@ -152,7 +201,7 @@ export class WorldManager {
                 name,
                 seed,
                 JSON.stringify(settings),
-                'running',
+                status,
                 seed,
                 Date.now(),
             );
@@ -170,7 +219,7 @@ export class WorldManager {
                 name,
                 seed,
                 settings,
-                status: 'running',
+                status,
                 gameTimeMs: 0,
                 rngState: seed,
             },

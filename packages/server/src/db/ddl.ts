@@ -81,9 +81,11 @@ CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   due_game_time INTEGER NOT NULL,
   type TEXT NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 50,
   payload_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_events_due ON events(due_game_time);
+CREATE INDEX IF NOT EXISTS idx_events_order ON events(due_game_time, priority, id);
 CREATE TABLE IF NOT EXISTS build_queue (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   village_id INTEGER NOT NULL,
@@ -97,7 +99,7 @@ CREATE TABLE IF NOT EXISTS recruit_queue (
   village_id INTEGER NOT NULL,
   unit_type TEXT NOT NULL CHECK (unit_type IN (${sqlList(UNIT_ORDER)})),
   count INTEGER NOT NULL,
-  next_unit_done_at INTEGER NOT NULL,
+  started_at INTEGER,
   per_unit_ms INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_recruit_queue_village ON recruit_queue(village_id);

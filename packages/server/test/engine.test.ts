@@ -210,7 +210,10 @@ describe('pause & persistence', () => {
         expect(reloaded.now()).toBeGreaterThanOrEqual(gameTime);
         // Queue survived; fast-forward completes it.
         reloaded.clock.skip(Duration.hours(2));
-        reloaded.scheduler.processDue();
+        // Alles Fällige abarbeiten, nicht nur einen Batch: Seit 19-2 planen
+        // Bots ab der Event-Zeit, und in zwei Stunden liegen mehr als 200
+        // Events vor dem fertigen Bau.
+        reloaded.scheduler.drainUntil(reloaded.now());
         expect(reloaded.villageView(1).buildings.clay_pit).toBe(2);
     });
 });

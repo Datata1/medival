@@ -1,6 +1,45 @@
 # Ticket 19-2: Zeit-Engine — Konsistenz & Millisekunden
 
-**Status:** 📋 offen · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md) · **Ergänzt:** [Plan 03](../03-zeit-stabilitaet-node.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md), umgesetzt nach [19-4](19-4-bots-reparieren.md) · **Ergänzt:** [Plan 03](../03-zeit-stabilitaet-node.md)
+
+> **Ergebnis:** Jede Anfrage holt vor dem Zugriff fällige Events nach. Zeitpunkte sind
+> ganze Millisekunden, und bei Gleichstand gilt eine feste Reihenfolge (Bau/Rekrutierung →
+> Unterstützung/Rückkehr/Handel → Angriff → Bot/Barbar). Handler rechnen mit der Fälligkeit
+> ihres Events. Die Rekrutierung braucht ein Event je Auftrag statt je Einheit.
+> `persist()` läuft nicht mehr je Event, und Nachrichten werden je Event-Loop-Durchlauf
+> gebündelt.
+>
+> **Der stärkste Nachweis:** Zwei gleiche Welten, die eine Event für Event, die andere
+> verschläft sechs Spielstunden und holt alles auf einmal nach. Danach sind Dörfer,
+> Gebäude, Truppen, Bauschleifen und Event-Warteschlange **bytegleich**
+> (`test/integration/time.test.ts`).
+>
+> **Echter Fehler, den erst der Test zeigte:** Die Priorität „Angriff nach Unterstützung"
+> war definiert, wurde beim Abschicken aber nicht übergeben. Der Gleichstand-Test schlug
+> fehl, bis `sendUnits` sie mitgab.
+>
+> **Migration alter Spielstände** an Kopien der Welten 15 und 19 geprüft: Welt 19 hatte 22
+> veraltete `recruit_tick`, nach 10 Spielminuten 0. Die Schleife wurde auf `started_at`
+> umgestellt, es gibt keine Gleitkomma-Fälligkeiten mehr und keine Handler-Fehler.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Kein `at`-Parameter, sondern Event-Zeit in `world.now()`.** Während ein Event
+>   verarbeitet wird, liefert `now()` dessen Fälligkeit. Damit sind alle genannten
+>   Fundstellen (Handel, Stämme, Bot- und Barbaren-Neuplanung, Rückkehr) auf einmal
+>   korrekt, und ein neuer Handler kann es nicht vergessen.
+> - **Kein `world.command`-Wrapper:** Nachgeholt wird in `requireWorld` (routes.ts), durch
+>   das jede Weltroute läuft. Bots handeln innerhalb von Events und brauchen kein
+>   Nachholen. Die Rechteprüfung, für die der Wrapper ebenfalls gedacht war, kommt mit
+>   19-9.
+> - **Wartende Aufträge haben `started_at = NULL`**, nicht 0: 0 ist der Weltstart. Der
+>   erste Entwurf mit 0 ließ einen Auftrag zur Spielzeit 0 für immer warten.
+> - **Zusätzlich behoben:** `Scheduler.dispose()` verwirft angehängte
+>   `setImmediate`-Fortsetzungen. Vorher konnte eine Fortsetzung nach dem Schließen der
+>   Welt gegen eine geschlossene Datenbank laufen („database connection is not open").
+>   Außerdem bewaffnet `insert` den Timer während der Verarbeitung nicht mehr je Event.
+> - **Die API-Form der Rekrutierungsschleife bleibt** (`nextUnitDoneAt`). Sie wird aus
+>   `started_at + perUnitMs` gerechnet, der Client ist unverändert.
 
 ## Kontext
 

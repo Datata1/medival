@@ -58,12 +58,15 @@ export function createTestWorld(
         fs.rmSync(dir, { recursive: true, force: true });
     };
     try {
-        const world = manager.createWorld(name, {
-            ...QUIET_SETTINGS,
-            ...settings,
-        });
-        // Kein echter Timer: Zeit vergeht ausschließlich über `advance*`.
-        world.pause();
+        // Pausiert angelegt: Kein echter Timer, und die Uhr steht exakt auf
+        // 0 — Zeit vergeht ausschließlich über `advance*`. Erst anlegen und
+        // dann pausieren ließ die Uhr ein paar Millisekunden laufen, je nach
+        // Last unterschiedlich viele.
+        const world = manager.createWorld(
+            name,
+            { ...QUIET_SETTINGS, ...settings },
+            { paused: true },
+        );
         return { world, manager, dir, dispose };
     } catch (error) {
         dispose();

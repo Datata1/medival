@@ -20,6 +20,39 @@ export interface GameEvent {
 const BATCH_SIZE = 200;
 
 /**
+ * Reihenfolge bei gleicher Fälligkeit (plans/19-prototyp/19-2).
+ *
+ * Kleinere Zahl zuerst; bei gleicher Priorität entscheidet die `id`, also die
+ * Einfügereihenfolge. Vorher entschied *nur* die `id` — ob eine Unterstützung
+ * vor einem zeitgleichen Angriff ankam, hing davon ab, wer zuerst geklickt
+ * hatte. Jetzt ist es eine Regel:
+ *
+ * 1. Was fertig wird (Bau, Rekrutierung), steht der Ankunft derselben
+ *    Millisekunde schon zur Verfügung.
+ * 2. Verstärkung, Rückkehr und Handel landen vor Angriffen.
+ * 3. Angriffe untereinander in Absendereihenfolge.
+ * 4. Entscheidungen (Bots, Barbaren) sehen das Ergebnis aller Ankünfte.
+ */
+export const EVENT_PRIORITY = {
+    build_complete: 10,
+    recruit_done: 10,
+    recruit_tick: 10,
+    arrival: 20,
+    arrival_attack: 30,
+    bot_tick: 90,
+    barbarian_tick: 90,
+} as const;
+
+const DEFAULT_PRIORITY = 50;
+
+const PRIORITY_BY_TYPE: Readonly<Record<string, number | undefined>> =
+    EVENT_PRIORITY;
+
+function priorityOf(type: string): number {
+    return PRIORITY_BY_TYPE[type] ?? DEFAULT_PRIORITY;
+}
+
+/**
  * Event queue backed by the world's `events` table. Holds a single armed
  * setTimeout for the next due event; everything else lives in SQLite so a
  * restart loses nothing.
@@ -31,6 +64,8 @@ const BATCH_SIZE = 200;
 export class Scheduler {
     private timer: NodeJS.Timeout | null = null;
     private processing = false;
+    /** Nach `dispose()`: keine Verarbeitung mehr, auch keine angehängte. */
+    private disposed = false;
 
     constructor(
         private readonly db: BetterSQLite3Database<
@@ -48,20 +83,29 @@ export class Scheduler {
             ),
     ) {}
 
+    /** Ob gerade Events abgearbeitet werden (dann ist `drainUntil` ein No-op). */
+    get isProcessing(): boolean {
+        return this.processing;
+    }
+
     insert(
         type: string,
         dueGameTime: GameTime,
         payload: Record<string, unknown>,
+        priority = priorityOf(type),
     ): void {
         this.db
             .insert(events)
             .values({
                 dueGameTime,
                 type,
+                priority,
                 payload: JSON.stringify(payload),
             })
             .run();
-        this.arm();
+        // Während des Abarbeitens bewaffnet `finally` den Timer ohnehin neu;
+        // ein `arm()` je eingefügtem Event wäre eine Abfrage je Event.
+        if (!this.processing) this.arm();
     }
 
     /**
@@ -96,7 +140,7 @@ export class Scheduler {
      * a larger backlog continues on the next event-loop turn. Always re-arms.
      */
     processDue(): void {
-        if (this.processing) return;
+        if (this.processing || this.disposed) return;
         this.processing = true;
         let moreDue = false;
         try {
@@ -127,13 +171,19 @@ export class Scheduler {
      *
      * Reentrant aufgerufen (aus einem Handler heraus) tut sie nichts und
      * liefert 0 — das laufende Abarbeiten holt ohnehin alles nach.
+     *
+     * `max` begrenzt die Zahl der Events; das Nachholen vor einem Befehl
+     * darf einen großen Rückstand nicht synchron abarbeiten (19-2).
      */
-    drainUntil(until: GameTime): number {
-        if (this.processing) return 0;
+    drainUntil(
+        until: GameTime,
+        max = Number.POSITIVE_INFINITY,
+    ): number {
+        if (this.processing || this.disposed) return 0;
         this.processing = true;
         let count = 0;
         try {
-            while (this.runNext(until)) count++;
+            while (count < max && this.runNext(until)) count++;
         } finally {
             this.processing = false;
             this.arm();
@@ -151,7 +201,11 @@ export class Scheduler {
             .select()
             .from(events)
             .where(lte(events.dueGameTime, until))
-            .orderBy(asc(events.dueGameTime), asc(events.id))
+            .orderBy(
+                asc(events.dueGameTime),
+                asc(events.priority),
+                asc(events.id),
+            )
             .limit(1)
             .all()[0];
         if (!next) return false;
@@ -173,6 +227,7 @@ export class Scheduler {
 
     /** (Re-)arm the timer for the next pending event. No-op while paused. */
     arm(): void {
+        if (this.disposed) return;
         if (this.timer) {
             clearTimeout(this.timer);
             this.timer = null;
@@ -186,6 +241,16 @@ export class Scheduler {
             Math.min(delay, 2_147_000_000),
         );
         this.timer.unref?.();
+    }
+
+    /**
+     * Endgültig anhalten, bevor die Datenbank schließt. Anders als `stop()`
+     * (Pause) verwirft das auch eine per `setImmediate` angehängte
+     * Fortsetzung — sie liefe sonst gegen eine geschlossene Verbindung.
+     */
+    dispose(): void {
+        this.disposed = true;
+        this.stop();
     }
 
     stop(): void {

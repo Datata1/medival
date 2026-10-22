@@ -61,3 +61,21 @@ describe('Zeitwerte lassen ungültige Zahlen nicht durch', () => {
         expect(amountAtRate(30, Duration.hours(2))).toBe(60);
     });
 });
+
+describe('GameTime ist ganzzahlig (plans/19-prototyp/19-2)', () => {
+    it('rundet auf ganze Millisekunden', () => {
+        expect(GameTime.of(1000.4)).toBe(1000);
+        expect(GameTime.of(1000.5)).toBe(1001);
+        expect(
+            GameTime.add(GameTime.of(10), Duration.hours(1e-7)),
+        ).toBe(10);
+        expect(
+            Number.isInteger(
+                GameTime.add(
+                    GameTime.zero,
+                    Duration.scale(1000, 1 / 3),
+                ),
+            ),
+        ).toBe(true);
+    });
+});

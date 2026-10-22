@@ -44,10 +44,17 @@ function finiteDuration(n: number): Duration {
     return n as Duration;
 }
 
+/**
+ * Zeitpunkte sind **ganze Millisekunden** (plans/19-prototyp/19-2). Vorher
+ * entstanden über `exponentialWait` und `Duration.scale` Stempel wie
+ * 9079141.307; Gleichstand und Reihenfolge zweier Events waren damit eine
+ * Frage der Nachkommastellen statt eine Regel. Gerundet wird hier, an der
+ * einzigen Stelle, an der ein `GameTime` entsteht.
+ */
 function finiteGameTime(n: number): GameTime {
     if (!Number.isFinite(n) || n < 0)
         throw new TimeValueError('GameTime', n);
-    return n as GameTime;
+    return Math.round(n) as GameTime;
 }
 
 export const Duration = {
