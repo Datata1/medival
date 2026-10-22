@@ -902,3 +902,69 @@ export const UNIT_ICONS_16 = {
         '................',
     ],
 };
+
+/**
+ * Gelände (Plan 18-3): 16×16, beim Erzeugen auf 32×32 verdoppelt.
+ *
+ * Wald und Hügel stehen auf durchsichtigem Grund — sie sind Gegenstände auf
+ * der Wiese, keine Bodenplatten, und benachbarte Felder wachsen dadurch zu
+ * einem Wald zusammen, statt ein Schachbrett zu bilden. Wasser ist als
+ * einziges randlos gefüllt: Ein See mit Lücken zwischen den Feldern wäre kein
+ * See.
+ */
+export const TERRAIN_SPRITES_16 = {
+    'terrain.forest': [
+        '................',
+        '...g............',
+        '..ggg...........',
+        '.gGgGg.....g....',
+        '..ggg.....ggg...',
+        '.gGgGg...gGgGg..',
+        '...W......ggg...',
+        '.........gGgGg..',
+        '...........W....',
+        '.......g........',
+        '.g....ggg.......',
+        'gGg..gGgGg...g..',
+        '.W....ggg...gGg.',
+        '.....gGgGg...W..',
+        '.......W........',
+        '................',
+    ],
+    'terrain.hill': [
+        '................',
+        '.....tttt.......',
+        '....ttttttT.....',
+        '...tttttttTT....',
+        '..tttttttTTT....',
+        '..ttttttTTTT....',
+        '...TTTTTTTT.....',
+        '................',
+        '................',
+        '.........tttt...',
+        '.tt.....ttttTT..',
+        '.TT....tttttTTT.',
+        '........TTTTTT..',
+        '................',
+        '................',
+        '................',
+    ],
+    'terrain.water': [
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaAAAaaaaaaaaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaaaaaAAAaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaAAAaaaaaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaaaaaaaaAAaa',
+        'aaaaaaaaaaaaaaaa',
+        'aAAAaaaaaaaaaaaa',
+        'aaaaaaaaAAAaaaaa',
+        'aaaaaaaaaaaaaaaa',
+        'aaaaaaAAaaaaaaaa',
+        'aaaaaaaaaaaaaaaa',
+    ],
+};

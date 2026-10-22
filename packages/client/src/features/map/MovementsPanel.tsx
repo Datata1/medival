@@ -5,19 +5,11 @@ import {
 } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import type { SpriteId } from '../../assets/registry.js';
 import { Card } from '../../components/Card.js';
 import { Countdown } from '../../components/Countdown.js';
 import { Icon } from '../../components/Icon.js';
 import { useStores } from '../../stores/StoreContext.js';
-
-/** Jede Bewegungsart hat ihr eigenes Zeichen. */
-const KIND_ICONS = {
-    attack: 'icon.attack',
-    support: 'icon.support',
-    return: 'icon.return',
-    trade: 'icon.trade',
-} as const satisfies Record<MovementInfo['kind'], SpriteId>;
+import { KIND_ICONS } from './derive.js';
 
 function MovementRow({
     movement,

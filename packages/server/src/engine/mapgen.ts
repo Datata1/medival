@@ -1,12 +1,14 @@
 import {
     BUILDING_ORDER,
     type BuildingLevels,
+    createRng,
     PLAYER_ID,
     pickRandom,
     type Rng,
     randInt,
     STARTING_BUILDINGS,
     STARTING_RESOURCES,
+    terrainAt,
     villagePoints,
     type WorldSettings,
 } from '@medival/shared';
@@ -56,22 +58,40 @@ const BOT_NAMES = [
     'Dagmar',
 ];
 
+/**
+ * Ein freies Feld für ein Dorf.
+ *
+ * Zwei Durchgänge: erst nur Ebene, dann ohne Rücksicht aufs Gelände. Der
+ * zweite ist die Rückversicherung. Das Gelände sperrt rund 30 % der Fläche,
+ * und auf der kleinsten erlaubten Karte (20×20) dürfen 100 Dörfer stehen —
+ * dort kann die Ebene wirklich ausgehen. Eine Welt, die sich nicht anlegen
+ * lässt, wäre der schlechtere Fehler: Der Renderer zeichnet unter einem Dorf
+ * ohnehin nie Gelände, ein Dorf im ehemaligen Wald sieht also aus wie jedes
+ * andere (plans/18-ux/18-3-karte.md).
+ */
 function pickFreeSpot(
     rng: Rng,
+    seed: number,
     size: number,
     taken: Set<string>,
     minDistFromCenter: number,
 ): { x: number; y: number } {
+    // `rng` ist hier bewusst *nicht* der Weltgenerator (siehe generateMap).
     const cx = Math.floor(size / 2);
     const cy = Math.floor(size / 2);
-    for (let i = 0; i < 10_000; i++) {
-        const x = randInt(rng, 1, size - 2);
-        const y = randInt(rng, 1, size - 2);
-        const key = `${x},${y}`;
-        if (taken.has(key)) continue;
-        if (Math.hypot(x - cx, y - cy) < minDistFromCenter) continue;
-        taken.add(key);
-        return { x, y };
+    for (const plainOnly of [true, false]) {
+        for (let i = 0; i < 10_000; i++) {
+            const x = randInt(rng, 1, size - 2);
+            const y = randInt(rng, 1, size - 2);
+            const key = `${x},${y}`;
+            if (taken.has(key)) continue;
+            if (Math.hypot(x - cx, y - cy) < minDistFromCenter)
+                continue;
+            if (plainOnly && terrainAt(seed, x, y) !== 'plain')
+                continue;
+            taken.add(key);
+            return { x, y };
+        }
     }
     throw new Error('Map too crowded: could not place village');
 }
@@ -121,7 +141,26 @@ export function generateMap(
     rng: Rng,
 ): void {
     const size = settings.mapSize;
+    const seed = settings.seed;
+    /*
+     * Die Bauplätze bekommen einen eigenen Zufallsstrom.
+     *
+     * Vorher zog alles aus `rng`: Persönlichkeit, Bauplatz, Barbarenstufen.
+     * Seit `pickFreeSpot` Felder ablehnen kann, kostet ein Platz nicht mehr
+     * genau zwei Würfe, sondern beliebig viele — und damit hätte allein das
+     * Einführen des Geländes jedem Bot eine andere Persönlichkeit gegeben.
+     * Getrennte Ströme halten unabhängige Entscheidungen unabhängig; sonst
+     * verschiebt jede künftige Änderung an der Platzsuche wieder die halbe
+     * Welt.
+     */
+    const placeRng = createRng(seed ^ 0x504c_4143);
     const taken = new Set<string>();
+    /*
+     * Das Heimatdorf steht per Definition in der Mitte, ungefragt und
+     * unabhängig vom Gelände. Es zu verschieben hieße, die einzige feste
+     * Größe der Karte aufzugeben, damit eine Zeichnung stimmt, die unter
+     * einem Dorf gar nicht gemalt wird.
+     */
     const center = Math.floor(size / 2);
     taken.add(`${center},${center}`);
 
@@ -148,14 +187,14 @@ export function generateMap(
                 .all(),
             'internal',
         );
-        const spot = pickFreeSpot(rng, size, taken, 8);
+        const spot = pickFreeSpot(placeRng, seed, size, taken, 8);
         insertVillage(db, bot.id, spot.x, spot.y, `${name}s Dorf`, {
             ...STARTING_BUILDINGS,
         });
     }
 
     for (let i = 0; i < settings.barbarianCount; i++) {
-        const spot = pickFreeSpot(rng, size, taken, 3);
+        const spot = pickFreeSpot(placeRng, seed, size, taken, 3);
         // Barbarian villages have modest resource buildings so early farming pays off.
         const levels: BuildingLevels = {
             ...STARTING_BUILDINGS,

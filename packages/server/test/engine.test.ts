@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
     Duration,
     farmCapacity,
+    terrainAt,
     totalBuildingPop,
 } from '@medival/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -67,6 +68,56 @@ describe('world creation', () => {
             .prepare('SELECT x, y FROM villages ORDER BY id')
             .all();
         expect(rowsA).toEqual(rowsB);
+    });
+
+    /*
+     * Das Gelände sperrt rund 30 % der Fläche als Bauplatz
+     * (plans/18-ux/18-3-karte.md). Auf einer großen Karte fällt das nicht ins
+     * Gewicht; hier steht der Fall, der wirklich eng wird: die kleinste
+     * erlaubte Karte, so voll wie die Welt-Invariante es zulässt
+     * (1 + Bots + Barbaren ≤ mapSize²/4).
+     */
+    it('stellt Dörfer bevorzugt in die Ebene', () => {
+        const world = manager.createWorld('Geländewelt', {
+            speed: 100,
+            mapSize: 60,
+            botCount: 10,
+            barbarianCount: 30,
+            barbarianAttemptsPerHour: 0,
+            seed: 24680,
+        });
+        const rows = world.sqlite
+            .prepare(
+                'SELECT x, y FROM villages WHERE player_id IS NULL OR player_id <> 1',
+            )
+            .all();
+        expect(rows).toHaveLength(40);
+        for (const row of rows as { x: number; y: number }[]) {
+            expect(
+                terrainAt(24680, row.x, row.y),
+                `Dorf auf ${row.x}|${row.y}`,
+            ).toBe('plain');
+        }
+    });
+
+    it('legt auch eine randvolle kleine Karte an', () => {
+        // 20×20 erlaubt 100 Dörfer. Die Bots halten zusätzlich Abstand 8 zum
+        // Zentrum, es bleibt also kaum Fläche übrig — genau der Fall, in dem
+        // die Geländesperre `pickFreeSpot` aufgeben lassen könnte.
+        for (const seed of [893, 813, 748, 4711]) {
+            const world = manager.createWorld(`Enge ${seed}`, {
+                speed: 100,
+                mapSize: 20,
+                botCount: 20,
+                barbarianCount: 79,
+                barbarianAttemptsPerHour: 0,
+                seed,
+            });
+            const count = world.sqlite
+                .prepare('SELECT COUNT(*) AS n FROM villages')
+                .get() as { n: number };
+            expect(count.n, `Seed ${seed}`).toBe(100);
+        }
     });
 });
 

@@ -23,6 +23,8 @@ Columns: 8
 110  42  31	roofDark
  92 122  74	grassLight
  61  86  54	grassDark
+ 74 122 156	waterLight
+ 47  90 120	waterDark
 217 166 120	skin
 195 202 209	steel
 139  47  34	blood

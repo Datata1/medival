@@ -473,6 +473,7 @@ export function registerRoutes(
                 kind: m.kind,
                 origin: names.get(m.originVillageId),
                 target: names.get(m.targetVillageId),
+                departureGameTime: m.departureGameTime,
                 arrivalGameTime: m.arrivalGameTime,
                 units: hideUnits
                     ? null

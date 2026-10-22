@@ -4,6 +4,11 @@ import { api } from '../api/client.js';
 import { apiErrorMessage } from '../lib/errors.js';
 import { AsyncValue } from './AsyncValue.js';
 
+export interface FrameSize {
+    width: number;
+    height: number;
+}
+
 /** Kartendörfer, die aktuelle Auswahl und das Versenden von Truppen. */
 export class MapStore {
     readonly villages = new AsyncValue<MapVillage[]>();
@@ -11,6 +16,16 @@ export class MapStore {
     selectedVillageId: number | null = null;
     sendError: string | null = null;
     isSending = false;
+
+    /*
+     * Die Größe der beiden Kartenrahmen. Sie steht hier und nicht in der
+     * Komponente, weil sie sonst bei jedem Blick auf ein Dorf verlorenginge:
+     * Die Karte ist eine Route, und wer sie einmal auf seinen Bildschirm
+     * eingestellt hat, will das nicht nach jedem Seitenwechsel wiederholen
+     * (plans/18-ux/18-3-karte.md).
+     */
+    frameSize: FrameSize = { width: 820, height: 560 };
+    miniSize: FrameSize = { width: 300, height: 300 };
 
     constructor() {
         makeAutoObservable(this);
@@ -34,6 +49,28 @@ export class MapStore {
     async load(worldId: number): Promise<void> {
         this.worldId = worldId;
         await this.villages.load(() => api.getMap(worldId));
+    }
+
+    /**
+     * Nachladen ohne Weltwechsel.
+     *
+     * Vorher lief `load()` genau einmal beim Öffnen der Welt: Eroberte ein Bot
+     * ein Dorf, blieb es in der Anzeige beim alten Besitzer, bis man die Welt
+     * neu öffnete. Der `RootStore` hängt das an `movement` und
+     * `village_updated` — die Liste ist klein und die Nachrichten sind selten.
+     */
+    async reload(): Promise<void> {
+        const id = this.worldId;
+        if (id === null) return;
+        await this.villages.load(() => api.getMap(id));
+    }
+
+    setFrameSize(size: FrameSize): void {
+        this.frameSize = size;
+    }
+
+    setMiniSize(size: FrameSize): void {
+        this.miniSize = size;
     }
 
     clear(): void {

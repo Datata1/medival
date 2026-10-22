@@ -16,6 +16,7 @@ import {
     BUILDING_ICONS_16,
     ICONS_16,
     MAP_SPRITES_16,
+    TERRAIN_SPRITES_16,
     UNIT_ICONS_16,
 } from './lib/sprite-definitions.mjs';
 import { KEYS, PALETTE, toGimpPalette } from './lib/sprite-palette.mjs';
@@ -32,6 +33,7 @@ function pathFor(id) {
     const folder = {
         icon: 'icons',
         map: 'map',
+        terrain: 'terrain',
         building: 'buildings',
         unit: 'units',
         yard: 'yard',
@@ -132,6 +134,11 @@ for (const [id, rows] of Object.entries(UNIT_ICONS_16))
 // Kartendörfer werden auf die Zielgröße 32×32 verdoppelt (Platzhalter-Abkürzung,
 // eigene Sprites sollten echte 32×32 sein).
 for (const [id, rows] of Object.entries(MAP_SPRITES_16))
+    written.push(write(id, rows, 2));
+
+// Das Gelände liegt in derselben Größe wie die Dörfer — es teilt sich mit
+// ihnen das Feldraster der Karte (Plan 18-3).
+for (const [id, rows] of Object.entries(TERRAIN_SPRITES_16))
     written.push(write(id, rows, 2));
 
 /*

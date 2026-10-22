@@ -55,6 +55,9 @@ import unitSword from './sprites/units/sword.png';
 import mapVillageBarbarian from './sprites/map/village-barbarian.png';
 import mapVillageBot from './sprites/map/village-bot.png';
 import mapVillagePlayer from './sprites/map/village-player.png';
+import terrainForest from './sprites/terrain/forest.png';
+import terrainHill from './sprites/terrain/hill.png';
+import terrainWater from './sprites/terrain/water.png';
 import yardAcademy from './sprites/yard/academy.png';
 import yardBarracks from './sprites/yard/barracks.png';
 import yardClay_pit from './sprites/yard/clay_pit.png';
@@ -116,6 +119,10 @@ export const SPRITES = {
     'map.village.barbarian': mapVillageBarbarian,
     'map.village.bot': mapVillageBot,
     'map.village.player': mapVillagePlayer,
+    // Das Kartengelände, 32×32 (plans/18-ux/18-3-karte.md).
+    'terrain.forest': terrainForest,
+    'terrain.hill': terrainHill,
+    'terrain.water': terrainWater,
     // Die Gebäude auf dem Dorfplatz, 32×32 (plans/18-ux/18-2-dorfuebersicht.md).
     'yard.academy': yardAcademy,
     'yard.barracks': yardBarracks,

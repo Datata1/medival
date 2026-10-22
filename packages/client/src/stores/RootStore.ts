@@ -157,6 +157,12 @@ export class RootStore {
                 if (this.village.villageId === message.villageId) {
                     void this.village.reload();
                 }
+                // Punkte und Besitzer stehen auch auf der Karte. Ohne das
+                // Nachladen zeigt ein erobertes Dorf bis zum nächsten Öffnen
+                // der Welt weiter seinen alten Herrn.
+                if (message.type === 'village_updated') {
+                    void this.map.reload();
+                }
                 if (
                     message.type === 'build_complete' &&
                     this.ownsVillage(message.villageId)
@@ -168,6 +174,9 @@ export class RootStore {
                 void this.movements
                     .reload()
                     .then(() => this.announceMovements());
+                // Eine Bewegung endet oft in einer Eroberung; die Karte muss
+                // den neuen Besitzer zeigen, nicht den von vorhin.
+                void this.map.reload();
                 break;
             case 'report':
                 void this.reports

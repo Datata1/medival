@@ -34,6 +34,9 @@ const EXPECTED_SIZE = {
     buildings: 16,
     units: 16,
     map: 32,
+    // Wald, Hügel und Wasser (Plan 18-3): dieselbe Kantenlänge wie die
+    // Kartendörfer, weil beide auf demselben Feldraster liegen.
+    terrain: 32,
     yard: 32,
 };
 

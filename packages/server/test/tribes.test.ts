@@ -454,7 +454,17 @@ describe('Krieg und Bündnisse über eine Spielwoche', () => {
             mapSize: 30,
             botCount: 8,
             barbarianCount: 4,
-            seed: 31415,
+            /*
+             * Der Seed ist gewählt, nicht beliebig: Eine Stammesgründung
+             * verlangt gegenseitige Zuneigung *und* einen Wurf gegen
+             * `FOUNDING_CHANCE`, und das gelingt in einer Woche mit acht Bots
+             * nur bei etwa jedem vierten Seed (nachgemessen über acht Seeds,
+             * vorher wie nachher). Er stand auf 31415, bis Plan 18-3 die
+             * Bauplätze ans Gelände band und damit alle Entfernungen
+             * verschob — an der Häufigkeit hat sich dabei nichts geändert,
+             * nur daran, welche Seeds sie zeigen.
+             */
+            seed: 99,
             barbarianAttemptsPerHour: 0,
         });
         for (let hour = 0; hour < 24 * 7; hour++) {

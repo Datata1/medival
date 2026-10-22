@@ -34,6 +34,10 @@ export const PALETTE = {
     roofDark: '#6e2a1f',
     grassLight: '#5c7a4a',
     grassDark: '#3d5636',
+    // Gewässer für das Kartengelände (Plan 18-3). Die Palette hatte bis dahin
+    // kein Blau — es kam auf keinem Gebäude und keiner Einheit vor.
+    waterLight: '#4a7a9c',
+    waterDark: '#2f5a78',
     skin: '#d9a678',
     steel: '#c3cad1',
     blood: '#8b2f22',
@@ -64,6 +68,9 @@ export const KEYS = {
     // Vegetation
     g: PALETTE.grassLight,
     G: PALETTE.grassDark,
+    // Wasser
+    a: PALETTE.waterLight,
+    A: PALETTE.waterDark,
     // Akzente
     y: PALETTE.goldLeaf,
     e: PALETTE.seal,

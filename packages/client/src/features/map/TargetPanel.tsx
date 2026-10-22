@@ -50,6 +50,27 @@ export const TargetPanel = observer(function TargetPanel({
                     </Link>
                 </p>
             )}
+            {/*
+             * Der dritte Bedienweg zum Dorfwechsel neben Dorfleiste und
+             * Übersicht (plans/18-ux/18-1-rahmen-und-kopfzeile.md): Wer sein
+             * zweites Dorf auf der Karte sieht, will es von dort aus öffnen
+             * können. Ein `<Link>` und kein `village.select()`, damit die
+             * Adresszeile mitwandert.
+             */}
+            {isOwn && !isSelf && (
+                <p>
+                    <Link
+                        to="/worlds/$worldId/village/$villageId"
+                        params={{
+                            worldId: String(worldId),
+                            villageId: String(target.id),
+                        }}
+                        className="text-seal underline"
+                    >
+                        {t('map.switchToVillage')}
+                    </Link>
+                </p>
+            )}
             {isSelf ? (
                 <p className="text-ink-light">
                     {t('map.isActiveVillage')}

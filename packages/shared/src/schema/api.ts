@@ -193,6 +193,14 @@ export const MovementInfoSchema = z.object({
     kind: MovementKindSchema,
     origin: villageRef.optional(),
     target: villageRef.optional(),
+    /**
+     * Wird **auch bei eingehenden Feindbewegungen** ausgeliefert: Verborgen
+     * bleibt allein die Truppenzusammensetzung, nicht die Tatsache, dass etwas
+     * unterwegs ist — die Ankunftszeit steht ja ohnehin daneben. Ohne den
+     * Abflug ließe sich der Marker auf der Karte nicht setzen
+     * (plans/18-ux/18-3-karte.md).
+     */
+    departureGameTime: GameTimeSchema,
     arrivalGameTime: GameTimeSchema,
     /** Bei eingehenden Feindbewegungen bewusst verborgen. */
     units: UnitsSchema.nullable(),

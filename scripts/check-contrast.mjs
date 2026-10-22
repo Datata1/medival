@@ -13,18 +13,37 @@ import { readFileSync } from 'node:fs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const THEME_FILE = 'packages/client/src/styles.css';
+const MAP_FILE = 'packages/client/src/features/map/colors.ts';
 
-/** Liest die `--color-*`-Token aus dem @theme-Block. */
+/**
+ * Liest die `--color-*`-Token aus dem @theme-Block und die Kartenfarben aus
+ * `MAP_COLORS`.
+ *
+ * Die Karte hat eine eigene Quelle, weil Canvas keine CSS-Variablen kennt.
+ * Sie hier mitzulesen ist der ganze Punkt der Prüfung: Kartenfarben, die
+ * niemand misst, driften genau so weit ab wie die Kopfzeile es vor Plan 18-1
+ * tat. Kartenfarben tragen das Präfix `map.`, damit sie in den Meldungen von
+ * den Theme-Farben zu unterscheiden sind.
+ */
 function readPalette() {
+    const palette = {};
     const css = readFileSync(
         new URL(`../${THEME_FILE}`, import.meta.url),
         'utf8',
     );
-    const palette = {};
     for (const [, name, value] of css.matchAll(
         /--color-([\w-]+):\s*(#[0-9a-fA-F]{6});/g,
     )) {
         palette[name] = value;
+    }
+    const map = readFileSync(
+        new URL(`../${MAP_FILE}`, import.meta.url),
+        'utf8',
+    );
+    for (const [, name, value] of map.matchAll(
+        /^\s{4}(\w+):\s*'(#[0-9a-fA-F]{6})',/gm,
+    )) {
+        palette[`map.${name}`] = value;
     }
     return palette;
 }
@@ -126,6 +145,92 @@ const COMBINATIONS = [
         fg: 'parchment',
         bg: 'moss',
         what: 'Stufenplakette auf dem Dorfplatz',
+    },
+    /*
+     * Plan 18-3: Der Kartengrund ist von Holz auf Wiese gewechselt. Damit
+     * kippen alle Paarungen der Karte — die Beschriftung in Pergament kam auf
+     * dem hellen Grund nur auf 2.2:1 und ist jetzt Tinte.
+     *
+     * Dörfer, Ringe und Bewegungsstrahlen sind gezeichnete Bedienelemente,
+     * keine Schrift: Für sie gilt die 3:1-Schwelle.
+     */
+    {
+        fg: 'map.label',
+        bg: 'map.ground',
+        what: 'Dorfname auf der Wiese',
+    },
+    {
+        fg: 'map.label',
+        bg: 'map.labelHalo',
+        what: 'Dorfname in seiner Aura (über Wald und Wasser)',
+    },
+    { fg: 'map.own', bg: 'map.ground', what: 'Eigenes Dorf', min: 3 },
+    {
+        fg: 'map.enemy',
+        bg: 'map.ground',
+        what: 'Fremdes Dorf',
+        min: 3,
+    },
+    {
+        fg: 'map.barbarian',
+        bg: 'map.ground',
+        what: 'Barbarendorf',
+        min: 3,
+    },
+    {
+        fg: 'map.activeOutlineEdge',
+        bg: 'map.ground',
+        what: 'Ring um das aktive Dorf (dunkler Rand)',
+        min: 3,
+    },
+    {
+        fg: 'map.activeOutline',
+        bg: 'map.activeOutlineEdge',
+        what: 'Ring um das aktive Dorf (heller Kern)',
+        min: 3,
+    },
+    {
+        fg: 'map.selectedOutline',
+        bg: 'map.ground',
+        what: 'Ring um das gewählte Dorf',
+        min: 3,
+    },
+    {
+        fg: 'map.movementOutgoing',
+        bg: 'map.ground',
+        what: 'Eigener Bewegungsstrahl',
+        min: 3,
+    },
+    {
+        fg: 'map.movementIncoming',
+        bg: 'map.ground',
+        what: 'Eingehender Bewegungsstrahl',
+        min: 3,
+    },
+    {
+        fg: 'map.viewportEdge',
+        bg: 'map.ground',
+        what: 'Ausschnittrahmen der Übersichtskarte',
+        min: 3,
+    },
+    /*
+     * Das Feldraster ist der einzige Eintrag mit einer Untergrenze unter 3:1,
+     * und das ist Absicht: Es trägt keine Information, es hilft beim Abzählen
+     * von Feldern. Ein Raster, das WCAG für Bedienelemente erfüllt, zerschneidet
+     * die Karte in Kacheln. Geprüft wird trotzdem — ein unsichtbares Raster ist
+     * genauso falsch wie ein aufdringliches.
+     */
+    {
+        fg: 'map.grid',
+        bg: 'map.ground',
+        what: 'Feldraster (bewusst leise, keine WCAG-Anforderung)',
+        min: 1.2,
+    },
+    {
+        fg: 'map.outside',
+        bg: 'map.ground',
+        what: 'Weltrand: Fläche jenseits der Karte',
+        min: 1.2,
     },
 ];
 

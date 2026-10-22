@@ -1,175 +1,313 @@
 import {
+    type GameTimeLike,
     type MapVillage,
     type MovementsResponse,
     PLAYER_ID,
+    terrainAt,
 } from '@medival/shared';
-import { type RefObject, useEffect } from 'react';
-import type { Camera, MapCameraHandlers } from './useMapCamera.js';
+import type { RefObject } from 'react';
+import { MAP_COLORS } from './colors.js';
+import {
+    KIND_ICONS,
+    movementLines,
+    movementProgress,
+    TERRAIN_SPRITES,
+} from './derive.js';
+import { ResizableCanvas } from './ResizableCanvas.js';
+import type { MapCameraHandlers } from './useMapCamera.js';
+import { TILE } from './useMapCamera.js';
+import type { FrameSize } from './useResizableFrame.js';
 import type { LoadedSprites } from './useSpriteAtlas.js';
 
-/**
- * Kartenfarben. Sie leben hier statt im CSS-Theme, weil Canvas keine
- * CSS-Variablen kennt — abgestimmt auf die Palette aus plans/11.
- */
-export const MAP_COLORS = {
-    ground: '#241a10', // timber
-    grid: 'rgba(242, 230, 208, 0.07)', // Pergament, sehr schwach
-    own: '#c8973f', // Blattgold, hell genug zum Leuchten
-    enemy: '#a8392a', // Siegelrot, auf dunklem Grund aufgehellt
-    barbarian: '#8a7f6a', // stumpfes Grau-Braun
-    activeOutline: '#f2e6d0', // Pergament
-    selectedOutline: '#7fb8d4',
-    label: 'rgba(242, 230, 208, 0.8)',
-} as const;
+/** Dorfsprites sind 32 px und werden 1:1 gezeichnet — verkleinert fransen sie. */
+const VILLAGE_SPRITE = 32;
+/** Das Zeichen einer unterwegs befindlichen Truppe. */
+const MARKER_SPRITE = 16;
 
-/** Pure canvas rendering: draws grid, movement lines and villages from props. */
-export function MapCanvas({
-    canvasRef,
-    camera,
-    villages,
-    movements,
-    mapSize,
-    selectedId,
-    activeVillageId,
-    handlers,
-    sprites,
-}: {
-    canvasRef: RefObject<HTMLCanvasElement | null>;
-    camera: Camera | null;
-    villages: MapVillage[] | undefined;
+export interface MapScene {
+    camera: { x: number; y: number };
+    villages: MapVillage[];
     movements: MovementsResponse | undefined;
     mapSize: number;
+    seed: number;
+    gameTime: GameTimeLike;
     selectedId: number | null;
     activeVillageId: number | null;
-    handlers: MapCameraHandlers;
     sprites: LoadedSprites;
+}
+
+/** Die Farbe eines Dorfes nach Besitzer — auch die Übersichtskarte färbt so. */
+export function villageColor(village: MapVillage): string {
+    if (village.playerId === PLAYER_ID) return MAP_COLORS.own;
+    return village.playerId === null
+        ? MAP_COLORS.barbarian
+        : MAP_COLORS.enemy;
+}
+
+/**
+ * Ein zweifarbiger Ring: außen dunkel, innen hell. Der dunkle Rand trägt den
+ * Kontrast zur hellen Wiese, der helle Kern macht den Ring erkennbar.
+ */
+function ring(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    core: string,
+    edge: string,
+): void {
+    const half = VILLAGE_SPRITE / 2 + 3;
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x - half, y - half, half * 2, half * 2);
+    ctx.strokeStyle = core;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - half, y - half, half * 2, half * 2);
+}
+
+/**
+ * Zeichnet die Nahansicht. Reine Funktion auf dem Kontext — alles, was sie
+ * braucht, steht in `scene`.
+ */
+function drawScene(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    scene: MapScene,
+): void {
+    const { camera, mapSize } = scene;
+    const px = (wx: number) => width / 2 + (wx - camera.x) * TILE;
+    const py = (wy: number) => height / 2 + (wy - camera.y) * TILE;
+    /* Auf halbe Pixel gesetzt: Eine 1 px breite Linie auf einer ganzen
+     * Koordinate deckt zwei halbe Pixel ab und wird grau statt scharf. */
+    const crisp = (v: number) => Math.floor(v) + 0.5;
+
+    // Erst die Fläche jenseits der Welt, dann die Welt darüber — so ist der
+    // Rand ohne eine einzige Linie sichtbar.
+    ctx.fillStyle = MAP_COLORS.outside;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = MAP_COLORS.ground;
+    ctx.fillRect(px(-0.5), py(-0.5), mapSize * TILE, mapSize * TILE);
+
+    // Sichtbarer Ausschnitt in Feldern, auf die Welt beschnitten.
+    const first = (center: number, extent: number) =>
+        Math.max(0, Math.floor(center - extent / (2 * TILE)) - 1);
+    const last = (center: number, extent: number) =>
+        Math.min(
+            mapSize - 1,
+            Math.ceil(center + extent / (2 * TILE)) + 1,
+        );
+    const fromX = first(camera.x, width);
+    const toX = last(camera.x, width);
+    const fromY = first(camera.y, height);
+    const toY = last(camera.y, height);
+
+    /*
+     * Gelände. Auf einem belegten Feld wird nie welches gezeichnet: Dörfer
+     * aus Welten von vor diesem Ticket stehen dort, wo der Zufall sie
+     * hingesetzt hat, notfalls mitten im See. So sehen auch alte Spielstände
+     * stimmig aus, ohne dass etwas migriert werden müsste.
+     */
+    const occupied = new Set(
+        scene.villages.map((v) => `${v.x},${v.y}`),
+    );
+    for (let y = fromY; y <= toY; y++) {
+        for (let x = fromX; x <= toX; x++) {
+            if (occupied.has(`${x},${y}`)) continue;
+            const id = TERRAIN_SPRITES[terrainAt(scene.seed, x, y)];
+            const sprite = id === null ? undefined : scene.sprites[id];
+            if (!sprite) continue;
+            ctx.drawImage(
+                sprite,
+                px(x) - TILE / 2,
+                py(y) - TILE / 2,
+                TILE,
+                TILE,
+            );
+        }
+    }
+
+    // Feldraster
+    ctx.strokeStyle = MAP_COLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = fromX; x <= toX + 1; x++) {
+        const at = crisp(px(x - 0.5));
+        ctx.moveTo(at, crisp(py(fromY - 0.5)));
+        ctx.lineTo(at, crisp(py(toY + 0.5)));
+    }
+    for (let y = fromY; y <= toY + 1; y++) {
+        const at = crisp(py(y - 0.5));
+        ctx.moveTo(crisp(px(fromX - 0.5)), at);
+        ctx.lineTo(crisp(px(toX + 0.5)), at);
+    }
+    ctx.stroke();
+
+    drawMovements(ctx, scene, px, py);
+    drawVillages(ctx, scene, px, py, width, height);
+}
+
+function drawMovements(
+    ctx: CanvasRenderingContext2D,
+    scene: MapScene,
+    px: (x: number) => number,
+    py: (y: number) => number,
+): void {
+    for (const { movement, incoming } of movementLines(
+        scene.movements,
+    )) {
+        const { origin, target } = movement;
+        if (!origin || !target) continue;
+        const color = incoming
+            ? MAP_COLORS.movementIncoming
+            : MAP_COLORS.movementOutgoing;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(px(origin.x), py(origin.y));
+        ctx.lineTo(px(target.x), py(target.y));
+        ctx.stroke();
+
+        // Der Marker sitzt dort, wo die Truppe gerade steht.
+        const done = movementProgress(movement, scene.gameTime);
+        const x = px(origin.x + (target.x - origin.x) * done);
+        const y = py(origin.y + (target.y - origin.y) * done);
+        const sprite = scene.sprites[KIND_ICONS[movement.kind]];
+        // Eine Scheibe unter dem Zeichen: Die Icons sind für Pergament
+        // gezeichnet und gehen auf der Wiese sonst unter.
+        ctx.fillStyle = MAP_COLORS.labelHalo;
+        ctx.beginPath();
+        ctx.arc(x, y, MARKER_SPRITE * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (sprite) {
+            ctx.drawImage(
+                sprite,
+                x - MARKER_SPRITE / 2,
+                y - MARKER_SPRITE / 2,
+                MARKER_SPRITE,
+                MARKER_SPRITE,
+            );
+        }
+    }
+}
+
+function drawVillages(
+    ctx: CanvasRenderingContext2D,
+    scene: MapScene,
+    px: (x: number) => number,
+    py: (y: number) => number,
+    width: number,
+    height: number,
+): void {
+    const half = VILLAGE_SPRITE / 2;
+    ctx.font = '12px "EB Garamond", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.lineJoin = 'round';
+
+    for (const village of scene.villages) {
+        const x = px(village.x);
+        const y = py(village.y);
+        if (
+            x < -TILE ||
+            x > width + TILE ||
+            y < -TILE ||
+            y > height + TILE
+        )
+            continue;
+
+        const spriteId =
+            village.playerId === PLAYER_ID
+                ? 'map.village.player'
+                : village.playerId === null
+                  ? 'map.village.barbarian'
+                  : 'map.village.bot';
+        const sprite = scene.sprites[spriteId];
+        if (sprite) {
+            ctx.drawImage(
+                sprite,
+                x - half,
+                y - half,
+                VILLAGE_SPRITE,
+                VILLAGE_SPRITE,
+            );
+        } else {
+            // Fällt ein Sprite aus, bleibt die Karte lesbar statt leer.
+            ctx.fillStyle = villageColor(village);
+            ctx.fillRect(
+                x - half,
+                y - half,
+                VILLAGE_SPRITE,
+                VILLAGE_SPRITE,
+            );
+        }
+
+        if (village.id === scene.activeVillageId) {
+            ring(
+                ctx,
+                x,
+                y,
+                MAP_COLORS.activeOutline,
+                MAP_COLORS.activeOutlineEdge,
+            );
+        } else if (village.id === scene.selectedId) {
+            ring(
+                ctx,
+                x,
+                y,
+                MAP_COLORS.selectedOutline,
+                MAP_COLORS.activeOutlineEdge,
+            );
+        }
+
+        /*
+         * Der Name, nicht die Koordinaten: „Ragnars Dorf" sagt mehr als
+         * „357|368", und die Koordinaten stehen daneben in der Zielleiste.
+         * Die helle Aura hält ihn auch über einem Wald lesbar.
+         */
+        const label = village.name;
+        const baseline = y + half + 12;
+        ctx.strokeStyle = MAP_COLORS.labelHalo;
+        ctx.lineWidth = 3;
+        ctx.strokeText(label, x, baseline);
+        ctx.fillStyle = MAP_COLORS.label;
+        ctx.fillText(label, x, baseline);
+    }
+}
+
+/** Die Nahansicht: ein ziehbarer Rahmen mit fester Feldgröße. */
+export function MapCanvas({
+    canvasRef,
+    scene,
+    handlers,
+    size,
+    onResized,
+    label,
+}: {
+    canvasRef: RefObject<HTMLCanvasElement | null>;
+    scene: MapScene | null;
+    handlers: MapCameraHandlers;
+    size: FrameSize;
+    onResized: (size: FrameSize) => void;
+    label: string;
 }) {
-    // Canvas is an external imperative system — synchronizing via an effect is the intended use.
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas || !camera || !villages) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        const { width, height } = canvas;
-        const px = (wx: number) =>
-            width / 2 + (wx - camera.x) * camera.zoom;
-        const py = (wy: number) =>
-            height / 2 + (wy - camera.y) * camera.zoom;
-
-        // Dunkler Grund als Gegenpol zum Pergament (plans/11): Dörfer leuchten
-        // darauf, und die Karte hebt sich klar vom Blatt ab.
-        // Ohne das verwaschen die Pixel beim Hineinzoomen zu Matsch.
-        ctx.imageSmoothingEnabled = false;
-        ctx.fillStyle = MAP_COLORS.ground;
-        ctx.fillRect(0, 0, width, height);
-
-        // Grid
-        ctx.strokeStyle = MAP_COLORS.grid;
-        ctx.lineWidth = 1;
-        for (let gx = 0; gx <= mapSize; gx++) {
-            const x = px(gx - 0.5);
-            if (x < 0 || x > width) continue;
-            ctx.beginPath();
-            ctx.moveTo(x, py(-0.5));
-            ctx.lineTo(x, py(mapSize - 0.5));
-            ctx.stroke();
-        }
-        for (let gy = 0; gy <= mapSize; gy++) {
-            const y = py(gy - 0.5);
-            if (y < 0 || y > height) continue;
-            ctx.beginPath();
-            ctx.moveTo(px(-0.5), y);
-            ctx.lineTo(px(mapSize - 0.5), y);
-            ctx.stroke();
-        }
-
-        // Movement lines (player-related)
-        const all = [
-            ...(movements?.outgoing ?? []),
-            ...(movements?.incoming ?? []),
-        ];
-        for (const m of all) {
-            if (!m.origin || !m.target) continue;
-            const isIncoming = movements?.incoming.includes(m) ?? false;
-            ctx.strokeStyle = isIncoming
-                ? 'rgba(220,80,60,0.65)'
-                : 'rgba(200,151,63,0.55)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(px(m.origin.x), py(m.origin.y));
-            ctx.lineTo(px(m.target.x), py(m.target.y));
-            ctx.stroke();
-        }
-
-        // Villages
-        const half = Math.max(3, camera.zoom * 0.36);
-        for (const v of villages) {
-            const x = px(v.x);
-            const y = py(v.y);
-            if (x < -20 || x > width + 20 || y < -20 || y > height + 20)
-                continue;
-            const spriteId =
-                v.playerId === PLAYER_ID
-                    ? 'map.village.player'
-                    : v.playerId === null
-                      ? 'map.village.barbarian'
-                      : 'map.village.bot';
-            const sprite = sprites[spriteId];
-            if (sprite) {
-                ctx.drawImage(
-                    sprite,
-                    x - half,
-                    y - half,
-                    half * 2,
-                    half * 2,
-                );
-            } else {
-                // Fällt ein Sprite aus, bleibt die Karte lesbar statt leer.
-                ctx.fillStyle =
-                    v.playerId === PLAYER_ID
-                        ? MAP_COLORS.own
-                        : v.playerId === null
-                          ? MAP_COLORS.barbarian
-                          : MAP_COLORS.enemy;
-                ctx.fillRect(x - half, y - half, half * 2, half * 2);
-            }
-            if (v.id === selectedId || v.id === activeVillageId) {
-                ctx.strokeStyle =
-                    v.id === activeVillageId
-                        ? MAP_COLORS.activeOutline
-                        : MAP_COLORS.selectedOutline;
-                ctx.lineWidth = 2;
-                ctx.strokeRect(
-                    x - half - 2,
-                    y - half - 2,
-                    half * 2 + 4,
-                    half * 2 + 4,
-                );
-            }
-            if (camera.zoom >= 18) {
-                ctx.fillStyle = MAP_COLORS.label;
-                ctx.font = '11px "EB Garamond", Georgia, serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(`${v.x}|${v.y}`, x, y + half + 11);
-            }
-        }
-    }, [
-        canvasRef,
-        camera,
-        villages,
-        movements,
-        mapSize,
-        selectedId,
-        activeVillageId,
-        sprites,
-    ]);
-
     return (
-        <canvas
-            ref={canvasRef}
-            width={720}
-            height={560}
-            className="w-full cursor-grab touch-none rounded-xs border-2 border-oak active:cursor-grabbing"
+        <ResizableCanvas
+            canvasRef={canvasRef}
+            size={size}
+            onResized={onResized}
+            label={label}
+            className="cursor-grab active:cursor-grabbing"
+            draw={(ctx, width, height) => {
+                if (scene) {
+                    drawScene(ctx, width, height, scene);
+                    return;
+                }
+                ctx.fillStyle = MAP_COLORS.ground;
+                ctx.fillRect(0, 0, width, height);
+            }}
             {...handlers}
         />
     );
