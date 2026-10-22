@@ -5,7 +5,9 @@ dist/
 
 # Spielstände: eine SQLite-Datei je Welt (MEDIVAL_DATA_DIR überschreibt den Ort).
 # Eine Welt sichern heißt, ihre Datei zu kopieren — ins Repo gehört sie nicht.
-data/
+# Mit führendem Schrägstrich: Ohne ihn verschwand auch packages/shared/src/data/
+# (Gebäude- und Einheitendaten) aus dem Repo.
+/data/
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
