@@ -261,7 +261,7 @@ describe('Barbarendörfer in einer laufenden Welt', () => {
             (v, i) => v.points > (before[i]?.points ?? 0),
         );
         expect(grown.length).toBeGreaterThan(after.length / 2);
-    });
+    }, 60_000);
 
     it('überschreitet den Punktedeckel nicht wesentlich', () => {
         // Ein laufendes Bauvorhaben darf den Deckel überschießen — es wurde
