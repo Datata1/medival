@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { sameTribe } from '../../src/engine/tribes.js';
 import type { World } from '../../src/engine/world.js';
 import {
-    advance,
     advanceYielding,
     createTestWorld,
     gameWeeks,

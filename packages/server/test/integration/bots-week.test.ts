@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { World } from '../../src/engine/world.js';
 import type { WorldManager } from '../../src/engine/worldManager.js';
 import {
-    advance,
     advanceYielding,
     createTestWorld,
     gameWeeks,
