@@ -18,6 +18,10 @@ import {
  */
 vi.mock('../src/api/client.js', () => ({
     api: {
+        me: vi.fn(),
+        login: vi.fn(),
+        register: vi.fn(),
+        logout: vi.fn(),
         listWorlds: vi.fn(),
         createWorld: vi.fn(),
         deleteWorld: vi.fn(),
@@ -45,6 +49,7 @@ const { MovementsStore } = await import(
 );
 const { ReportsStore } = await import('../src/stores/ReportsStore.js');
 const { MapStore } = await import('../src/stores/MapStore.js');
+const { AuthStore } = await import('../src/stores/AuthStore.js');
 const { RootStore } = await import('../src/stores/RootStore.js');
 type WorldSocket =
     import('../src/stores/SocketConnection.js').WorldSocket;
@@ -581,5 +586,49 @@ describe('MapStore: Karte in Kacheln (19-7)', () => {
             map.showArea(0, 0, 99, 99),
         ]);
         expect(mocked.getMapTiles).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('AuthStore (19-8)', () => {
+    const account = { id: 1, name: 'Ragna', role: 'admin' as const };
+
+    it('fragt beim ersten Mal, wer angemeldet ist — parallele Aufrufe teilen sich die Anfrage', async () => {
+        mocked.me.mockResolvedValue({ account: null, devMode: false });
+        const auth = new AuthStore();
+        await Promise.all([auth.ensureLoaded(), auth.ensureLoaded()]);
+        expect(mocked.me).toHaveBeenCalledTimes(1);
+        expect(auth.loaded).toBe(true);
+        expect(auth.account).toBeNull();
+        await auth.ensureLoaded();
+        expect(mocked.me).toHaveBeenCalledTimes(1);
+    });
+
+    it('meldet an und ab', async () => {
+        mocked.login.mockResolvedValue({ account });
+        mocked.logout.mockResolvedValue({ ok: true });
+        const auth = new AuthStore();
+        expect(await auth.login('Ragna', 'geheim-genug')).toBe(true);
+        expect(auth.account?.name).toBe('Ragna');
+        expect(auth.isAdmin).toBe(true);
+        await auth.logout();
+        expect(auth.account).toBeNull();
+    });
+
+    it('übersetzt einen abgelehnten Login', async () => {
+        mocked.login.mockRejectedValue(
+            new Error('invalid_credentials'),
+        );
+        const auth = new AuthStore();
+        expect(await auth.login('Ragna', 'falsch')).toBe(false);
+        expect(auth.error).toBe('Name oder Passwort stimmt nicht');
+        expect(auth.account).toBeNull();
+    });
+
+    it('gilt als geladen, auch wenn der Server nicht antwortet', async () => {
+        mocked.me.mockRejectedValue(new Error('network'));
+        const auth = new AuthStore();
+        await auth.ensureLoaded();
+        expect(auth.loaded).toBe(true);
+        expect(auth.account).toBeNull();
     });
 });

@@ -10,7 +10,8 @@ export function WorldListItem({
 }: {
     world: WorldListEntry;
     onOpen: () => void;
-    onDelete: () => void;
+    /** Fehlt für Nicht-Admins: dann kein Löschknopf (19-8). */
+    onDelete?: () => void;
 }) {
     const { t } = useTranslation();
     const status =
@@ -34,9 +35,11 @@ export function WorldListItem({
             </div>
             <div className="flex items-center gap-2">
                 <Button onClick={onOpen}>{t('lobby.open')}</Button>
-                <Button variant="danger" onClick={onDelete}>
-                    {t('lobby.delete')}
-                </Button>
+                {onDelete && (
+                    <Button variant="danger" onClick={onDelete}>
+                        {t('lobby.delete')}
+                    </Button>
+                )}
             </div>
         </li>
     );

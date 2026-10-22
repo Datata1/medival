@@ -3,6 +3,7 @@ import {
     type AudioOutput,
     WebAudioOutput,
 } from '../audio/AudioEngine.js';
+import { AuthStore } from './AuthStore.js';
 import { LobbyStore } from './LobbyStore.js';
 import { MapStore } from './MapStore.js';
 import { MovementsStore } from './MovementsStore.js';
@@ -25,6 +26,7 @@ import { WorldStore } from './WorldStore.js';
  * daran, ob eine bestimmte Komponente gerade gerendert wird.
  */
 export class RootStore {
+    readonly auth = new AuthStore();
     readonly lobby = new LobbyStore();
     readonly world = new WorldStore();
     readonly village = new VillageStore();

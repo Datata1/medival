@@ -16,8 +16,11 @@ import { useStores } from '../../stores/StoreContext.js';
  */
 export const SettingsView = observer(function SettingsView({
     onExit,
+    onLogout,
 }: {
     onExit: () => void;
+    /** Abmelden (19-8). */
+    onLogout?: () => void;
 }) {
     const { t } = useTranslation();
     const { world, sound } = useStores();
@@ -107,6 +110,11 @@ export const SettingsView = observer(function SettingsView({
                     <Button variant="danger" onClick={onExit}>
                         {t('world.backToLobby')}
                     </Button>
+                    {onLogout && (
+                        <Button variant="tab" onClick={onLogout}>
+                            {t('auth.logout')}
+                        </Button>
+                    )}
                 </div>
             </Card>
 

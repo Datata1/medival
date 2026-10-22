@@ -7,7 +7,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { GameClock, wallClock } from '../../src/engine/clock.js';
 import { WorldManager } from '../../src/engine/worldManager.js';
 import { act } from '../harness/act.js';
-import { createTestApp, type TestApp } from '../harness/app.js';
+import {
+    createTestApp,
+    loginAs,
+    type TestApp,
+} from '../harness/app.js';
 import { givenPlayer, givenVillage } from '../harness/given.js';
 import { reportsOf } from '../harness/query.js';
 import { QUIET_SETTINGS } from '../harness/world.js';
@@ -159,10 +163,13 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
     it('im Entwicklermodus: pausieren, vorspulen, fortsetzen', async () => {
         const wall = fakeWallClock();
         api = await createTestApp({ devMode: true });
+        const { cookie } = await loginAs(api, 'Verwalter');
+        const headers = { cookie };
         const world = api.manager.createWorld('Dev', QUIET_SETTINGS);
 
         const paused = await api.app.inject({
             method: 'POST',
+            headers,
             url: `/api/worlds/${world.id}/pause`,
         });
         expect(paused.json()).toMatchObject({
@@ -175,6 +182,7 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
 
         const skipped = await api.app.inject({
             method: 'POST',
+            headers,
             url: `/api/worlds/${world.id}/dev/skip`,
             payload: { ms: Duration.hours(1) },
         });
@@ -184,6 +192,7 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
 
         await api.app.inject({
             method: 'POST',
+            headers,
             url: `/api/worlds/${world.id}/resume`,
         });
         wall.advance(Duration.seconds(30));

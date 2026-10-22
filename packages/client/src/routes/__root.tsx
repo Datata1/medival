@@ -1,6 +1,7 @@
 import {
     createRootRouteWithContext,
     Outlet,
+    redirect,
 } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../components/Card.js';
@@ -25,7 +26,23 @@ function NotFound() {
     );
 }
 
+/** Seiten, die ohne Anmeldung erreichbar sind. */
+const PUBLIC_PATHS = ['/login', '/register'];
+
 export const Route = createRootRouteWithContext<RouterContext>()({
+    /*
+     * Ohne Session zur Anmeldung (plans/19-prototyp/19-8). Wie alle Loader
+     * stößt auch dieser nur eine Store-Action an; was „angemeldet" heißt,
+     * entscheidet der AuthStore.
+     */
+    beforeLoad: async ({ context, location }) => {
+        await context.stores.auth.ensureLoaded();
+        if (
+            !context.stores.auth.account &&
+            !PUBLIC_PATHS.includes(location.pathname)
+        )
+            throw redirect({ to: '/login' });
+    },
     component: Outlet,
     notFoundComponent: NotFound,
 });

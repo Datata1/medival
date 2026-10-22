@@ -1,9 +1,11 @@
 import {
+    AccountSchema,
     type BuildingType,
     DeletedResponseSchema,
     DiplomacyViewSchema,
     MapTilesResponseSchema,
     MapVillageAtResponseSchema,
+    MeResponseSchema,
     MovementsResponseSchema,
     OkResponseSchema,
     PlayerProfileSchema,
@@ -36,6 +38,9 @@ async function request<T>(
 ): Promise<T> {
     // Content-Type nur mit Body — Fastify lehnt application/json ohne Body ab.
     const res = await fetch(url, {
+        // Session-Cookie mitsenden (19-8). Same-Origin ist der Standard, hier
+        // ausdrücklich, damit es niemand für Zufall hält.
+        credentials: 'same-origin',
         ...init,
         headers: init?.body
             ? { 'Content-Type': 'application/json' }
@@ -66,7 +71,27 @@ const postJson = (body: unknown): RequestInit => ({
     body: JSON.stringify(body),
 });
 
+/** Antwort auf Anmelden und Registrieren (19-8). */
+const AuthResponseSchema = z.object({ account: AccountSchema });
+
 export const api = {
+    me: () => request('/api/me', MeResponseSchema),
+    register: (name: string, password: string) =>
+        request(
+            '/api/auth/register',
+            AuthResponseSchema,
+            postJson({ name, password }),
+        ),
+    login: (name: string, password: string) =>
+        request(
+            '/api/auth/login',
+            AuthResponseSchema,
+            postJson({ name, password }),
+        ),
+    logout: () =>
+        request('/api/auth/logout', OkResponseSchema, {
+            method: 'POST',
+        }),
     listWorlds: () => request('/api/worlds', WorldListSchema),
     createWorld: (name: string, settings: Partial<WorldSettings>) =>
         request(

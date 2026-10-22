@@ -6,6 +6,8 @@ import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { registerRoutes } from './api/routes.js';
+import { registerAuth } from './auth/plugin.js';
+import { registerAuthRoutes } from './auth/routes.js';
 import type { WorldManager } from './engine/worldManager.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,6 +22,8 @@ export interface AppOptions {
      * aus der Umgebung, `MEDIVAL_DEV=1`; `pnpm dev` setzt das.
      */
     devMode?: boolean;
+    /** Cookie-Geheimnis; Standard aus dem WorldManager (19-8). */
+    secret?: string;
 }
 
 /**
@@ -52,8 +56,16 @@ export async function buildApp(
         });
     }
 
-    registerRoutes(app, manager, {
-        devMode: options.devMode ?? process.env.MEDIVAL_DEV === '1',
+    const devMode = options.devMode ?? process.env.MEDIVAL_DEV === '1';
+    await registerAuth(
+        app,
+        manager.accounts,
+        options.secret ?? manager.secret,
+    );
+    registerAuthRoutes(app, manager.accounts, {
+        devMode,
+        secureCookies: process.env.MEDIVAL_SECURE_COOKIES === '1',
     });
+    registerRoutes(app, manager, { devMode });
     return app;
 }

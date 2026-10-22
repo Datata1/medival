@@ -40,3 +40,32 @@ export async function createTestApp(
         },
     };
 }
+
+/**
+ * Registriert einen Account und liefert das Session-Cookie für `inject`
+ * (plans/19-prototyp/19-8). Der erste Account einer App wird Admin.
+ */
+export async function loginAs(
+    api: TestApp,
+    name: string,
+    password = 'geheim-genug',
+): Promise<{ cookie: string; account: { id: number; role: string } }> {
+    const res = await api.app.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { name, password },
+    });
+    if (res.statusCode !== 200)
+        throw new Error(
+            `loginAs(${name}): ${res.statusCode} ${res.body}`,
+        );
+    const cookie = res.cookies.find(
+        (c) => c.name === 'medival_session',
+    );
+    if (!cookie)
+        throw new Error(`loginAs(${name}): kein Session-Cookie`);
+    const { account } = res.json() as {
+        account: { id: number; role: string };
+    };
+    return { cookie: `${cookie.name}=${cookie.value}`, account };
+}

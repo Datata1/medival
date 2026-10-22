@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -10,6 +11,7 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { startBarbarianTicks } from '../ai/barbarian.js';
 import { startBotTicks } from '../ai/bot.js';
+import { Accounts } from '../auth/accounts.js';
 import { META_DDL, WORLD_DDL } from '../db/ddl.js';
 import { parseJsonColumn, parseRow } from '../db/parse.js';
 import {
@@ -103,6 +105,15 @@ function migrateWorldDb(sqlite: Database.Database): void {
     }
 }
 
+function loadSecret(dataDir: string): string {
+    const file = path.join(dataDir, 'secret');
+    if (fs.existsSync(file))
+        return fs.readFileSync(file, 'utf8').trim();
+    const secret = randomBytes(32).toString('base64url');
+    fs.writeFileSync(file, secret, { mode: 0o600 });
+    return secret;
+}
+
 function villageCount(sqlite: Database.Database): number {
     return sqlite.prepare('SELECT id FROM villages').all().length;
 }
@@ -120,6 +131,14 @@ function columnsOf(sqlite: Database.Database, table: string): string[] {
 
 export class WorldManager {
     private readonly meta: Database.Database;
+    /** Accounts und Sessions, weltübergreifend in der Meta-DB (19-8). */
+    readonly accounts: Accounts;
+    /**
+     * Geheimnis zum Signieren der Session-Cookies: `MEDIVAL_SECRET`, sonst
+     * einmalig erzeugt und in `<data>/secret` abgelegt — damit Sessions einen
+     * Neustart überstehen.
+     */
+    readonly secret: string;
     private readonly worlds = new Map<number, World>();
     private readonly persistTimer: NodeJS.Timeout;
     readonly health = new EngineHealth();
@@ -129,6 +148,14 @@ export class WorldManager {
         this.meta = new Database(path.join(dataDir, 'worlds.sqlite'));
         this.meta.pragma('journal_mode = WAL');
         this.meta.exec(META_DDL);
+        this.accounts = new Accounts(
+            this.meta,
+            (process.env.MEDIVAL_ADMINS ?? '')
+                .split(',')
+                .map((n) => n.trim())
+                .filter(Boolean),
+        );
+        this.secret = process.env.MEDIVAL_SECRET ?? loadSecret(dataDir);
         // Plan 19-3: Spielzeit an der Wanduhr.
         if (!columnsOf(this.meta, 'worlds').includes('epoch_zero_ms'))
             this.meta.exec(

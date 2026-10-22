@@ -367,3 +367,42 @@ export const DevSkipRequestSchema = z.object({
         .positive()
         .max(7 * 24 * 3_600_000),
 });
+
+// ── Accounts (plans/19-prototyp/19-8-accounts-und-session.md) ─────────
+
+/** Name: 3–24 Zeichen aus Buchstaben, Ziffern, Leerzeichen, `_` und `-`. */
+export const AccountNameSchema = z
+    .string()
+    .trim()
+    .min(3)
+    .max(24)
+    .regex(/^[\p{L}\p{N}_ -]+$/u);
+
+export const PasswordSchema = z.string().min(8).max(200);
+
+export const RegisterRequestSchema = z.object({
+    name: AccountNameSchema,
+    password: PasswordSchema,
+});
+
+export const LoginRequestSchema = z.object({
+    name: z.string().trim().min(1).max(24),
+    password: z.string().min(1).max(200),
+});
+
+export const AccountRoleSchema = z.enum(['player', 'admin']);
+
+export const AccountSchema = z.object({
+    id: z.number().int().positive(),
+    name: z.string(),
+    role: AccountRoleSchema,
+});
+
+/** Wer angemeldet ist — `account: null` heißt: niemand. */
+export const MeResponseSchema = z.object({
+    account: AccountSchema.nullable(),
+    devMode: z.boolean(),
+});
+
+export type Account = z.infer<typeof AccountSchema>;
+export type MeResponse = z.infer<typeof MeResponseSchema>;

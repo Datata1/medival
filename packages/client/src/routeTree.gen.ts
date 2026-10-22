@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as WorldsWorldIdRouteImport } from './routes/worlds.$worldId'
 import { Route as WorldsWorldIdIndexRouteImport } from './routes/worlds.$worldId.index'
 import { Route as WorldsWorldIdDiplomacyRouteImport } from './routes/worlds.$worldId.diplomacy'
@@ -27,6 +29,16 @@ import { Route as WorldsWorldIdVillageVillageIdBuildingRouteImport } from './rou
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorldsWorldIdRoute = WorldsWorldIdRouteImport.update({
@@ -101,6 +113,8 @@ const WorldsWorldIdVillageVillageIdBuildingRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/worlds/$worldId': typeof WorldsWorldIdRouteWithChildren
   '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/handbook': typeof WorldsWorldIdHandbookRoute
@@ -117,6 +131,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/handbook': typeof WorldsWorldIdHandbookRoute
   '/worlds/$worldId/map': typeof WorldsWorldIdMapRoute
@@ -132,6 +148,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/worlds/$worldId': typeof WorldsWorldIdRouteWithChildren
   '/worlds/$worldId/diplomacy': typeof WorldsWorldIdDiplomacyRoute
   '/worlds/$worldId/handbook': typeof WorldsWorldIdHandbookRoute
@@ -150,6 +168,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
+    | '/register'
     | '/worlds/$worldId'
     | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/handbook'
@@ -166,6 +186,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
+    | '/register'
     | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/handbook'
     | '/worlds/$worldId/map'
@@ -180,6 +202,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
+    | '/register'
     | '/worlds/$worldId'
     | '/worlds/$worldId/diplomacy'
     | '/worlds/$worldId/handbook'
@@ -197,6 +221,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   WorldsWorldIdRoute: typeof WorldsWorldIdRouteWithChildren
 }
 
@@ -207,6 +233,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/worlds/$worldId': {
@@ -354,6 +394,8 @@ const WorldsWorldIdRouteWithChildren = WorldsWorldIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   WorldsWorldIdRoute: WorldsWorldIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
