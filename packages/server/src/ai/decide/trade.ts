@@ -2,6 +2,7 @@ import {
     type Attitude,
     attitudeOf,
     distanceInfluence,
+    MERCHANT_CAPACITY,
     RESOURCE_KEYS,
     type Resources,
 } from '@medival/shared';
@@ -27,6 +28,11 @@ export interface TradePartner {
      * gleichmäßig geliefert.
      */
     needs?: Resources;
+    /**
+     * Ist schon eine Lieferung dieses Bots an den Empfänger unterwegs?
+     * Dann wartet die nächste (plans/19-prototyp/19-4).
+     */
+    shipmentInFlight?: boolean;
 }
 
 export interface ShipDecision {
@@ -65,6 +71,26 @@ const GOODWILL_BASE = 20;
 const SURPLUS_THRESHOLD = 0.75;
 /** Höchstens so viel des Lagers geht auf eine Reise. */
 const SHARE_PER_SHIPMENT = 0.25;
+
+/**
+ * Die kleinste Lieferung, die sich lohnt: so viel, wie auf eine Reise passt
+ * — höchstens ein voller Händler (plans/19-prototyp/19-4).
+ *
+ * Ohne diese Schwelle lieferte ein Bot mit kleinem Lager und großer
+ * Produktion alle 2 s die ~20 Rohstoffe, die seit dem letzten Tick
+ * nachgewachsen waren: >13 000 Ankünfte je Spielstunde in einer Welt mit
+ * zehn Bots. Gefunden vom Harness aus 19-1.
+ */
+export function minShipment(
+    capacity: number,
+    merchantsFree: number,
+): number {
+    return Math.min(
+        MERCHANT_CAPACITY,
+        merchantsFree,
+        Math.floor(capacity * SHARE_PER_SHIPMENT),
+    );
+}
 
 /**
  * Was ein Dorf entbehren kann: alles über der Überschussschwelle, gedeckelt
@@ -113,10 +139,13 @@ export function decideShipment(
     partners: readonly TradePartner[],
 ): ShipDecision | null {
     const surplus = surplusOf(resources, capacity, merchantsFree);
-    if (totalOf(surplus) <= 0) return null;
+    const total = totalOf(surplus);
+    if (total <= 0 || total < minShipment(capacity, merchantsFree))
+        return null;
 
     let best: { partner: TradePartner; score: number } | null = null;
     for (const partner of partners) {
+        if (partner.shipmentInFlight) continue;
         if (!GIVING_ATTITUDES.includes(attitudeOf(partner.standing)))
             continue;
         const score =

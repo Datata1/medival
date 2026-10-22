@@ -1,6 +1,46 @@
 # Ticket 19-4: Bots reparieren
 
-**Status:** 📋 offen · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md), [19-2](19-2-zeit-engine-konsistenz.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-1](19-1-integrationstest-harness.md) (19-2 entgegen der Planung *nicht*, siehe unten)
+
+> **Ergebnis:** Bots schlafen nicht mehr und liefern nicht mehr im Sekundentakt. Gemessen
+> über den Harness (Seed 555, zehn Bots, zwei echte Spielwochen): **8 840 Bot-Punkte gegen
+> 1 187 bei Barbaren, Faktor 7,4** (der alte Test maß 2,3). Speicher im Schnitt 4,8,
+> Bauernhof 3,8 (vorher in jeder echten Welt 1–2). Die Persönlichkeiten unterscheiden sich:
+> Wall turtle 15,5 / raider 7,7, Hauptgebäude expander 14,0 / turtle 4,0.
+>
+> **Am echten Server**, dieselbe Welt (Speed 200, 20 Bots, Seed 24680) je 90 s: `main`
+> 26,6 Punkte im Schnitt (praktisch kein Wachstum ab Start ~26), dieser Stand 41,9;
+> keine abgewiesenen Intents, Event-Rückstand 0.
+>
+> **Umgesetzt:** `queueFreeAt` im Snapshot und in `planBot`; Denkintervalle in Spielzeit
+> (`maxThinkInterval(speed)`, 2 Spielstunden, mindestens 10 s); `wakeBot` mit
+> `Scheduler.pullForward` bei `build_complete`, abgeschicktem Angriff (Ziel) und jeder
+> Ankunft (beide Seiten); Mindestlieferung (`minShipment`) und höchstens eine Lieferung
+> gleichzeitig je Partner; Speicher-Horizont (3 Spielstunden) und Bauernhof-Prognose ab
+> Kaserne. Nur Bau und Rekrutierung verkürzen den nächsten Tick.
+>
+> **Die drei Wochensimulationen** laufen jetzt über den Harness in `test/integration/`
+> (`bots-week`, `war-week`, `barbarians-week`) mit echten Spielwochen (`gameWeeks`).
+> Die alten Tests spulten 168 *Echt*stunden vor, bei Speed 100 rund 700 Spielwochen, von
+> denen sie nur einen Bruchteil abarbeiteten.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Reihenfolge: 19-4 vor 19-2.** 19-2 macht die Zeit in Handlern korrekt, und damit
+>   zeigten die alten Wochentests, was sie wirklich simuliert hatten: rund sechs Stunden
+>   statt einer Woche. Ehrlich einmessen ließen sie sich erst ohne die Lieferschleife,
+>   und 19-4 braucht 19-2 nicht, weil der Harness Uhr und Fälligkeit bereits gleichsetzt.
+>   19-2 setzt jetzt auf 19-4 auf.
+> - **Statt `SHIPMENT_COOLDOWN` gibt es „eine Lieferung je Partner gleichzeitig":** Die
+>   Wahrnehmung sieht die Lieferung, die unterwegs ist, und braucht keinen
+>   gespeicherten Zeitstempel in `BotState`.
+> - **Der Speed-Unabhängigkeitstest** (Speed 1 über 48 h gegen Speed 100) ist nicht
+>   gebaut. `MIN_THINK_INTERVAL` bleibt bewusst Echtzeit (2 s nach eigener Aktion), damit
+>   gilt die Gleichheit nur ungefähr. Das gehört in die Lastprobe (19-15).
+> - **Regressionstest Lieferungen** prüft die Regel statt einer Zahl: keine Lieferung
+>   unter 200, je Partner höchstens eine unterwegs, und < 1,5 Ankünfte je Bot und
+>   Spielstunde. Gemessen: 878 Ankünfte in Stunde 4 (vorher 2 485), 1 745 in Stunde 6
+>   (vorher ~25 000).
 
 ## Kontext
 

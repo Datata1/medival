@@ -8,6 +8,7 @@ import {
     unitCost,
 } from '@medival/shared';
 import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 import { events } from '../db/schema.js';
 import { GameError } from '../engine/errors.js';
 import {
@@ -16,7 +17,7 @@ import {
     invitePlayer,
 } from '../engine/tribes.js';
 import type { World } from '../engine/world.js';
-import { decideBuild } from './decide/build.js';
+import { decideBuild, QUEUE_LIMIT } from './decide/build.js';
 import {
     decideFounding,
     decideInvitation,
@@ -47,13 +48,28 @@ import {
  */
 
 /**
- * Spätestens so lange wartet ein Bot, auch wenn sein Sparziel noch fern ist.
- * Ohne diese Obergrenze verschläft er alles, was die Lage zwischendurch
- * ändert: einen eingehenden Angriff, ein zerstörtes Gebäude, eine Lieferung.
+ * Spätestens so lange wartet ein Bot, auch wenn sein Sparziel noch fern ist —
+ * in **Spielzeit** bei Speed 1 (plans/19-prototyp/19-4).
+ *
+ * Vorher waren es feste 10 Minuten Echtzeit. Bei Speed 200 sind das ~33
+ * Spielstunden, und weil eine volle Bauschleife kein Ziel lieferte, schlief
+ * jeder Bot nach zwei Aufträgen genau so lange — die Bauten waren nach
+ * Sekunden fertig. Ereignisse, die die Lage ändern, wecken ihn zusätzlich
+ * (`wakeBot`); die Obergrenze ist nur das Netz darunter.
  */
-const MAX_THINK_INTERVAL = Duration.minutes(10);
+const MAX_THINK_GAME_TIME = Duration.hours(2);
+/** Untergrenze des Höchstintervalls in Echtzeit, auch bei hohem Speed. */
+const MAX_THINK_FLOOR = Duration.seconds(10);
 /** Untergrenze, damit ein Bot mit vollem Lager nicht in Dauerschleife denkt. */
 const MIN_THINK_INTERVAL = Duration.seconds(2);
+
+/** Höchstintervall bei dieser Weltgeschwindigkeit. */
+export function maxThinkInterval(speed: number): Duration {
+    return Duration.atLeast(
+        Duration.scale(MAX_THINK_GAME_TIME, 1 / Math.max(1, speed)),
+        MAX_THINK_FLOOR,
+    );
+}
 
 /**
  * Entscheidet für alle Dörfer eines Bots und sagt zugleich, wann sich das
@@ -72,7 +88,20 @@ export function planBot(snapshot: BotSnapshot): {
 } {
     const intents: Intent[] = [];
     const savingFor: BotState['savingFor'] = {};
-    let soonest = MAX_THINK_INTERVAL;
+    let soonest = maxThinkInterval(snapshot.speed);
+    /*
+     * Wann eine volle Bauschleife wieder Platz hat. Ohne diese Zeile lieferte
+     * `decideBuild` bei voller Schleife nichts, `soonest` blieb auf dem
+     * Höchstintervall, und der Bot verschlief die Fertigstellung.
+     */
+    for (const village of snapshot.villages) {
+        if (village.queueLength < QUEUE_LIMIT) continue;
+        if (village.queueFreeAt == null) continue;
+        const wait = Duration.ms(
+            Math.max(0, village.queueFreeAt - snapshot.gameTime),
+        );
+        if (wait < soonest) soonest = wait;
+    }
     /*
      * Was nach dem Bauen noch im Lager liegt.
      *
@@ -87,7 +116,11 @@ export function planBot(snapshot: BotSnapshot): {
     );
 
     for (const village of snapshot.villages) {
-        const choice = decideBuild(village, snapshot.personality);
+        const choice = decideBuild(
+            village,
+            snapshot.personality,
+            snapshot.speed,
+        );
         if (!choice) continue;
 
         savingFor[String(village.id)] = {
@@ -197,11 +230,19 @@ export function planBot(snapshot: BotSnapshot): {
     }
 
     const factor = DIFFICULTY_THINK_FACTOR[snapshot.difficulty];
+    /*
+     * Nach einem Bau oder einer Rekrutierung gleich wieder schauen: Lager und
+     * Schleife haben sich geändert, vielleicht passt noch ein Auftrag.
+     * Lieferungen und Truppenbewegungen zählen bewusst nicht — sie ändern
+     * nichts, worüber der Bot zwei Sekunden später anders entschiede. Genau
+     * diese Abkürzung machte aus jeder Lieferung eine Schleife (19-4).
+     */
+    const changedOwnState = intents.some(
+        (i) => i.kind === 'build' || i.kind === 'recruit',
+    );
     const nextIn = Duration.atLeast(
         Duration.scale(
-            // Nach einer ausgeführten Aktion gleich wieder schauen: Die Lage
-            // hat sich geändert (Lager leerer, Schleife länger).
-            intents.length > 0 ? MIN_THINK_INTERVAL : soonest,
+            changedOwnState ? MIN_THINK_INTERVAL : soonest,
             factor,
         ),
         MIN_THINK_INTERVAL,
@@ -209,6 +250,43 @@ export function planBot(snapshot: BotSnapshot): {
 
     return { intents, nextIn, state: { savingFor } };
 }
+
+/**
+ * Weckt einen Bot, weil sich seine Lage geändert hat (plans/19-prototyp/19-4):
+ * ein Bau ist fertig, ein Angriff ist unterwegs, Truppen oder Waren sind
+ * angekommen.
+ *
+ * Plan 15 sah das vor („Ereignisse, die die Lage ändern, planen den Tick
+ * sofort neu"), umgesetzt war es nie — ein Bot erfuhr von allem erst beim
+ * nächsten regulären Tick. Es entsteht **kein zweiter Tick**: Der vorhandene
+ * wird vorgezogen, die Invariante „eine Kette je Bot" bleibt. Für Menschen,
+ * Barbaren und Bots ohne laufende Kette ist der Aufruf ein No-op.
+ */
+export function wakeBot(
+    world: World,
+    playerId: number | null,
+    at: GameTime = world.now(),
+): void {
+    if (playerId === null) return;
+    const tick = world.sqlite
+        .prepare(
+            `SELECT e.id, e.due_game_time AS due FROM events e
+             JOIN players p ON p.id = json_extract(e.payload_json, '$.playerId')
+             WHERE e.type = 'bot_tick' AND p.id = ? AND p.is_bot = 1
+             LIMIT 1`,
+        )
+        .get(playerId);
+    const parsed = BotTickRowSchema.safeParse(tick);
+    if (!parsed.success) return;
+    // Schon bald dran: nicht noch weiter vorziehen.
+    if (parsed.data.due <= GameTime.add(at, MIN_THINK_INTERVAL)) return;
+    world.scheduler.pullForward(parsed.data.id, at);
+}
+
+const BotTickRowSchema = z.object({
+    id: z.number().int(),
+    due: z.number(),
+});
 
 export function scheduleBotTick(
     world: World,

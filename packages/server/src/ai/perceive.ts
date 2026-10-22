@@ -71,6 +71,8 @@ export interface BotSnapshot {
     tribeId: number | null;
     gameTime: number;
     unitSpeed: number;
+    /** Weltgeschwindigkeit — für Denkintervalle in Spielzeit (19-4). */
+    speed: number;
 }
 
 /**
@@ -143,6 +145,10 @@ export function perceiveBot(
             capacity,
             popInUse: world.popInUse(v.id, levels),
             queueLength: queue.length,
+            queueFreeAt:
+                queue.length === 0
+                    ? null
+                    : Math.min(...queue.map((q) => q.completesAt)),
             merchantsFree: freeMerchantCapacity(world, v.id),
             recruiting:
                 world.db
@@ -172,6 +178,7 @@ export function perceiveBot(
         tribeId: tribeOf(world, playerId),
         gameTime: now,
         unitSpeed: world.settings.unitSpeed,
+        speed: world.settings.speed,
     };
 }
 
@@ -372,9 +379,25 @@ function perceiveFounding(
 function perceivePartners(
     world: World,
     playerId: number,
-    owned: { x: number; y: number }[],
+    owned: { id: number; x: number; y: number }[],
     now: GameTime,
 ): TradePartner[] {
+    // Empfänger, an die dieser Bot gerade liefert (19-4).
+    const ownedIds = new Set(owned.map((v) => v.id));
+    const busy = new Set<number>();
+    for (const m of world.db
+        .select({
+            origin: movements.originVillageId,
+            target: villages.playerId,
+        })
+        .from(movements)
+        .innerJoin(villages, eq(villages.id, movements.targetVillageId))
+        .where(eq(movements.kind, 'trade'))
+        .all()) {
+        if (ownedIds.has(m.origin) && m.target !== null)
+            busy.add(m.target);
+    }
+
     const others = world.db
         .select({
             id: villages.id,
@@ -403,6 +426,7 @@ function perceivePartners(
             villageId: v.id,
             standing: world.settleStanding(playerId, v.playerId, now),
             distance: best,
+            shipmentInFlight: busy.has(v.playerId),
         });
     }
     return [...nearest.values()];

@@ -18,7 +18,7 @@ zusammen. Die Reihenfolge unten ist keine Empfehlung, sondern weitgehend erzwung
 | 19-1 | [Integrationstest-Harness](19-1-integrationstest-harness.md) | server (Tests) | ✅ erledigt |
 | 19-2 | [Zeit-Engine: Konsistenz & Millisekunden](19-2-zeit-engine-konsistenz.md) | server + shared | 📋 offen |
 | 19-3 | [Wanduhr & Welt-Lebenszyklus](19-3-wanduhr-und-lebenszyklus.md) | server + client | 📋 offen |
-| 19-4 | [Bots reparieren](19-4-bots-reparieren.md) | server | 📋 offen |
+| 19-4 | [Bots reparieren](19-4-bots-reparieren.md) | server | ✅ erledigt |
 | 19-5 | [Bot-Wahrnehmung skalierbar](19-5-bot-wahrnehmung-skalierbar.md) | server | 📋 offen |
 | 19-6 | [Weltkarte 1000×1000, kreisförmige Besiedlung](19-6-weltkarte-kreisfoermige-besiedlung.md) | shared + server | 📋 offen |
 | 19-7 | [Karten-API nach Ausschnitt](19-7-karten-api-ausschnitt.md) | server + client | 📋 offen |
@@ -44,6 +44,9 @@ zusammen. Die Reihenfolge unten ist keine Empfehlung, sondern weitgehend erzwung
   ohne Event je Einheit. Ohne sie misst die Lastprobe ein Problem, das es nicht geben müsste.
 - **19-4 direkt danach.** Der Bot-Fehler ist klein und sofort sichtbar. Mit 19-1 und 19-2
   bekommt er einen Regressionstest, der ihn ohne die beiden nicht hätte.
+  *Umgesetzt wurde 19-4 vor 19-2:* Korrekte Event-Zeit (19-2) entlarvte die alten
+  Wochentests, die sich erst ohne die Lieferschleife aus 19-4 ehrlich einmessen ließen.
+  Der Harness aus 19-1 reicht 19-4 als Grundlage.
 - **19-3 nach 19-4**, weil die Bots erst funktionieren müssen, bevor die Zeit nicht mehr
   angehalten werden kann.
 - **19-5 vor 19-6.** Eine 1000×1000-Karte mit tausenden Dörfern macht die Wahrnehmung,
