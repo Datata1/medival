@@ -1,6 +1,49 @@
 # Ticket 19-6: Weltkarte 1000×1000, 100 Kontinente, kreisförmige Besiedlung
 
-**Status:** 📋 offen · **Voraussetzung:** [19-5](19-5-bot-wahrnehmung-skalierbar.md), 18-3 committet · **Grundlage für:** [19-7](19-7-karten-api-ausschnitt.md), [19-9](19-9-welt-beitreten-und-rechte.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-5](19-5-bot-wahrnehmung-skalierbar.md), 18-3 committet · **Grundlage für:** [19-7](19-7-karten-api-ausschnitt.md), [19-9](19-9-welt-beitreten-und-rechte.md)
+
+> **Ergebnis:** Karten bis 1000×1000 (Standard 1000), 100 Kontinente K00–K99. Die
+> Besiedlung beginnt genau in der Mitte und wächst kreisförmig nach außen
+> (`shared/logic/placement.ts`, pur): Das n-te Dorf liegt im Ring um
+> `r(n) = √(n / (π·d))`. Es gilt ein Mindestabstand von 1 Feld, Ebene wird bevorzugt.
+> Gibt es im Ring keinen Platz, wird der Ring breiter, zuletzt folgt eine
+> deterministische Suche über den ganzen Kreis. Bots und Barbaren werden verzahnt
+> platziert. Der Zähler `settled_count` liegt in der Meta-DB.
+> `engine/settle.ts:settleNewPlayer` setzt neue Spieler mit `barbariansPerSettler`
+> Barbaren an den Rand; 19-9 ruft es beim Beitreten auf. Neue Einstellungen:
+> `settlementDensity` (Standard 0,15, max. 0,2) und `barbariansPerSettler` (Standard 2).
+>
+> **Gemessen:** 300 Bots + 2 000 Barbaren auf 1000×1000 werden in 0,63 s angelegt
+> (Laptop) und liegen alle in K44/K45/K54/K55, höchstens 80 Felder von der Mitte.
+> 5 000 Platzierungen (pur) brauchen ~60 ms. Am echten Server liegen in der Standardwelt
+> (30 Bots, 80 Barbaren) alle 111 Dörfer innerhalb von 18 Feldern um (500|500).
+> `GET /map` liefert 8 KB.
+>
+> **Tests:** `shared/test/placement.test.ts`: keine Doppel- und keine Nachbarbelegung,
+> Beginn in der Mitte, Rundheit (≥ 95 % im Ring), Dichte im Zielband (±20 %), die ersten
+> 300 Dörfer in den vier mittleren Kontinenten, Determinismus, Kontinente auf 1000×1000,
+> volle Karte → `MapFullError`. `test/integration/settle.test.ts`: Weltstart,
+> gleichmäßige Mischung Bots/Barbaren, 100 Ansiedlungen am Rand mit je zwei Barbaren
+> (die sofort ticken), `map_full`, Zähler über Neustart.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Das erste Dorf steht genau in der Mitte**, nicht mit Streuung. Dort beginnt die
+>   Besiedlung, und bis 19-9 ist es das Dorf des Menschen.
+> - **Neue Kapazitätsregel:** Statt „ein Dorf je vier Felder der ganzen Karte" gilt
+>   `settlementCapacity(mapSize, density) = ⌊π·(mapSize/2 − 2)²·d⌋`. Der Test der
+>   „randvollen 20×20-Karte mit 100 Dörfern" prüft deshalb jetzt eine Karte genau an
+>   ihrer Kapazitätsgrenze (40 Dörfer bei Dichte 0,2), ebenfalls über vier Seeds.
+> - **Höchstdichte 0,2 statt 0,5:** Mit Mindestabstand 1 lässt sich mehr nicht
+>   verlässlich füllen (theoretisch 0,25 bei perfektem Raster).
+> - **Übersichtskarte zeigt 100×100 Felder statt der ganzen Welt** (Rückmeldung des
+>   Nutzers nach dem ersten Stand). Auf 1000×1000 war die Gesamtansicht ein Punktehaufen,
+>   in dem sich einzelne Dörfer nicht erkennen ließen. Jetzt folgt ein Ausschnitt von
+>   100×100 Feldern der Kamera, bleibt in der Welt und zeigt Kontinentgrenzen mit
+>   Nummer. Kleine Welten werden ganz gezeigt (`miniWindow` in `features/map/derive.ts`,
+>   getestet). Im Browser per Headless-Screenshot geprüft.
+> - **Weltanlage-Formular** zeigt die neuen Einstellungen noch nicht. Die Kamera folgte
+>   schon dem eigenen Dorf.
 
 ## Kontext
 

@@ -100,6 +100,13 @@ export interface WorldSettings {
     botCount: number;
     barbarianCount: number;
     /**
+     * Zieldichte der Besiedlung: Dörfer je Feld innerhalb des Siedlungskreises
+     * (plans/19-prototyp/19-6).
+     */
+    settlementDensity: number;
+    /** Wie viele Barbarendörfer mit jedem neuen Spieler im selben Ring entstehen. */
+    barbariansPerSettler: number;
+    /**
      * Mittlere Handlungsversuche eines Barbarendorfs pro Stunde **bei
      * Weltgeschwindigkeit 1**; wird wie die Produktion mit `speed`
      * multipliziert. 0 hält Barbaren statisch (Verhalten vor Plan 14).

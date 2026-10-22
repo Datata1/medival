@@ -76,12 +76,22 @@ export interface WorldMeta {
     rngState: number;
     /** Wanduhrzeit, zu der die Spielzeit 0 war; `null` vor 19-3. */
     epochZeroMs: number | null;
+    /**
+     * Wie viele Dörfer seit Weltbeginn platziert wurden (19-6). Ein Zähler,
+     * keine Zählung: Eroberte oder verlassene Dörfer verkleinern den
+     * Siedlungskreis nicht — er wächst nur nach außen.
+     */
+    settledCount: number;
 }
 
 export type MetaPatch = Partial<
     Pick<
         WorldMeta,
-        'status' | 'gameTimeMs' | 'rngState' | 'epochZeroMs'
+        | 'status'
+        | 'gameTimeMs'
+        | 'rngState'
+        | 'epochZeroMs'
+        | 'settledCount'
     >
 >;
 
@@ -101,6 +111,8 @@ export class World {
     readonly name: string;
     readonly settings: WorldSettings;
     status: WorldMeta['status'];
+    /** Siehe `WorldMeta.settledCount`. */
+    settledCount: number;
     readonly clock: GameClock;
     readonly scheduler: Scheduler;
     readonly rng: StatefulRng;
@@ -128,6 +140,7 @@ export class World {
         this.name = meta.name;
         this.settings = meta.settings;
         this.status = meta.status;
+        this.settledCount = meta.settledCount;
         this.clock = new GameClock(
             meta.gameTimeMs,
             meta.status === 'running',
@@ -262,6 +275,7 @@ export class World {
             gameTimeMs: this.now(),
             rngState: this.rng.state,
             epochZeroMs: this.clock.epochZeroMs,
+            settledCount: this.settledCount,
         });
     }
 

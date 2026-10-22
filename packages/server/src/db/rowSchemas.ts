@@ -27,6 +27,8 @@ export const WorldMetaRowSchema = z.object({
     created_at: z.number().int(),
     /** Fehlt bei Spielständen von vor 19-3; dann läuft die Uhr ab `game_time_ms`. */
     epoch_zero_ms: z.number().nullable().optional(),
+    /** Platzierte Dörfer seit Weltbeginn (19-6); fehlt vor 19-6. */
+    settled_count: z.number().int().nullable().optional(),
 });
 
 export type WorldMetaRow = z.infer<typeof WorldMetaRowSchema>;

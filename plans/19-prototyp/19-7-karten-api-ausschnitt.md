@@ -22,10 +22,12 @@ Kacheln sind fest ausgerichtet (`x0 = floor(x/20)·20`), damit sie sich cachen l
 eine Änderung genau eine Kachel ungültig macht. Die Nahansicht braucht typischerweise
 4–6 Kacheln.
 
-Für die Übersicht wird **nicht** jedes Dorf übertragen, sondern ein Aggregat **je
-Kachel**: Dorfzahl, Anzahl eigener, Stammes- und Barbarendörfer. 2 500 Kacheln
-(1000/20)² sind auch bei voller Welt nur ein paar Kilobyte. Die Minimap zeichnet pro
-Kachel ein eingefärbtes Feld statt Punkten.
+**Die Übersicht zeigt seit 19-6 einen Ausschnitt von 100×100 Feldern** um die Kamera
+(Entscheidung des Nutzers: Die ganze Welt auf kleinem Raum macht einzelne Dörfer
+unkenntlich). Sie braucht deshalb dieselben Kacheln wie die Nahansicht, nur mehr davon
+(5×5 bis 6×6 Kacheln), und kein eigenes Aggregat. Eine Gesamtansicht der Welt
+(Dorfzahl je Kachel, eingefärbt) ist eine mögliche spätere Ergänzung, etwa als
+eigene Weltkarten-Seite, aber nicht Teil dieses Tickets.
 
 **Invalidierung per WebSocket.** Ändert sich ein Dorf in einer Weise, die die Karte
 betrifft (Punkte über eine Rundungsstufe, Besitzer, Name, neues Dorf), sendet der Server
@@ -40,9 +42,6 @@ wäre jede Bauaktion ein Karten-Event.
 - `GET /api/worlds/:id/map/tiles?tx0&ty0&tx1&ty1`. Höchstens 6×6 Kacheln je Anfrage,
   geparst mit zod. Die Antwort ist `{ tiles: [{ tx, ty, villages: MapVillage[] }] }`.
   Die Abfrage läuft über `villagesInBox` aus 19-5.
-- `GET /api/worlds/:id/map/overview` liefert `{ tileSize: 20, tiles: [{ tx, ty, total,
-  own, tribe, barbarian }] }`. Es werden nur nicht-leere Kacheln gesendet, und das
-  Aggregat ist ein `GROUP BY x/20, y/20`.
 - `MapVillage` erhält `tribeTag` (heute separat in `/diplomacy` abgefragt), damit die
   Nahansicht ohne zweite Anfrage färben kann.
 - `map_tile_changed` aus `insertVillage`, Eroberung, Umbenennung und
@@ -57,12 +56,13 @@ wäre jede Bauaktion ein Karten-Event.
 ### Client
 
 - `MapStore`: `tiles: ObservableMap<string, AsyncValue<MapVillage[]>>`,
-  `ensureTiles(view)` (aufgerufen aus der Kamera-Reaktion, entprellt 100 ms),
-  LRU-Grenze 400 Kacheln, `overview: AsyncValue<TileSummary[]>`.
+  `ensureTiles(view)` (aufgerufen aus der Kamera-Reaktion, entprellt 100 ms) für den
+  Ausschnitt der Übersicht (`miniWindow`), der die Nahansicht einschließt,
+  LRU-Grenze 400 Kacheln.
 - `visibleVillages` als `computed` über die Kacheln im Ausschnitt.
 - `MapCanvas.tsx`/`MapView.tsx` lesen `visibleVillages` statt aller Dörfer. Noch nicht
   geladene Kacheln werden als Gelände ohne Dörfer gezeichnet, ohne Spinner.
-- `MiniMap.tsx` zeichnet die Übersicht kachelweise.
+- `MiniMap.tsx` liest die Dörfer seines 100×100-Ausschnitts aus denselben Kacheln.
 - Ziel- und Dorfsuche (`TargetPicker.tsx`) nutzen eine neue Route
   `GET /map/search?q=` statt der vollen Dorfliste.
 - Layering-Regel bleibt: nur Stores rufen die API.
@@ -71,25 +71,25 @@ wäre jede Bauaktion ein Karten-Event.
 
 | Datei | Änderung |
 |---|---|
-| `server/src/api/routes.ts` | `map/tiles`, `map/overview`, `map/search`; alte `/map` entfernen |
+| `server/src/api/routes.ts` | `map/tiles`, `map/search`; alte `/map` entfernen |
 | `server/src/engine/world.ts` · `military.ts` · `mapgen.ts` | `map_tile_changed` |
 | `shared/src/logic/tiles.ts` | **neu** |
-| `shared/src/schema/api.ts` | `MapTilesResponse`, `MapOverview`, `MapVillage.tribeTag` |
+| `shared/src/schema/api.ts` | `MapTilesResponse`, `MapVillage.tribeTag` |
 | `client/src/api/client.ts` | neue Methoden |
-| `client/src/stores/MapStore.ts` | Kachel-Cache, Übersicht, WS-Invalidierung |
+| `client/src/stores/MapStore.ts` | Kachel-Cache, WS-Invalidierung |
 | `client/src/features/map/{MapCanvas,MapView,MiniMap}.tsx` · `village/TargetPicker.tsx` | auf Kacheln umstellen |
 | `client/test/stores.test.ts` | API-Mock ergänzen, Kachel-Tests |
 
 ## Verifikation
 
 - **Server (inject):** Welt mit 5 000 Dörfern → `map/tiles` für 4×4 Kacheln liefert genau
-  die Dörfer in diesem Rechteck, Antwortzeit < 20 ms. `map/overview` < 30 ms und < 50 KB.
+  die Dörfer in diesem Rechteck, Antwortzeit < 20 ms; 6×6 Kacheln (Übersicht) < 30 ms.
 - **Grenzen:** 7×7 Kacheln → 400, Kacheln außerhalb der Karte → leer statt Fehler.
 - **Invalidierung:** Eroberung in Kachel (3,4) → genau ein `map_tile_changed {3,4}`.
   Ein normaler Ausbau ohne Rundungssprung löst keines aus.
 - **Store-Test:** Kamera über drei Kacheln schieben → genau drei Anfragen, die zweite
   Bewegung zurück → keine weitere (Cache). LRU verwirft die älteste Kachel bei 401.
-- **Browser:** Karte auf 1000×1000 mit 5 000 Dörfern ruckelfrei scrollen. Die Minimap
-  zeigt den runden Haufen.
+- **Browser:** Karte auf 1000×1000 mit 5 000 Dörfern ruckelfrei scrollen; die Übersicht
+  lädt beim Verschieben nach.
 - `pnpm lint` (inkl. Layering und Kontrast für neue Kachelfarben), `pnpm typecheck`,
   `pnpm test`, `pnpm test:integration`, `pnpm build` grün.
