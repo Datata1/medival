@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
     createRng,
     Duration,
+    isScoutMission,
     ramDamage,
     resolveBattle,
+    resolveSpying,
+    spyTier,
     travelTime,
 } from '../src/index.js';
 
@@ -155,5 +158,53 @@ describe('travel', () => {
         expect(travelTime(0, 0, 10, 0, { spear: 5 }, 30)).toBe(
             Duration.minutes(180) / 30,
         );
+    });
+});
+
+describe('Spähkampf (19-10)', () => {
+    const fixed = () => 0.99; // rundet Bruchteile immer ab
+
+    it('ohne gegnerische Späher fällt niemand und alles wird gesehen', () => {
+        expect(resolveSpying(10, 0, fixed)).toEqual({
+            lost: 0,
+            survivors: 10,
+            tier: 3,
+        });
+    });
+
+    it('bei Gleichstand fällt die Hälfte, bei doppelter Übermacht alle', () => {
+        expect(resolveSpying(10, 10, fixed)).toMatchObject({
+            lost: 5,
+            tier: 2,
+        });
+        expect(resolveSpying(5, 10, fixed)).toMatchObject({
+            lost: 5,
+            survivors: 0,
+            tier: 0,
+        });
+    });
+
+    it('stuft nach dem Anteil der Überlebenden ab', () => {
+        expect(spyTier(0, 10)).toBe(0);
+        expect(spyTier(1, 10)).toBe(1);
+        expect(spyTier(5, 10)).toBe(2);
+        expect(spyTier(7, 10)).toBe(3);
+    });
+
+    it('erkennt reine Spähtrupps', () => {
+        expect(isScoutMission({ spy: 3 })).toBe(true);
+        expect(isScoutMission({ spy: 3, axe: 1 })).toBe(false);
+        expect(isScoutMission({})).toBe(false);
+    });
+
+    it('Späher greifen nicht an', () => {
+        const r = resolveBattle({
+            attacker: { spy: 50 },
+            defender: { spear: 1 },
+            wallLevel: 0,
+            loyalty: 100,
+            rng: () => 0.5,
+        });
+        expect(r.attackerWon).toBe(false);
     });
 });

@@ -321,6 +321,19 @@ const de = {
         loyalty: 'Loyalität: {{before}} → {{after}}',
         conquered: ' — Dorf erobert!',
         loot: 'Beute:',
+        scoutOf: 'Spähbericht: {{name}} ({{x}}|{{y}})',
+        scoutRepelled:
+            'Spähversuch von {{name}} ({{x}}|{{y}}) abgewehrt',
+        scoutHeadline:
+            '{{attacker}} ({{ax}}|{{ay}}) späht {{defender}} ({{dx}}|{{dy}}) aus — {{sent}} Späher, {{lost}} verloren',
+        scoutDefenseHeadline:
+            '{{sent}} Späher aus {{attacker}} ({{ax}}|{{ay}}) gestellt, {{lost}} gefallen. Eigene Späher im Dorf: {{spies}}',
+        scoutResources: 'Rohstoffe:',
+        scoutUnits: 'Truppen im Dorf',
+        scoutBuildings: 'Gebäude',
+        scoutUnitsAway: 'Truppen unterwegs',
+        notScouted: 'nicht erkundet',
+        scoutedInBattle: 'Deine Späher sahen:',
     },
     routes: {
         notFoundTitle: 'Seite nicht gefunden',
@@ -374,6 +387,7 @@ const de = {
         spear: 'Speerträger',
         sword: 'Schwertkämpfer',
         axe: 'Axtkämpfer',
+        spy: 'Späher',
         light_cavalry: 'Leichte Kavallerie',
         heavy_cavalry: 'Schwere Kavallerie',
         ram: 'Ramme',

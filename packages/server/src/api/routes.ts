@@ -14,6 +14,7 @@ import {
     MapTilesQuerySchema,
     NumericIdSchema,
     RecruitRequestSchema,
+    ScoutReportPayloadSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
     TILE_SIZE,
@@ -721,17 +722,36 @@ export function registerRoutes(
                 .orderBy(desc(reports.id))
                 .limit(50)
                 .all();
-            return rows.map((r) => ({
-                id: r.id,
-                type: r.type,
-                createdGameTime: r.createdGameTime,
-                read: r.read,
-                payload: parseJsonColumn(
-                    BattleReportPayloadSchema,
-                    r.payload,
-                    'report.payload',
-                ),
-            }));
+            // Die Nutzlast je nach Art lesen (19-10: Spähberichte).
+            return rows.map((r) => {
+                const base = {
+                    id: r.id,
+                    createdGameTime: r.createdGameTime,
+                    read: r.read,
+                };
+                return r.type === 'scout' || r.type === 'scout_defense'
+                    ? {
+                          ...base,
+                          type: r.type,
+                          payload: parseJsonColumn(
+                              ScoutReportPayloadSchema,
+                              r.payload,
+                              'report.payload',
+                          ),
+                      }
+                    : {
+                          ...base,
+                          type:
+                              r.type === 'defense'
+                                  ? 'defense'
+                                  : 'attack',
+                          payload: parseJsonColumn(
+                              BattleReportPayloadSchema,
+                              r.payload,
+                              'report.payload',
+                          ),
+                      };
+            });
         },
     );
 

@@ -299,9 +299,14 @@ describe('Regression: Bots verschicken Kleinstlieferungen im Sekundentakt', () =
         await advanceYielding(world, Duration.hours(1), 6);
 
         expect(violations).toEqual([]);
-        // Großzügige Obergrenze: 1,5 Ankünfte je Bot und Spielstunde (Speed
-        // 100 → 100 Spielstunden je Stunde Echtzeit).
-        expect(arrivals).toBeLessThan(10 * 100 * 1.5);
+        /*
+         * Großzügige Obergrenze: 2 Ankünfte je Bot und Spielstunde (Speed 100
+         * → 100 Spielstunden je Stunde Echtzeit). Bis 19-9 lag sie bei 1,5;
+         * seit 19-10 spähen Bots und greifen mit dem Gesehenen öfter an.
+         * Gemessen in Stunde 4: 567 Lieferungen, 749 Rückwege, 132 Angriffe,
+         * 67 Spähtrupps — 1 515 Ankünfte, also gewolltes Spiel, keine Schleife.
+         */
+        expect(arrivals).toBeLessThan(10 * 100 * 2);
     });
 });
 

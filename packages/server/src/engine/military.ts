@@ -6,9 +6,12 @@ import {
     entriesOf,
     farmCapacity,
     GameTime,
+    isScoutMission,
     type MovementKind,
+    type Resources,
     recruitTime,
     resolveBattle,
+    resolveSpying,
     singleEntry,
     travelTime,
     UNIT_ORDER,
@@ -513,7 +516,10 @@ export function handleArrival(
             case 'attack': {
                 // Use the movement's arrival time as battle time so catch-up
                 // processing (after pause/restart) stays consistent.
-                resolveAttackArrival(
+                // Nur Späher: Spähmission statt Kampf (19-10).
+                (isScoutMission(units)
+                    ? resolveScoutArrival
+                    : resolveAttackArrival)(
                     world,
                     m.originVillageId,
                     m.targetVillageId,
@@ -528,6 +534,174 @@ export function handleArrival(
     for (const id of affected)
         world.broadcast({ type: 'village_updated', villageId: id });
     for (const playerId of toWake) wakeBot(world, playerId);
+}
+
+/**
+ * Überlebende auf den Heimweg schicken — mit Beute, falls es welche gibt.
+ * Gemeinsam für Angriffe und Spähmissionen (19-10).
+ */
+function sendHome(
+    world: World,
+    origin: { id: number; x: number; y: number },
+    target: { x: number; y: number },
+    survivors: Units,
+    loot: Resources,
+    now: GameTime,
+): void {
+    if (Object.keys(survivors).length === 0) return;
+    const arrivalGameTime = GameTime.add(
+        now,
+        travelTime(
+            target.x,
+            target.y,
+            origin.x,
+            origin.y,
+            survivors,
+            world.settings.unitSpeed,
+        ),
+    );
+    const movement = firstOrThrow(
+        world.db
+            .insert(movements)
+            .values({
+                originVillageId: origin.id,
+                targetVillageId: origin.id,
+                kind: 'return',
+                unitsJson: JSON.stringify(survivors),
+                departureGameTime: now,
+                arrivalGameTime,
+                carriesJson: JSON.stringify(loot),
+            })
+            .returning({ id: movements.id })
+            .all(),
+        'internal',
+    );
+    world.scheduler.insert('arrival', arrivalGameTime, {
+        movementId: movement.id,
+    });
+}
+
+/**
+ * Spähmission (plans/19-prototyp/19-10): Späher gegen Späher, die übrige
+ * Verteidigung bleibt außen vor. Was die Überlebenden sehen, hängt von ihrem
+ * Anteil ab (`spyTier`). Gerechnet wird zum Ankunftszeitpunkt — Rohstoffe und
+ * fertige Rekruten so, wie sie in dieser Millisekunde stehen.
+ */
+function resolveScoutArrival(
+    world: World,
+    originId: number,
+    targetId: number,
+    sent: Units,
+    now: GameTime,
+): void {
+    const origin = world.getVillageRow(originId);
+    const target = world.getVillageRow(targetId);
+    const spies = sent.spy ?? 0;
+    const home = world.getUnits(targetId);
+    const resources = world.settleResources(targetId, now);
+    const levels = world.getBuildingLevels(targetId);
+    const result = resolveSpying(spies, home.spy ?? 0, world.rng.next);
+
+    const tier = result.tier;
+    const payload = {
+        attackerVillage: villageRefOf(origin),
+        defenderVillage: villageRefOf(target),
+        sent: spies,
+        lost: result.lost,
+        tier,
+        defenderSpies: null,
+        resources: tier >= 1 ? roundResources(resources) : null,
+        units: tier >= 1 ? home : null,
+        buildings: tier >= 2 ? levels : null,
+        unitsAway: tier >= 3 ? unitsAwayFrom(world, targetId) : null,
+    };
+
+    if (tier > 0) {
+        // Das Wissen merkt sich der Spähende — auch Bots, die keine Berichte
+        // bekommen, entscheiden damit (19-10).
+        recordIntel(world, origin.playerId, targetId, now, {
+            units: home,
+            wall: levels.wall,
+            points: target.points,
+        });
+        writeReport(world, origin.playerId, 'scout', payload);
+    }
+    // Der Verteidiger merkt den Versuch nur, wenn seine Späher jemanden
+    // gestellt haben.
+    if (result.lost > 0)
+        writeReport(world, target.playerId, 'scout_defense', {
+            ...payload,
+            defenderSpies: home.spy ?? 0,
+            resources: null,
+            units: null,
+            buildings: null,
+            unitsAway: null,
+        });
+
+    sendHome(
+        world,
+        origin,
+        target,
+        result.survivors > 0 ? { spy: result.survivors } : {},
+        { wood: 0, clay: 0, iron: 0 },
+        now,
+    );
+}
+
+function villageRefOf(v: {
+    id: number;
+    name: string;
+    x: number;
+    y: number;
+}) {
+    return { id: v.id, name: v.name, x: v.x, y: v.y };
+}
+
+function roundResources(r: Resources): Resources {
+    return {
+        wood: Math.floor(r.wood),
+        clay: Math.floor(r.clay),
+        iron: Math.floor(r.iron),
+    };
+}
+
+/** Truppen eines Dorfes, die gerade unterwegs sind (Angriff, Unterstützung, Rückweg). */
+function unitsAwayFrom(world: World, villageId: number): Units {
+    const away: Units = {};
+    for (const m of world.db
+        .select({
+            kind: movements.kind,
+            unitsJson: movements.unitsJson,
+        })
+        .from(movements)
+        .where(eq(movements.originVillageId, villageId))
+        .all()) {
+        if (m.kind === 'trade') continue;
+        for (const [type, n] of entriesOf(
+            parseJsonColumn(UnitsSchema, m.unitsJson, 'movement.units'),
+        ))
+            away[type] = (away[type] ?? 0) + n;
+    }
+    return away;
+}
+
+/** Letztes Spähwissen eines Spielers über ein Dorf speichern. */
+function recordIntel(
+    world: World,
+    playerId: number | null,
+    villageId: number,
+    now: GameTime,
+    intel: { units: Units; wall: number; points: number },
+): void {
+    if (playerId === null) return;
+    world.sqlite
+        .prepare(
+            `INSERT INTO scout_intel (player_id, village_id, game_time, payload_json)
+             VALUES (?, ?, ?, ?)
+             ON CONFLICT(player_id, village_id)
+             DO UPDATE SET game_time = excluded.game_time, payload_json = excluded.payload_json`,
+        )
+        .run(playerId, villageId, now, JSON.stringify(intel));
 }
 
 function resolveAttackArrival(
@@ -646,38 +820,7 @@ function resolveAttackArrival(
     }
 
     // Send survivors home.
-    if (Object.keys(survivors).length > 0) {
-        const arrivalGameTime = GameTime.add(
-            now,
-            travelTime(
-                target.x,
-                target.y,
-                origin.x,
-                origin.y,
-                survivors,
-                world.settings.unitSpeed,
-            ),
-        );
-        const movement = firstOrThrow(
-            world.db
-                .insert(movements)
-                .values({
-                    originVillageId: originId,
-                    targetVillageId: originId,
-                    kind: 'return',
-                    unitsJson: JSON.stringify(survivors),
-                    departureGameTime: now,
-                    arrivalGameTime,
-                    carriesJson: JSON.stringify(loot),
-                })
-                .returning({ id: movements.id })
-                .all(),
-            'internal',
-        );
-        world.scheduler.insert('arrival', arrivalGameTime, {
-            movementId: movement.id,
-        });
-    }
+    sendHome(world, origin, target, survivors, loot, now);
 
     const reportPayload = {
         attackerVillage: {
@@ -704,6 +847,14 @@ function resolveAttackArrival(
         luck: Math.round(result.luck * 100),
         loot,
         conquered,
+        // Überlebende Späher im gemischten Angriff sehen Lager und Gebäude (19-10).
+        scouted:
+            (survivors.spy ?? 0) > 0
+                ? {
+                      resources: roundResources(targetResources),
+                      buildings: targetLevels,
+                  }
+                : null,
     };
     /*
      * Ansehen: Der Verteidiger denkt schlechter über den Angreifer. Bewertet
@@ -742,4 +893,11 @@ function resolveAttackArrival(
     writeReport(world, target.playerId, 'defense', reportPayload);
     // Ein Besitzerwechsel steht auf jeder Karte (19-9: öffentlich).
     if (conquered) world.broadcast({ type: 'map_changed' });
+    // Was überlebende Späher sahen, gilt auch für Bots (19-10).
+    if ((survivors.spy ?? 0) > 0 && !conquered)
+        recordIntel(world, origin.playerId, targetId, now, {
+            units: result.defenderSurvivors,
+            wall: result.wallLevelAfter,
+            points: target.points,
+        });
 }

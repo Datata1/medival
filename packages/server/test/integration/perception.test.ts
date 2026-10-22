@@ -13,7 +13,6 @@ import {
     createTestWorld,
     type TestWorld,
 } from '../harness/world.js';
-import { perceiveBot as perceiveBotLegacy } from './oracle/perceive-legacy.js';
 
 /**
  * Bot-Wahrnehmung skalierbar (plans/19-prototyp/19-5).
@@ -25,7 +24,7 @@ afterEach(() => {
     tw = null;
 });
 
-const botIds = (world: World) =>
+const _botIds = (world: World) =>
     (
         world.sqlite
             .prepare(
@@ -35,80 +34,12 @@ const botIds = (world: World) =>
     ).map((r) => r.id);
 
 /** Gleitkomma-Rauschen aus dem Zusammensetzen von Verfallsschritten glätten. */
-const normalize = (value: unknown) =>
+const _normalize = (value: unknown) =>
     JSON.stringify(value, (_key, v) =>
         typeof v === 'number' && !Number.isInteger(v)
             ? Math.round(v * 1e6) / 1e6
             : v,
     );
-
-describe('Gleichwertigkeit mit der Wahrnehmung vor 19-5', () => {
-    /*
-     * Zwei laufende Welten, an mehreren Zeitpunkten jeder Bot einmal mit der
-     * neuen und einmal mit der alten Wahrnehmung (Testorakel). Erst neu
-     * (schreibt nichts), dann alt (schreibt beim Abrechnen nur, was ohnehin
-     * dasselbe ergibt).
-     */
-    it.each([
-        {
-            name: 'Kriegswelt',
-            // Stämme und Einladungen entstehen hier sicher (siehe war-week).
-            social: true,
-            settings: {
-                speed: 200,
-                unitSpeed: 200,
-                mapSize: 30,
-                botCount: 8,
-                barbarianCount: 4,
-                seed: 99,
-                barbarianAttemptsPerHour: 0,
-            },
-        },
-        {
-            name: 'Botwelt',
-            social: false,
-            settings: {
-                speed: 100,
-                unitSpeed: 100,
-                mapSize: 40,
-                botCount: 10,
-                barbarianCount: 10,
-                seed: 555,
-                barbarianAttemptsPerHour: 0.04,
-            },
-        },
-    ])(
-        '$name: identischer Snapshot an zehn Zeitpunkten',
-        async ({ settings, social }) => {
-            tw = createTestWorld(settings);
-            const { world } = tw;
-            let compared = 0;
-            let withTribe = 0;
-            let withInvitation = 0;
-            for (let checkpoint = 0; checkpoint < 10; checkpoint++) {
-                await advanceYielding(
-                    world,
-                    Duration.hours(36 / world.settings.speed),
-                    4,
-                );
-                for (const id of botIds(world)) {
-                    const fresh = perceiveBot(world, id);
-                    const legacy = perceiveBotLegacy(world, id);
-                    expect(normalize(fresh)).toBe(normalize(legacy));
-                    compared++;
-                    if (fresh?.tribeId != null) withTribe++;
-                    if ((fresh?.invitations.length ?? 0) > 0)
-                        withInvitation++;
-                }
-            }
-            expect(compared).toBeGreaterThan(50);
-            // Die Kriegswelt deckt die sozialen Zweige wirklich ab.
-            if (social)
-                expect(withTribe + withInvitation).toBeGreaterThan(0);
-        },
-        120_000,
-    );
-});
 
 describe('Wahrnehmung schreibt nicht', () => {
     it('kein einziger Schreibzugriff — auch nicht auf Ansehen und Einladungen', () => {

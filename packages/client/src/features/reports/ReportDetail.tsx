@@ -1,9 +1,23 @@
-import type { Report } from '@medival/shared';
+import {
+    type BattleReport,
+    isScoutReport,
+    type Report,
+} from '@medival/shared';
 import { useTranslation } from 'react-i18next';
 import { ResourceCost } from '../../components/ResourceCost.js';
+import { BuildingLevelList, ScoutDetail } from './ScoutDetail.js';
 import { UnitLossTable } from './UnitLossTable.js';
 
+/** Ein Bericht — Kampf oder Spähen (19-10). */
 export function ReportDetail({ report }: { report: Report }) {
+    return isScoutReport(report) ? (
+        <ScoutDetail report={report} />
+    ) : (
+        <BattleDetail report={report} />
+    );
+}
+
+function BattleDetail({ report }: { report: BattleReport }) {
     const { t } = useTranslation();
     const p = report.payload;
     return (
@@ -62,6 +76,15 @@ export function ReportDetail({ report }: { report: Report }) {
                     {t('reports.loot')}{' '}
                     <ResourceCost resources={p.loot} />
                 </p>
+            )}
+            {p.scouted && (
+                <div>
+                    <p className="mb-0">
+                        {t('reports.scoutedInBattle')}{' '}
+                        <ResourceCost resources={p.scouted.resources} />
+                    </p>
+                    <BuildingLevelList levels={p.scouted.buildings} />
+                </div>
             )}
         </div>
     );

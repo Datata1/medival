@@ -15,6 +15,7 @@ export type UnitType =
     | 'spear'
     | 'sword'
     | 'axe'
+    | 'spy'
     | 'light_cavalry'
     | 'heavy_cavalry'
     | 'ram'
@@ -74,8 +75,14 @@ export interface UnitSpec {
     /** Recruit time in seconds at world speed 1 */
     recruitTimeS: number;
     recruitedAt: 'barracks' | 'stable' | 'academy';
-    isCavalry: boolean;
+    /**
+     * Gegen welche Verteidigung die Einheit angreift (19-10; vorher
+     * `isCavalry`). 19-12 ergänzt `archer`.
+     */
+    attackClass: AttackClass;
 }
+
+export type AttackClass = 'infantry' | 'cavalry';
 
 export type MovementKind =
     | 'attack'

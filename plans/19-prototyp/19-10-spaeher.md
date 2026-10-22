@@ -1,6 +1,66 @@
 # Ticket 19-10: Späher & Spähberichte
 
-**Status:** 📋 offen · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md), [19-9](19-9-welt-beitreten-und-rechte.md) (Berichte je Empfänger)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md), [19-9](19-9-welt-beitreten-und-rechte.md)
+
+> **Ergebnis:**
+>
+> - **Einheit `spy`:** Werte nach Tribal Wars, rekrutiert im Stall. Ein Angriff nur aus
+>   Spähern ist eine Spähmission (`resolveScoutArrival`) und kämpft nur gegen die
+>   Späher im Ziel. Verlustanteil ist `min(1, (V/A)^1,5 · 0,5)`: Bei Gleichstand fällt
+>   die Hälfte, bei doppelter Übermacht der Verteidiger fallen alle.
+> - **Stufen nach dem Anteil der Überlebenden:** ≥ 1 Späher ergibt Rohstoffe und Truppen
+>   zu Hause, ≥ 50 % zusätzlich Gebäude, ≥ 70 % zusätzlich Truppen unterwegs. Der
+>   Spähende bekommt einen Bericht `scout`. Der Verteidiger erfährt nur dann davon, wenn
+>   seine Späher jemanden gestellt haben (`scout_defense`).
+> - **Gemischter Angriff:** Überlebende Späher liefern im Kampfbericht `scouted`
+>   (Lager vor der Plünderung und Gebäude).
+> - **`scout_intel`:** Das letzte Spähwissen je Spieler und Dorf wird gespeichert, auch
+>   für Bots, die keine Berichte bekommen.
+> - **Bots:** Die Wahrnehmung nutzt frisches Wissen (6 Spielstunden) statt der Schätzung
+>   aus Punkten. `decideScouting` (pur) späht das Lieblingsziel aus, höchstens ein Trupp
+>   je Dorf gleichzeitig, `turtle` gar nicht. Späher haben in jeder Heeresmischung einen
+>   kleinen Anteil.
+> - **`isCavalry` wird zu `attackClass`** (`infantry` | `cavalry`), damit 19-12 `archer`
+>   ergänzen kann.
+> - **Client:** Spähbericht mit Stufen („nicht erkundet" statt Lücken), `scouted` im
+>   Kampfbericht, Sprite `unit.spy`, Texte. Das Handbuch zeigt den Späher automatisch.
+>
+> **Allgemeine Migration für `CHECK`-Listen** (`refreshCheckLists`): Tabellen, deren
+> Liste einen Wert aus `UNIT_ORDER`/`BUILDING_ORDER` nicht kennt, werden neu angelegt,
+> die Daten werden kopiert, die Indizes wiederhergestellt. Das läuft nach allen
+> Spaltenmigrationen und dient auch 19-11 bis 19-14.
+>
+> **Ein Fehler im ersten Entwurf**, gefunden vom Regressionstest aus 19-4: Die Bots
+> spähten bei jedem Tick das nächste unbekannte Ziel aus. Das ergab 9 030 Ankünfte in
+> einer Spielstunde bei zehn Bots. Seit der Korrektur gibt es nur ein Ziel und einen
+> Trupp je Dorf. Gemessen danach in Stunde 4: 567 Lieferungen, 749 Rückwege, 132 Angriffe,
+> 67 Spähtrupps. Die Angriffe nahmen zu, weil Bots schwache Barbaren jetzt erkennen. Die
+> grobe Obergrenze im Test ist deshalb von 1,5 auf 2 Ankünfte je Bot und Spielstunde
+> gestiegen. Die eigentlichen Regeln (Mindestmenge, eine Lieferung je Partner) gelten
+> unverändert.
+>
+> **Tests:** `shared/test/combat.test.ts` prüft Spähkampf, Stufen, `isScoutMission` und
+> dass Späher nicht angreifen. `test/integration/scouting.test.ts` prüft die Mission ohne
+> Gegenwehr (Stufe 3, Verteidiger merkt nichts, Speere kämpfen nicht, Späher kehren
+> heim), die Abwehr durch 20 Späher (A ohne Bericht, B mit `scout_defense`), den
+> gemischten Angriff mit `scouted`, das Spähwissen für Bots, `decideScouting` (bestes
+> unbekanntes Ziel, einer bleibt zu Hause, nicht bei erkundetem Ziel oder Trupp
+> unterwegs, nie für `turtle`, keine Neutralen) und die **Migration einer alten Welt**,
+> deren `CHECK`-Liste `spy` nicht kannte.
+>
+> **Im Browser:** Die Spielerin tritt bei und schickt 5 Späher über die API zum nächsten
+> Barbarendorf. Nach 17 s gibt es einen Spähbericht der Stufe 3 mit Rohstoffen, Truppen und
+> Gebäuden (Screenshot geprüft).
+>
+> **Abweichungen von der Planung:**
+>
+> - **Kein A/B-Vergleich** der Angriffserfolge mit und ohne Aufklärung. Gemessen ist
+>   stattdessen die Zusammensetzung der Ankünfte. Die Wirkung auf die Bots zeigt sich
+>   darin, dass sie häufiger angreifen.
+> - **„Zuletzt erkundet vor …" im Kartenpanel** ist nicht gebaut. Das Wissen liegt in
+>   `scout_intel` und kann später angezeigt werden.
+> - **Das Testorakel aus 19-5 ist gelöscht**, wie dort angekündigt: Die Wahrnehmung kennt
+>   jetzt Spähwissen und ist damit nicht mehr gleich der alten.
 
 ## Kontext
 

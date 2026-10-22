@@ -1,10 +1,13 @@
 import {
+    Duration,
     distance,
     GameTime,
+    isScoutMission,
     projectResources,
     RELATION_RANGE,
     resourceRatePerHour,
     type Units,
+    UnitsSchema,
     warehouseCapacity,
     effectiveStanding as withTribeModifier,
 } from '@medival/shared';
@@ -18,6 +21,8 @@ import {
     inArray,
     ne,
 } from 'drizzle-orm';
+import { z } from 'zod';
+import { parseJsonColumn, parseRow } from '../db/parse.js';
 import {
     buildQueue,
     movements,
@@ -159,6 +164,7 @@ export function perceiveBot(
                     ? null
                     : Math.min(...queue.map((q) => q.completesAt)),
             merchantsFree: freeMerchantCapacity(world, v.id),
+            scoutsInFlight: scoutsInFlightFrom(world, v.id),
             recruiting:
                 world.db
                     .select({ id: recruitQueue.id })
@@ -285,20 +291,34 @@ function perceiveSocial(
         });
 
     // Ziele: auch Barbarendörfer — folgenlose Ziele und der Grund, warum in
-    // einer friedlichen Welt überhaupt gekämpft wird.
+    // einer friedlichen Welt überhaupt gekämpft wird. Mit frischem
+    // Spähwissen zählt, was die Späher gesehen haben (19-10), sonst die
+    // Schätzung aus den Punkten.
+    const intel = freshIntel(world, playerId, now);
     const targets: AttackTarget[] = nearby
         .filter((v) => v.dist <= ATTACK_RANGE)
-        .map((v) => ({
-            villageId: v.id,
-            ownerId: v.playerId,
-            x: v.x,
-            y: v.y,
-            points: v.points,
-            // Barbarendörfer haben keinen Besitzer und damit keine Haltung.
-            standing:
-                v.playerId === null ? 0 : standingTowards(v.playerId),
-            ...estimateDefense(v.points),
-        }));
+        .map((v) => {
+            const seen = intel.get(v.id);
+            return {
+                villageId: v.id,
+                ownerId: v.playerId,
+                x: v.x,
+                y: v.y,
+                points: v.points,
+                // Barbarendörfer haben keinen Besitzer und damit keine Haltung.
+                standing:
+                    v.playerId === null
+                        ? 0
+                        : standingTowards(v.playerId),
+                ...(seen
+                    ? {
+                          estimatedDefense: seen.units,
+                          estimatedWall: seen.wall,
+                          scouted: true,
+                      }
+                    : { ...estimateDefense(v.points), scouted: false }),
+            };
+        });
 
     // Je Spieler das nächstgelegene Dorf und die kürzeste Entfernung.
     const nearestByPlayer = new Map<number, { dist: number }>();
@@ -371,6 +391,71 @@ function perceiveSocial(
         foundingCandidates,
     };
 }
+
+/** Ist von diesem Dorf ein reiner Spähtrupp auf dem Hinweg? */
+function scoutsInFlightFrom(world: World, villageId: number): boolean {
+    return world.db
+        .select({ unitsJson: movements.unitsJson })
+        .from(movements)
+        .where(
+            and(
+                eq(movements.originVillageId, villageId),
+                eq(movements.kind, 'attack'),
+            ),
+        )
+        .all()
+        .some((m) =>
+            isScoutMission(
+                parseJsonColumn(
+                    UnitsSchema,
+                    m.unitsJson,
+                    'movement.units',
+                ),
+            ),
+        );
+}
+
+/**
+ * So lange gilt Spähwissen als frisch — in Spielzeit bei Speed 1 (19-10).
+ * Danach können Truppen längst woanders sein.
+ */
+const INTEL_MAX_AGE_HOURS = 6;
+
+const IntelSchema = z.object({
+    units: UnitsSchema,
+    wall: z.number().int().nonnegative(),
+});
+
+/** Frisches Spähwissen dieses Bots, nach Dorf. */
+function freshIntel(
+    world: World,
+    playerId: number,
+    now: GameTime,
+): Map<number, z.infer<typeof IntelSchema>> {
+    const maxAge = Duration.hours(
+        INTEL_MAX_AGE_HOURS / world.settings.speed,
+    );
+    const out = new Map<number, z.infer<typeof IntelSchema>>();
+    for (const row of world.sqlite
+        .prepare(
+            'SELECT village_id, game_time, payload_json FROM scout_intel WHERE player_id = ?',
+        )
+        .all(playerId)) {
+        const r = parseRow(IntelRowSchema, row, 'scout_intel');
+        if (now - r.game_time > maxAge) continue;
+        const parsed = IntelSchema.safeParse(
+            JSON.parse(r.payload_json),
+        );
+        if (parsed.success) out.set(r.village_id, parsed.data);
+    }
+    return out;
+}
+
+const IntelRowSchema = z.object({
+    village_id: z.number().int(),
+    game_time: z.number(),
+    payload_json: z.string(),
+});
 
 /** Dörfer im Rechteck samt Stamm ihres Besitzers, eine Abfrage. */
 function villagesInBoxWithTribe(

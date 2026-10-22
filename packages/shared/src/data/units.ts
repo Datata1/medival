@@ -11,7 +11,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 50, clay: 30, iron: 10 },
         recruitTimeS: 1020,
         recruitedAt: 'barracks',
-        isCavalry: false,
+        attackClass: 'infantry',
     },
     sword: {
         attack: 25,
@@ -23,7 +23,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 30, clay: 30, iron: 70 },
         recruitTimeS: 1500,
         recruitedAt: 'barracks',
-        isCavalry: false,
+        attackClass: 'infantry',
     },
     axe: {
         attack: 40,
@@ -35,7 +35,24 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 60, clay: 30, iron: 40 },
         recruitTimeS: 1320,
         recruitedAt: 'barracks',
-        isCavalry: false,
+        attackClass: 'infantry',
+    },
+    /**
+     * Späher (plans/19-prototyp/19-10): greift nicht an, sondern erkundet. Ein
+     * Angriff nur aus Spähern ist eine Spähmission und kämpft nur gegen die
+     * Späher im Ziel. Werte nach Tribal Wars.
+     */
+    spy: {
+        attack: 0,
+        defense: 2,
+        defenseCavalry: 1,
+        speedMinPerField: 9,
+        carry: 0,
+        pop: 2,
+        cost: { wood: 50, clay: 50, iron: 20 },
+        recruitTimeS: 900,
+        recruitedAt: 'stable',
+        attackClass: 'cavalry',
     },
     light_cavalry: {
         attack: 130,
@@ -47,7 +64,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 125, clay: 100, iron: 250 },
         recruitTimeS: 1800,
         recruitedAt: 'stable',
-        isCavalry: true,
+        attackClass: 'cavalry',
     },
     heavy_cavalry: {
         attack: 150,
@@ -59,7 +76,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 200, clay: 150, iron: 600 },
         recruitTimeS: 3600,
         recruitedAt: 'stable',
-        isCavalry: true,
+        attackClass: 'cavalry',
     },
     ram: {
         attack: 2,
@@ -71,7 +88,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 300, clay: 200, iron: 200 },
         recruitTimeS: 4800,
         recruitedAt: 'barracks',
-        isCavalry: false,
+        attackClass: 'infantry',
     },
     noble: {
         attack: 30,
@@ -83,7 +100,7 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         cost: { wood: 40000, clay: 50000, iron: 50000 },
         recruitTimeS: 12600,
         recruitedAt: 'academy',
-        isCavalry: false,
+        attackClass: 'infantry',
     },
 };
 
@@ -91,6 +108,7 @@ export const UNIT_ORDER = [
     'spear',
     'sword',
     'axe',
+    'spy',
     'light_cavalry',
     'heavy_cavalry',
     'ram',
@@ -103,3 +121,14 @@ export const NOBLE_LOYALTY_MAX = 35;
 
 /** Loyalty regeneration per hour at world speed 1. */
 export const LOYALTY_REGEN_PER_HOUR = 1;
+
+/**
+ * Spähkampf (19-10): Anteil der angreifenden Späher, die fallen, ist
+ * `min(1, (Verteidiger/Angreifer)^1,5 · Faktor)`. Bei Gleichstand fällt die
+ * Hälfte, bei doppelter Übermacht der Verteidiger fallen alle.
+ */
+export const SPY_DEFENSE_FACTOR = 0.5;
+
+/** Ab welchem Anteil überlebender Späher welche Stufe erkundet wird. */
+export const SPY_TIER_BUILDINGS = 0.5;
+export const SPY_TIER_UNITS_AWAY = 0.7;
