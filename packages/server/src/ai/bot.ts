@@ -11,6 +11,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { events } from '../db/schema.js';
 import { GameError } from '../engine/errors.js';
+import { botTickTimings } from '../engine/health.js';
 import {
     acceptInvitation,
     foundTribe,
@@ -304,6 +305,7 @@ export function handleBotTick(
     world: World,
     payload: { playerId: number },
 ): void {
+    const started = performance.now();
     const snapshot = perceiveBot(world, payload.playerId);
     // Kein Dorf mehr oder kein Bot: Kette endet hier, ohne Fehler.
     if (!snapshot) return;
@@ -324,6 +326,7 @@ export function handleBotTick(
         writeBotState(world, payload.playerId, state);
     }
     scheduleBotTick(world, payload.playerId, nextIn);
+    botTickTimings.record(performance.now() - started);
 }
 
 /**

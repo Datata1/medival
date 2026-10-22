@@ -21,7 +21,7 @@ import {
     villagePoints,
     warehouseCapacity,
 } from '@medival/shared';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { wakeBot } from '../ai/bot.js';
 import {
     firstOrThrow,
@@ -206,12 +206,7 @@ export function settleRecruits(
     villageId: number,
     at: GameTime = world.now(),
 ): void {
-    const rows = world.db
-        .select()
-        .from(recruitQueue)
-        .where(eq(recruitQueue.villageId, villageId))
-        .orderBy(asc(recruitQueue.id))
-        .all();
+    const rows = world.q.recruits.all({ villageId });
     if (rows.length === 0) return;
 
     world.sqlite.transaction(() => {
