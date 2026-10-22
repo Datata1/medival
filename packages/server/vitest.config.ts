@@ -13,6 +13,9 @@ export default defineConfig({
                     name: 'unit',
                     include: ['test/**/*.test.ts'],
                     exclude: ['test/integration/**'],
+                    // CI-Runner sind deutlich langsamer als ein Laptop; die
+                    // kleinen Wochen-Simulationen brauchen dort das Doppelte.
+                    testTimeout: 20_000,
                 },
             },
             {

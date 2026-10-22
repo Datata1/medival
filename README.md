@@ -29,6 +29,13 @@ pnpm lint       # Biome (Format + Lint); Auto-Fix: pnpm lint:fix
 pnpm typecheck  # tsc über alle Packages
 ```
 
+`pnpm test` führt Unit- und Integrationstests aus; nur die Szenarien über den
+Test-Harness (`packages/server/test/harness/`) laufen mit `pnpm test:integration`.
+
+**Arbeitsweise:** Änderungen kommen über Pull Requests nach `main`, ein Branch je Ticket.
+Die CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) führt `pnpm lint`,
+`pnpm typecheck`, `pnpm test` und `pnpm build` aus; gemergt wird nur, wenn sie grün ist.
+
 Formatierung/Linting: [Biome](https://biomejs.dev) (`biome.json` im Root). Für VS Code die
 offizielle Biome-Extension installieren, dann greift Format-on-Save automatisch.
 

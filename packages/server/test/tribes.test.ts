@@ -2,7 +2,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Duration, type Units } from '@medival/shared';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+    afterAll,
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+} from 'vitest';
 import {
     decideFounding,
     decideInvitation,
@@ -445,7 +453,13 @@ describe('Krieg und Bündnisse über eine Spielwoche', () => {
     let manager: WorldManager;
     let world: World;
 
-    beforeEach(() => {
+    /*
+     * `beforeAll`, nicht `beforeEach`: Alle Tests unten lesen nur. Vorher lief
+     * dieselbe Woche siebenmal — auf dem CI-Runner 87 s fast ununterbrochen
+     * synchron, sodass der Vitest-Worker seine Statusmeldungen nicht
+     * zustellen konnte („Timeout calling onTaskUpdate").
+     */
+    beforeAll(() => {
         dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-war-'));
         manager = new WorldManager(dir);
         world = manager.createWorld('Kriegswoche', {
@@ -473,7 +487,7 @@ describe('Krieg und Bündnisse über eine Spielwoche', () => {
         }
     }, 90_000);
 
-    afterEach(() => {
+    afterAll(() => {
         manager.shutdown();
         fs.rmSync(dir, { recursive: true, force: true });
     });
