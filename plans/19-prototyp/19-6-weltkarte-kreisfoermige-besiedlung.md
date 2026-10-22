@@ -36,9 +36,14 @@
 >   ihrer Kapazitätsgrenze (40 Dörfer bei Dichte 0,2), ebenfalls über vier Seeds.
 > - **Höchstdichte 0,2 statt 0,5:** Mit Mindestabstand 1 lässt sich mehr nicht
 >   verlässlich füllen (theoretisch 0,25 bei perfektem Raster).
-> - **Client unverändert:** Die Kamera folgte schon dem eigenen Dorf. Weltanlage-Formular
->   und Übersichtskarte zeigen die neuen Einstellungen bzw. die große Karte noch nicht
->   gesondert; die Übersicht nach Kacheln kommt mit 19-7.
+> - **Übersichtskarte zeigt 100×100 Felder statt der ganzen Welt** (Rückmeldung des
+>   Nutzers nach dem ersten Stand). Auf 1000×1000 war die Gesamtansicht ein Punktehaufen,
+>   in dem sich einzelne Dörfer nicht erkennen ließen. Jetzt folgt ein Ausschnitt von
+>   100×100 Feldern der Kamera, bleibt in der Welt und zeigt Kontinentgrenzen mit
+>   Nummer. Kleine Welten werden ganz gezeigt (`miniWindow` in `features/map/derive.ts`,
+>   getestet). Im Browser per Headless-Screenshot geprüft.
+> - **Weltanlage-Formular** zeigt die neuen Einstellungen noch nicht. Die Kamera folgte
+>   schon dem eigenen Dorf.
 
 ## Kontext
 
