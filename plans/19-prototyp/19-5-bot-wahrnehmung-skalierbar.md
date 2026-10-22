@@ -23,6 +23,17 @@ jeder Bot-Tick zu einem Vollscan:
 Kosten je Tick ≈ O(Dörfer der Welt + Bewegungen der Welt). Bei 300 Bots × einem Tick alle
 paar Sekunden (19-4 macht sie aktiver!) wächst das quadratisch mit der Weltgröße.
 
+**Gemessen (2026-10-22, beim Umsetzen von 19-2):** CPU-Profil einer Welt mit zehn Bots über
+vier Spielstunden (Speed 100), 8 224 Events in 17,8 s, also **2,2 ms je Event**. Davon
+entfallen **72 % auf `perceiveBot`**, allein `perceiveFounding` braucht 35 %
+(`settleStanding` je Paar mit Schreibzugriff, `tribeOf` einzeln). Nach Funktionsart
+gerechnet sind ~70 % der Gesamtzeit Abfrage-Overhead: Drizzle baut jede Abfrage bei
+jedem Aufruf neu (`is`, `sql.js`, ~40 %), und better-sqlite3 kompiliert sie jedes Mal neu
+(`prepare`, 21 %). Das eigentliche Ausführen in SQLite liegt bei ~12 %. Daraus folgen zwei
+Hebel für dieses Ticket: weniger Abfragen je Tick (räumlich, gebündelt, ohne Schreiben)
+und **vorbereitete Abfragen** (`.prepare()` mit `sql.placeholder`) in den heißen Pfaden
+von Wahrnehmung und Scheduler.
+
 Hinzu kommt ein Verstoß gegen das eigene Prinzip: *„Wahrnehmung liest, sie schreibt nicht"*
 (Kommentar in `perceive.ts`). Über `settleStanding` schreibt sie doch, und zwar
 innerhalb jedes Bot-Ticks, für jedes Nachbarpaar.

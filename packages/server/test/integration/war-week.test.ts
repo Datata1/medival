@@ -3,6 +3,7 @@ import { sameTribe } from '../../src/engine/tribes.js';
 import type { World } from '../../src/engine/world.js';
 import {
     advance,
+    advanceYielding,
     createTestWorld,
     gameWeeks,
     type TestWorld,
@@ -29,7 +30,7 @@ describe('Krieg und Bündnisse über zwei Spielwochen', () => {
      * synchron, sodass der Vitest-Worker seine Statusmeldungen nicht
      * zustellen konnte („Timeout calling onTaskUpdate").
      */
-    beforeAll(() => {
+    beforeAll(async () => {
         tw = createTestWorld(
             {
                 speed: 200,
@@ -55,7 +56,7 @@ describe('Krieg und Bündnisse über zwei Spielwochen', () => {
         ({ world } = tw);
         // Gemessen nach zwei Spielwochen (19-4): 20 Angriffstruppen,
         // 13 Angriffe bzw. Rückmärsche unterwegs, 3 Stämme.
-        advance(world, gameWeeks(world, 2));
+        await advanceYielding(world, gameWeeks(world, 2));
     }, 90_000);
 
     afterAll(() => {

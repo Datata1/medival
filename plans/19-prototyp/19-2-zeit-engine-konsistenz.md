@@ -38,6 +38,10 @@
 >   `setImmediate`-Fortsetzungen. Vorher konnte eine Fortsetzung nach dem Schließen der
 >   Welt gegen eine geschlossene Datenbank laufen („database connection is not open").
 >   Außerdem bewaffnet `insert` den Timer während der Verarbeitung nicht mehr je Event.
+> - **Lange Simulationen geben den Event-Loop frei** (`advanceYielding` im Harness). Auf dem
+>   CI-Runner rechnete der Lieferungs-Regressionstest 62 s am Stück, und Vitest brach mit
+>   „Timeout calling onTaskUpdate" ab. Die eigentliche Ursache ist die Kostenstruktur je
+>   Event (2,2 ms, davon 72 % Bot-Wahrnehmung). Der Profil-Befund steht in 19-5.
 > - **Die API-Form der Rekrutierungsschleife bleibt** (`nextUnitDoneAt`). Sie wird aus
 >   `started_at + perUnitMs` gerechnet, der Client ist unverändert.
 

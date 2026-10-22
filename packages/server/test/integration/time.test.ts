@@ -12,6 +12,7 @@ import {
 import {
     advance,
     advanceTo,
+    advanceYielding,
     createTestWorld,
     QUIET_SETTINGS,
     type TestWorld,
@@ -127,14 +128,17 @@ describe('Gleichstand in derselben Millisekunde', () => {
 });
 
 describe('Ganze Millisekunden', () => {
-    it('nach einer Spielwoche hat kein Zeitstempel Nachkommastellen', () => {
+    it('nach einer Spielwoche hat kein Zeitstempel Nachkommastellen', async () => {
         tw = createTestWorld({
             botCount: 6,
             barbarianCount: 12,
             barbarianAttemptsPerHour: 0.5,
         });
         const { world } = tw;
-        advance(world, Duration.hours(168 / world.settings.speed));
+        await advanceYielding(
+            world,
+            Duration.hours(168 / world.settings.speed),
+        );
         const fractional = (sql: string) =>
             (world.sqlite.prepare(sql).get() as { n: number }).n;
         expect(

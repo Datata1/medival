@@ -106,6 +106,35 @@ export function advance(world: World, d: DurationLike): number {
 }
 
 /**
+ * Wie `advance`, aber in `slices` Scheiben mit einem Event-Loop-Durchlauf
+ * dazwischen. Das Ergebnis ist dasselbe — die Welt läuft Event für Event,
+ * nur in Etappen.
+ *
+ * Für lange Simulationen: Ein Vitest-Worker, der über 60 s am Stück
+ * synchron rechnet, kann seine Statusmeldungen nicht zustellen und bricht
+ * mit „Timeout calling onTaskUpdate" ab, obwohl jeder Test grün ist. Auf dem
+ * CI-Runner rechnen die Wochensimulationen drei- bis viermal so lange wie
+ * auf einem Laptop.
+ */
+export async function advanceYielding(
+    world: World,
+    d: DurationLike,
+    slices = 24,
+): Promise<number> {
+    const target = GameTime.add(world.now(), d);
+    const start = world.now();
+    let count = 0;
+    for (let i = 1; i <= slices; i++) {
+        const step = GameTime.of(
+            start + ((target - start) * i) / slices,
+        );
+        count += advanceTo(world, step);
+        await new Promise((resolve) => setImmediate(resolve));
+    }
+    return count;
+}
+
+/**
  * Läuft, bis `predicate` zutrifft — geprüft nach jeder Fälligkeit —, höchstens
  * aber `max`. Liefert, ob die Bedingung erreicht wurde; die Uhr steht dann
  * auf dem Zeitpunkt, an dem sie erstmals galt.
