@@ -39,6 +39,11 @@ export interface AttackTarget {
      */
     estimatedDefense: Units;
     estimatedWall: number;
+    /**
+     * Stammt die Schätzung aus frischem Spähwissen (19-10)? Dann ist sie keine
+     * Schätzung mehr, sondern das, was die Späher gesehen haben.
+     */
+    scouted?: boolean;
 }
 
 /** Ein bedrängtes Stammesmitglied. */
@@ -168,6 +173,71 @@ export function decideAttack(
         }
     }
     return best?.plan ?? null;
+}
+
+export interface ScoutPlan {
+    kind: 'scout';
+    targetVillageId: number;
+    units: Units;
+}
+
+/** So viele Späher gehen auf eine Mission; einer bleibt zur Abwehr zu Hause. */
+const SCOUT_PARTY = 3;
+/** Wer weniger angriffslustig ist, späht auch nicht aus. */
+const SCOUT_MIN_AGGRESSION = 0.5;
+
+/**
+ * Wen ein Bot ausspäht — oder `null` (plans/19-prototyp/19-10).
+ *
+ * Ausgespäht wird **das eine Ziel, das der Bot am liebsten angreifen würde**
+ * (feindlich oder herrenlos, Punkte gegen Entfernung wie in `decideAttack`),
+ * und nur, solange es kein frisches Spähwissen hat und von diesem Dorf kein
+ * Spähtrupp unterwegs ist. Danach greift `decideAttack` mit den gesehenen
+ * Truppen statt mit einer Schätzung aus den Punkten an.
+ *
+ * Der erste Entwurf spähte bei jedem Tick das nächste unbekannte Ziel in
+ * Reichweite aus: 9 030 Ankünfte in einer Spielstunde bei zehn Bots, fast
+ * alles Späher. Wissen ist nur etwas wert, wenn man danach handelt.
+ *
+ * `turtle` späht nicht: Wer nie angreift, braucht das Wissen nicht.
+ */
+export function decideScouting(
+    home: {
+        x: number;
+        y: number;
+        units: Units;
+        /** Ist von diesem Dorf schon ein Spähtrupp unterwegs? */
+        scoutsInFlight?: boolean;
+    },
+    targets: readonly AttackTarget[],
+    personality: Personality,
+): ScoutPlan | null {
+    if (
+        PERSONALITY_WEIGHTS[personality].aggression <
+        SCOUT_MIN_AGGRESSION
+    )
+        return null;
+    if (home.scoutsInFlight) return null;
+    const spies = home.units.spy ?? 0;
+    if (spies < 2) return null;
+
+    let best: { target: AttackTarget; score: number } | null = null;
+    for (const target of targets) {
+        const isBarbarian = target.ownerId === null;
+        if (!isBarbarian && attitudeOf(target.standing) !== 'hostile')
+            continue;
+        const dist = distance(home.x, home.y, target.x, target.y);
+        const weight = isBarbarian ? 1 : 2.5;
+        const score = (target.points * weight) / (1 + dist);
+        if (!best || score > best.score) best = { target, score };
+    }
+    // Das Lieblingsziel ist schon erkundet: nichts zu tun.
+    if (!best || best.target.scouted) return null;
+    return {
+        kind: 'scout',
+        targetVillageId: best.target.villageId,
+        units: { spy: Math.min(SCOUT_PARTY, spies - 1) },
+    };
 }
 
 /**

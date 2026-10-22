@@ -23,7 +23,11 @@ import {
     decideFounding,
     decideInvitation,
 } from './decide/diplomacy.js';
-import { decideAttack, decideSupport } from './decide/military.js';
+import {
+    decideAttack,
+    decideScouting,
+    decideSupport,
+} from './decide/military.js';
 import { decideRecruit } from './decide/recruit.js';
 import { decideShipment } from './decide/trade.js';
 import { executeIntents } from './execute.js';
@@ -210,6 +214,30 @@ export function planBot(snapshot: BotSnapshot): {
             targetVillageId: support.targetVillageId,
             movement: 'support',
             units: support.units,
+        });
+    }
+
+    // Erst ausspähen, dann angreifen (19-10): Der Angriff nutzt beim
+    // nächsten Mal, was die Späher gesehen haben.
+    for (const village of snapshot.villages) {
+        if (snapshot.targets.length === 0) break;
+        const scout = decideScouting(
+            {
+                x: village.x,
+                y: village.y,
+                units: village.units,
+                scoutsInFlight: village.scoutsInFlight,
+            },
+            snapshot.targets,
+            snapshot.personality,
+        );
+        if (!scout) continue;
+        intents.push({
+            kind: 'send',
+            originVillageId: village.id,
+            targetVillageId: scout.targetVillageId,
+            movement: 'attack',
+            units: scout.units,
         });
     }
 

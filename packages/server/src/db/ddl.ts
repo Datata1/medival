@@ -113,6 +113,13 @@ CREATE TABLE IF NOT EXISTS relations (
   UNIQUE(player_id, other_player_id)
 );
 CREATE INDEX IF NOT EXISTS idx_relations_player ON relations(player_id);
+CREATE TABLE IF NOT EXISTS scout_intel (
+  player_id INTEGER NOT NULL,
+  village_id INTEGER NOT NULL,
+  game_time INTEGER NOT NULL,
+  payload_json TEXT NOT NULL,
+  UNIQUE(player_id, village_id)
+);
 CREATE TABLE IF NOT EXISTS reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   player_id INTEGER NOT NULL,

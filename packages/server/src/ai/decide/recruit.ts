@@ -55,12 +55,14 @@ const TARGET_MIX: Record<
     Partial<Record<UnitType, number>>
 > = {
     // Verteidigt und greift nicht an — bleibt bewusst ohne Offensive.
-    turtle: { spear: 0.7, sword: 0.3 },
+    // Späher (19-10) überall in kleinem Anteil: zur Abwehr fremder Späher
+    // und, bei allen außer `turtle`, zum Ausspähen vor dem Angriff.
+    turtle: { spear: 0.67, sword: 0.28, spy: 0.05 },
     // Plündert: Äxte, dazu leichte Kavallerie für die Beute.
-    raider: { axe: 0.6, light_cavalry: 0.25, spear: 0.15 },
+    raider: { axe: 0.55, light_cavalry: 0.25, spear: 0.15, spy: 0.05 },
     // Wächst, hält aber die Dörfer: halb und halb.
-    expander: { spear: 0.5, axe: 0.5 },
-    balanced: { spear: 0.4, axe: 0.4, sword: 0.2 },
+    expander: { spear: 0.48, axe: 0.48, spy: 0.04 },
+    balanced: { spear: 0.38, axe: 0.38, sword: 0.2, spy: 0.04 },
 };
 
 /**

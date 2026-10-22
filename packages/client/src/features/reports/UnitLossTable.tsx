@@ -7,7 +7,8 @@ export function UnitLossTable({
     losses,
 }: {
     units: Units;
-    losses: Units;
+    /** Ohne Verluste (Spähbericht, 19-10) entfällt die Spalte. */
+    losses?: Units;
 }) {
     const { t } = useTranslation();
     const rows = entriesOf(units).filter(([, n]) => n > 0);
@@ -21,7 +22,7 @@ export function UnitLossTable({
                 <tr>
                     <Th>{t('reports.colUnit')}</Th>
                     <Th>{t('reports.colCount')}</Th>
-                    <Th>{t('reports.colLosses')}</Th>
+                    {losses && <Th>{t('reports.colLosses')}</Th>}
                 </tr>
             </thead>
             <tbody>
@@ -29,7 +30,7 @@ export function UnitLossTable({
                     <tr key={type}>
                         <Td>{t(`units.${type}`)}</Td>
                         <Td>{n}</Td>
-                        <Td>{losses[type] ?? 0}</Td>
+                        {losses && <Td>{losses[type] ?? 0}</Td>}
                     </tr>
                 ))}
             </tbody>

@@ -5,6 +5,9 @@ import {
 import {
     NOBLE_LOYALTY_MAX,
     NOBLE_LOYALTY_MIN,
+    SPY_DEFENSE_FACTOR,
+    SPY_TIER_BUILDINGS,
+    SPY_TIER_UNITS_AWAY,
     UNITS,
 } from '../data/units.js';
 import { entriesOf } from '../lib/objects.js';
@@ -25,7 +28,8 @@ function attackPower(units: Units): {
     let inf = 0;
     let cav = 0;
     for (const [t, n] of entries(units)) {
-        if (UNITS[t].isCavalry) cav += UNITS[t].attack * n;
+        if (UNITS[t].attackClass === 'cavalry')
+            cav += UNITS[t].attack * n;
         else inf += UNITS[t].attack * n;
     }
     const total = inf + cav;
@@ -201,4 +205,55 @@ export function attackMargin(
         0,
     );
     return left / sent;
+}
+
+/**
+ * Wie viel ein Spähtrupp erfährt (19-10): 0 = nichts (alle gefallen),
+ * 1 = Rohstoffe und Truppen zu Hause, 2 = zusätzlich Gebäude,
+ * 3 = zusätzlich Truppen außerhalb.
+ */
+export type SpyTier = 0 | 1 | 2 | 3;
+
+/** Ist `units` ein reiner Spähtrupp? Dann kämpft er nur gegen Späher. */
+export function isScoutMission(units: Units): boolean {
+    const kinds = entries(units);
+    return kinds.length > 0 && kinds.every(([t]) => t === 'spy');
+}
+
+/**
+ * Spähkampf: Späher gegen Späher (plans/19-prototyp/19-10).
+ *
+ * Die übrige Verteidigung spielt keine Rolle — Späher schleichen sich vorbei
+ * oder werden von gegnerischen Spähern gestellt. Die Verteidiger-Späher
+ * verlieren nichts. **Pur**; der Zufall rundet nur den Bruchteil eines
+ * Spähers, damit kleine Trupps nicht immer gleich ausgehen.
+ */
+export function resolveSpying(
+    sent: number,
+    defenderSpies: number,
+    rng: Rng,
+): { lost: number; survivors: number; tier: SpyTier } {
+    if (sent <= 0) return { lost: 0, survivors: 0, tier: 0 };
+    const share =
+        defenderSpies <= 0
+            ? 0
+            : Math.min(
+                  1,
+                  (defenderSpies / sent) ** 1.5 * SPY_DEFENSE_FACTOR,
+              );
+    const exact = sent * share;
+    const lost = Math.min(
+        sent,
+        Math.floor(exact) + (rng() < exact - Math.floor(exact) ? 1 : 0),
+    );
+    const survivors = sent - lost;
+    return { lost, survivors, tier: spyTier(survivors, sent) };
+}
+
+export function spyTier(survivors: number, sent: number): SpyTier {
+    if (survivors <= 0 || sent <= 0) return 0;
+    const share = survivors / sent;
+    if (share >= SPY_TIER_UNITS_AWAY) return 3;
+    if (share >= SPY_TIER_BUILDINGS) return 2;
+    return 1;
 }

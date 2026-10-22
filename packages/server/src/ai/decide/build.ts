@@ -65,6 +65,8 @@ export interface VillageSnapshot {
     merchantsFree: number;
     /** Steht schon etwas in der Rekrutierungsschleife (Plan 17)? */
     recruiting: boolean;
+    /** Ist von hier ein Spähtrupp unterwegs (19-10)? */
+    scoutsInFlight?: boolean;
 }
 
 export interface BuildChoice {

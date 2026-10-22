@@ -51,6 +51,7 @@ import unitLight_cavalry from './sprites/units/light_cavalry.png';
 import unitNoble from './sprites/units/noble.png';
 import unitRam from './sprites/units/ram.png';
 import unitSpear from './sprites/units/spear.png';
+import unitSpy from './sprites/units/spy.png';
 import unitSword from './sprites/units/sword.png';
 import mapVillageBarbarian from './sprites/map/village-barbarian.png';
 import mapVillageBot from './sprites/map/village-bot.png';
@@ -115,6 +116,7 @@ export const SPRITES = {
     'unit.noble': unitNoble,
     'unit.ram': unitRam,
     'unit.spear': unitSpear,
+    'unit.spy': unitSpy,
     'unit.sword': unitSword,
     'map.village.barbarian': mapVillageBarbarian,
     'map.village.bot': mapVillageBot,

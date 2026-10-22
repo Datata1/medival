@@ -2,8 +2,10 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+    BUILDING_ORDER,
     createRng,
     DEFAULT_WORLD_SETTINGS,
+    UNIT_ORDER,
     WorldSettingsPatchSchema,
     WorldSettingsSchema,
 } from '@medival/shared';
@@ -78,6 +80,17 @@ function migrateWorldDb(sqlite: Database.Database): void {
         sqlite.exec('ALTER TABLE players ADD COLUMN tribe_id INTEGER');
     }
 
+    // Plan 19-10: Spähwissen; neue Einheiten in den CHECK-Listen.
+    sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS scout_intel (
+          player_id INTEGER NOT NULL,
+          village_id INTEGER NOT NULL,
+          game_time INTEGER NOT NULL,
+          payload_json TEXT NOT NULL,
+          UNIQUE(player_id, village_id)
+        );
+    `);
+
     // Plan 19-9: Spieler gehören zu Accounts; ein Account je Welt höchstens
     // einmal (mehrere NULL — Bots — erlaubt SQLite im UNIQUE-Index).
     if (!columnsOf(sqlite, 'players').includes('account_id')) {
@@ -115,6 +128,16 @@ function migrateWorldDb(sqlite: Database.Database): void {
             ALTER TABLE recruit_queue DROP COLUMN next_unit_done_at;
         `);
     }
+
+    // Zuletzt (19-10): CHECK-Listen auf den Stand von UNIT_ORDER bzw.
+    // BUILDING_ORDER bringen — nach allen Spaltenmigrationen oben, damit die
+    // Neuanlage die bereits umgerechneten Spalten übernimmt.
+    refreshCheckLists(sqlite, {
+        units: UNIT_ORDER,
+        recruit_queue: UNIT_ORDER,
+        buildings: BUILDING_ORDER,
+        build_queue: BUILDING_ORDER,
+    });
 }
 
 function loadSecret(dataDir: string): string {
@@ -130,6 +153,55 @@ const MembershipRowSchema = z.object({
     world_id: z.number().int(),
     player_id: z.number().int(),
 });
+
+/**
+ * Tabellen mit `CHECK (… IN (…))` über Einheiten oder Gebäude neu anlegen,
+ * wenn ihre Liste einen Wert nicht kennt (19-10, gilt auch für 19-11 ff.).
+ *
+ * SQLite kann eine `CHECK`-Bedingung nicht ändern. Ohne diesen Schritt ließe
+ * eine Welt von gestern keinen einzigen Späher zu: Das `INSERT` in `units`
+ * scheiterte an der alten Liste. Der Weg ist der übliche: alte Tabelle
+ * umbenennen, neue nach dem aktuellen `WORLD_DDL` anlegen, gemeinsame
+ * Spalten kopieren, alte löschen. Die Indizes legt `WORLD_DDL` mit
+ * `IF NOT EXISTS` danach wieder an.
+ */
+function refreshCheckLists(
+    sqlite: Database.Database,
+    tables: Record<string, readonly string[]>,
+): void {
+    for (const [table, values] of Object.entries(tables)) {
+        const row = sqlite
+            .prepare(
+                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+            )
+            .get(table);
+        const stored = parseRow(
+            SqlRowSchema,
+            row,
+            `schema ${table}`,
+        ).sql;
+        if (values.every((v) => stored.includes(`'${v}'`))) continue;
+        const create = new RegExp(
+            `CREATE TABLE IF NOT EXISTS ${table} \\([\\s\\S]*?\\n\\);`,
+        ).exec(WORLD_DDL)?.[0];
+        if (!create) throw new Error(`Kein DDL für ${table}`);
+        const oldColumns = columnsOf(sqlite, table);
+        sqlite.transaction(() => {
+            sqlite.exec(`ALTER TABLE ${table} RENAME TO ${table}_old`);
+            sqlite.exec(create);
+            const shared = columnsOf(sqlite, table)
+                .filter((c) => oldColumns.includes(c))
+                .join(', ');
+            sqlite.exec(
+                `INSERT INTO ${table} (${shared}) SELECT ${shared} FROM ${table}_old`,
+            );
+            sqlite.exec(`DROP TABLE ${table}_old`);
+        })();
+    }
+    sqlite.exec(WORLD_DDL);
+}
+
+const SqlRowSchema = z.object({ sql: z.string() });
 
 function villageCount(sqlite: Database.Database): number {
     return sqlite.prepare('SELECT id FROM villages').all().length;

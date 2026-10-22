@@ -266,15 +266,60 @@ export const BattleReportPayloadSchema = z.object({
     luck: z.number(),
     loot: ResourcesSchema,
     conquered: z.boolean(),
+    /**
+     * Was mitgeschickte Späher gesehen haben, sofern welche überlebten (19-10):
+     * Rohstoffe vor der Plünderung und Gebäude.
+     */
+    scouted: z
+        .object({
+            resources: ResourcesSchema,
+            buildings: BuildingLevelsSchema,
+        })
+        .nullable()
+        .optional(),
 });
 
-export const ReportSchema = z.object({
+/**
+ * Spähbericht (plans/19-prototyp/19-10). Was fehlt, ist `null`: Die Stufe
+ * (`tier`) bestimmt, wie viel die Überlebenden gesehen haben.
+ */
+export const ScoutReportPayloadSchema = z.object({
+    attackerVillage: villageRef,
+    defenderVillage: villageRef,
+    sent: z.number().int().nonnegative(),
+    lost: z.number().int().nonnegative(),
+    tier: z.number().int().min(0).max(3),
+    /** Nur im Bericht des Verteidigers: seine Späher zu Hause. */
+    defenderSpies: z.number().int().nonnegative().nullable(),
+    resources: ResourcesSchema.nullable(),
+    units: UnitsSchema.nullable(),
+    buildings: BuildingLevelsSchema.nullable(),
+    unitsAway: UnitsSchema.nullable(),
+});
+
+const reportBase = {
     id: z.number().int().positive(),
-    type: z.enum(['attack', 'defense']),
     createdGameTime: GameTimeSchema,
     read: z.boolean(),
+};
+
+export const BattleReportSchema = z.object({
+    ...reportBase,
+    type: z.enum(['attack', 'defense']),
     payload: BattleReportPayloadSchema,
 });
+
+/** `scout`: Bericht des Spähenden. `scout_defense`: abgewehrter Spähversuch. */
+export const ScoutReportSchema = z.object({
+    ...reportBase,
+    type: z.enum(['scout', 'scout_defense']),
+    payload: ScoutReportPayloadSchema,
+});
+
+export const ReportSchema = z.union([
+    BattleReportSchema,
+    ScoutReportSchema,
+]);
 
 /** Öffentliches Profil eines Spielers oder Bots. */
 export const PlayerProfileSchema = z.object({
@@ -363,6 +408,16 @@ export type BattleReportPayload = z.infer<
     typeof BattleReportPayloadSchema
 >;
 export type Report = z.infer<typeof ReportSchema>;
+export type BattleReport = z.infer<typeof BattleReportSchema>;
+export type ScoutReport = z.infer<typeof ScoutReportSchema>;
+export type ScoutReportPayload = z.infer<
+    typeof ScoutReportPayloadSchema
+>;
+
+/** Spähbericht oder Kampfbericht? (19-10) */
+export function isScoutReport(report: Report): report is ScoutReport {
+    return report.type === 'scout' || report.type === 'scout_defense';
+}
 export type WorldMessage = z.infer<typeof WorldMessageSchema>;
 export type Tribe = z.infer<typeof TribeSchema>;
 export type DiplomacyView = z.infer<typeof DiplomacyViewSchema>;
