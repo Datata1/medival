@@ -2,7 +2,7 @@
 
 Sequenziell abzuarbeitende Vorhaben. **01–10** räumen technische Schuld auf, **11–13**
 stellen die Weichen für Aussehen, Assets und Klang, **14–17** erwecken die Karte zum Leben
-(Meilenstein 3), **18** macht die Oberfläche bedienbar. Die Nummerierung ist die
+(Meilenstein 3), **18** macht die Oberfläche bedienbar, **19** macht aus dem Singleplayer einen Mehrspieler-Prototyp. Die Nummerierung ist die
 empfohlene Reihenfolge:
 
 | # | Plan | Bereich | Status |
@@ -25,6 +25,7 @@ empfohlene Reihenfolge:
 | 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ✅ erledigt |
 | 17 | [Stämme & Krieg](17-staemme-und-krieg.md) | server + shared + client | ✅ erledigt |
 | 18 | [UX-Überarbeitung (6 Tickets)](18-ux/README.md) | client (+shared, +server) | 📋 offen |
+| 19 | [Vom Singleplayer zum Mehrspieler-Prototyp (15 Tickets)](19-prototyp/README.md) | server + shared + client | 📋 offen |
 
 **Warum diese Reihenfolge?**
 
@@ -36,5 +37,7 @@ empfohlene Reihenfolge:
 - **14 steht für sich:** Barbarendörfer teilen mit den Bots nur die Erkenntnis, dass die nächste Entscheidung *ausgerechnet* und nicht *abgefragt* wird (kein Tick). Sonst brauchen sie nichts von 15–17 und lassen sich jederzeit dazwischenschieben.
 - **18 nach 17:** Die Oberfläche ist über siebzehn Pläne mitgewachsen, ohne je entworfen worden zu sein. Sie jetzt zu überarbeiten heißt, alle Bildschirme zu kennen, die es geben soll — vorher hätte jeder neue Plan die frische Schale wieder aufgebrochen. Plan 18 ist deshalb ein Ordner mit sechs weitgehend unabhängigen Tickets statt eines einzelnen Arbeitsschritts.
 - **15 → 16 → 17:** Erst das Gerüst (Wahrnehmung → Entscheidung → Ausführung), dann Ansehen und Handel als Hebel, dann die Folgen in Stämmen und Krieg. Andersherum ginge es nicht: Ohne Ansehen gibt es keine Bedingung dafür, wen ein Bot angreift oder in seinen Stamm lässt. Jeder der drei Schritte endet mit etwas Spielbarem — Bots wachsen, Bots mögen dich, Bots handeln danach.
+
+- **19 nach 17, vor 18-2…18-6:** Das Ziel hat sich geändert, von beschleunigtem Singleplayer zur Tribal-Wars-Alternative mit mehreren hundert Spielern. Plan 19 baut den Prototyp dafür: Testbasis, Zeit-Konsistenz, funktionierende Bots, eine 1000×1000-Karte mit kreisförmiger Besiedlung, Accounts und alle Basiseinheiten und -gebäude. 18-3 (Karte) wird vorher abgeschlossen und committet, weil 19-6/19-7 direkt darauf aufbauen. 18-2, 18-4, 18-5 und 18-6 werden zurückgestellt, denn 19-9 entfernt `PLAYER_ID` und würde jedes dieser Tickets noch einmal anfassen.
 
 **Arbeitsweise:** Pro Plan ein zusammenhängender Arbeitsschritt. Nach Abschluss: Status-Spalte hier und die Status-Zeile im Plandokument aktualisieren. Nach jedem Plan müssen `pnpm lint` (ab 01), `pnpm typecheck`, `pnpm test` und `pnpm build` grün sein.
