@@ -2,8 +2,9 @@ import { continentOf, MERCHANT_CAPACITY } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import type { SpriteId } from '../../assets/registry.js';
+import { ClockTime } from '../../components/ClockTime.js';
 import { Icon } from '../../components/Icon.js';
-import { formatGameTime, formatNumber } from '../../lib/format.js';
+import { formatNumber } from '../../lib/format.js';
 import { useStores } from '../../stores/StoreContext.js';
 import { liveResources } from '../village/derive.js';
 import { VillageSwitcher } from './VillageSwitcher.js';
@@ -139,15 +140,17 @@ const VillageCounters = observer(function VillageCounters() {
 });
 
 /**
- * Die Spieluhr. Sie stand zuerst in der Kopfzeile und hat dort die Symmetrie
+ * Die Serveruhr. Sie stand zuerst in der Kopfzeile und hat dort die Symmetrie
  * der Reiter gebrochen — hier gehört sie ohnehin besser hin, neben die anderen
- * laufenden Zahlen.
+ * laufenden Zahlen. Seit 19-3 zeigt sie die Uhrzeit der Welt statt „Tag 3,
+ * 14:00": Ankünfte stehen ebenfalls in Uhrzeit, und beides muss sich
+ * vergleichen lassen.
  */
 const WorldClock = observer(function WorldClock() {
     const { world } = useStores();
     return (
         <span className="text-ink-light">
-            {formatGameTime(world.gameTime)}
+            <ClockTime at={world.gameTime} />
         </span>
     );
 });

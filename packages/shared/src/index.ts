@@ -17,9 +17,14 @@ export * from './types.js';
 
 import type { WorldSettings } from './types.js';
 
+/**
+ * Standard für neue Welten: Speed 1 wie eine Mehrspielerwelt
+ * (plans/19-prototyp/19-3). Schnelle Welten zum Ausprobieren wählt man beim
+ * Anlegen; Tests setzen ihren Speed ohnehin selbst.
+ */
 export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
-    speed: 200,
-    unitSpeed: 30,
+    speed: 1,
+    unitSpeed: 1,
     mapSize: 100,
     botCount: 30,
     barbarianCount: 80,

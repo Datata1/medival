@@ -38,8 +38,11 @@ const RULES = [
         test: (rel, source) =>
             rel.includes('/components/') &&
             /from\s+'[^']*stores\//.test(source) &&
-            // Countdown liest bewusst die Weltzeit — dokumentierte Ausnahme.
-            !rel.endsWith('components/Countdown.tsx'),
+            // Countdown und ClockTime lesen bewusst die Weltzeit bzw. den
+            // Nullpunkt der Serveruhr — dokumentierte Ausnahmen
+            // (ClockTime: plans/19-prototyp/19-3).
+            !rel.endsWith('components/Countdown.tsx') &&
+            !rel.endsWith('components/ClockTime.tsx'),
         hint: 'Komponenten unter components/ bekommen alles über Props (Plan 05).',
     },
 ];
@@ -92,6 +95,11 @@ if (process.argv.includes('--self-test')) {
         ],
         [
             'packages/client/src/components/Countdown.tsx',
+            "import { useStores } from '../stores/StoreContext.js';",
+            false,
+        ],
+        [
+            'packages/client/src/components/ClockTime.tsx',
             "import { useStores } from '../stores/StoreContext.js';",
             false,
         ],

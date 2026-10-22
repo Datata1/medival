@@ -5,6 +5,8 @@ import {
     BattleReportPayloadSchema,
     BuildRequestSchema,
     CreateWorldRequestSchema,
+    DevSkipRequestSchema,
+    Duration,
     distance,
     FoundTribeRequestSchema,
     InvitePlayerRequestSchema,
@@ -59,9 +61,15 @@ function requireWorld(manager: WorldManager, id: string): World {
     return world;
 }
 
+export interface RouteOptions {
+    /** Entwicklermodus: Pause und Vorspulen (19-3). */
+    devMode: boolean;
+}
+
 export function registerRoutes(
     app: FastifyInstance,
     manager: WorldManager,
+    options: RouteOptions = { devMode: false },
 ): void {
     app.setErrorHandler((err, _req, reply) => {
         if (err instanceof GameError) {
@@ -101,31 +109,49 @@ export function registerRoutes(
             body.name ?? 'Neue Welt',
             body.settings ?? {},
         );
-        return worldSummary(world);
+        return worldSummary(world, options.devMode);
     });
 
     app.get<{ Params: { id: string } }>('/api/worlds/:id', (req) => {
         const world = requireWorld(manager, req.params.id);
-        return worldSummary(world);
+        return worldSummary(world, options.devMode);
     });
 
-    app.post<{ Params: { id: string } }>(
-        '/api/worlds/:id/pause',
-        (req) => {
-            const world = requireWorld(manager, req.params.id);
-            world.pause();
-            return worldSummary(world);
-        },
-    );
+    /*
+     * Pause und Vorspulen gibt es nur im Entwicklermodus (19-3). In einer
+     * Mehrspielerwelt hielte eine Pause die Welt für alle an — und jede
+     * verabredete Ankunftszeit wäre hinfällig. Ohne Entwicklermodus
+     * existieren die Routen nicht (404). Ab 19-8 zusätzlich nur für Admins.
+     */
+    if (options.devMode) {
+        app.post<{ Params: { id: string } }>(
+            '/api/worlds/:id/pause',
+            (req) => {
+                const world = requireWorld(manager, req.params.id);
+                world.pause();
+                return worldSummary(world, true);
+            },
+        );
 
-    app.post<{ Params: { id: string } }>(
-        '/api/worlds/:id/resume',
-        (req) => {
-            const world = requireWorld(manager, req.params.id);
-            world.resume();
-            return worldSummary(world);
-        },
-    );
+        app.post<{ Params: { id: string } }>(
+            '/api/worlds/:id/resume',
+            (req) => {
+                const world = requireWorld(manager, req.params.id);
+                world.resume();
+                return worldSummary(world, true);
+            },
+        );
+
+        app.post<{ Params: { id: string } }>(
+            '/api/worlds/:id/dev/skip',
+            (req) => {
+                const world = requireWorld(manager, req.params.id);
+                const body = parseInput(DevSkipRequestSchema, req.body);
+                world.devSkip(Duration.ms(body.ms));
+                return worldSummary(world, true);
+            },
+        );
+    }
 
     app.delete<{ Params: { id: string } }>('/api/worlds/:id', (req) => {
         return { deleted: manager.deleteWorld(Number(req.params.id)) };
@@ -570,7 +596,7 @@ export function registerRoutes(
     );
 }
 
-function worldSummary(world: World) {
+function worldSummary(world: World, devMode: boolean) {
     const playerVillages = world.db
         .select({
             id: villages.id,
@@ -588,6 +614,8 @@ function worldSummary(world: World) {
         status: world.status,
         settings: world.settings,
         gameTime: world.now(),
+        epochZeroMs: world.clock.epochZeroMs,
+        devMode,
         playerVillages,
     };
 }

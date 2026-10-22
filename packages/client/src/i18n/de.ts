@@ -7,6 +7,8 @@ const de = {
     common: {
         max: 'max {{count}}',
         gameDay: 'Tag {{day}}, {{time}}',
+        clockTomorrow: 'morgen {{time}}',
+        clockOnDay: '{{date}} {{time}}',
     },
     lobby: {
         title: 'Medival',
@@ -22,6 +24,7 @@ const de = {
         meta: '· Speed {{speed}}x · {{time}} · {{status}}',
         statusRunning: 'läuft',
         statusPaused: 'pausiert',
+        statusEnded: 'beendet',
         presetRelaxed: 'Gemütlich (100x)',
         presetFast: 'Schnell (200x)',
         barbarians: 'Barbarendörfer',
@@ -72,6 +75,7 @@ const de = {
         world: 'Welt',
         running: 'Die Welt läuft.',
         paused: 'Die Welt ist angehalten.',
+        ended: 'Die Welt ist beendet.',
         parameters: 'Weltparameter',
         parametersHint:
             'Sie stehen beim Anlegen der Welt fest und lassen sich danach nicht mehr ändern.',

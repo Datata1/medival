@@ -64,9 +64,13 @@ export const CreateWorldRequestSchema = z.object({
     settings: WorldSettingsPatchSchema.optional(),
 });
 
-export const WorldStatusSchema = z.enum([
-    'running',
-    'paused',
-    'won',
-    'lost',
-]);
+/**
+ * Lebenszyklus einer Welt (plans/19-prototyp/19-3): Sie läuft, ist im
+ * Entwicklermodus pausiert, oder sie ist beendet. `won`/`lost` stammen aus
+ * dem Singleplayer — Sieg und Niederlage aus Sicht *eines* Menschen — und
+ * werden beim Lesen alter Spielstände zu `ended`.
+ */
+export const WorldStatusSchema = z.preprocess(
+    (value) => (value === 'won' || value === 'lost' ? 'ended' : value),
+    z.enum(['running', 'paused', 'ended']),
+);

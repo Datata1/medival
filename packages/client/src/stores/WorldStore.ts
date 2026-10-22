@@ -1,4 +1,9 @@
-import { Duration, GameTime, type WorldSummary } from '@medival/shared';
+import {
+    Duration,
+    GameTime,
+    type GameTimeLike,
+    type WorldSummary,
+} from '@medival/shared';
 import { makeAutoObservable, runInAction } from 'mobx';
 import { api } from '../api/client.js';
 import { apiErrorMessage } from '../lib/errors.js';
@@ -8,7 +13,8 @@ import { AsyncValue } from './AsyncValue.js';
 const TICK_INTERVAL = Duration.ms(500);
 
 /**
- * Die geöffnete Welt: Zustand, Pause-Steuerung und die laufende Spielzeit.
+ * Die geöffnete Welt: Zustand, Pause-Steuerung (nur Entwicklermodus) und die
+ * laufende Spielzeit.
  *
  * Die Uhr gehört hierher und nicht in eine Komponente: Sie beschreibt die Welt,
  * nicht eine Ansicht. Sie rechnet einen Server-Zeitstempel mit der seither
@@ -43,6 +49,21 @@ export class WorldStore {
 
     get isRunning(): boolean {
         return this.summary?.status === 'running';
+    }
+
+    /** Wanduhrzeit des Servers, zu der die Spielzeit 0 war (19-3). */
+    get epochZeroMs(): number {
+        return this.summary?.epochZeroMs ?? 0;
+    }
+
+    /** Läuft der Server im Entwicklermodus (Pause, Vorspulen)? */
+    get devMode(): boolean {
+        return this.summary?.devMode ?? false;
+    }
+
+    /** Uhrzeit (Epoch-ms) eines Spielzeitpunkts — in Serverzeit. */
+    clockOf(t: GameTimeLike): number {
+        return this.epochZeroMs + t;
     }
 
     get playerVillages(): WorldSummary['playerVillages'] {

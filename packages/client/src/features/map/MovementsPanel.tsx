@@ -5,8 +5,8 @@ import {
 } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { Arrival } from '../../components/Arrival.js';
 import { Card } from '../../components/Card.js';
-import { Countdown } from '../../components/Countdown.js';
 import { Icon } from '../../components/Icon.js';
 import { useStores } from '../../stores/StoreContext.js';
 import { KIND_ICONS } from './derive.js';
@@ -27,7 +27,7 @@ function MovementRow({
                 <Icon name={KIND_ICONS[movement.kind]} />{' '}
                 {movement.origin?.name} → {movement.target?.name}
             </span>
-            <Countdown until={movement.arrivalGameTime} />
+            <Arrival at={movement.arrivalGameTime} />
         </li>
     );
 }

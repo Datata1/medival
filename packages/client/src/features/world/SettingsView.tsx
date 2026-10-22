@@ -77,24 +77,32 @@ export const SettingsView = observer(function SettingsView({
             <Card>
                 <h2>{t('settings.world')}</h2>
                 <div className="flex flex-wrap items-center gap-4">
-                    <Button onClick={() => void world.togglePause()}>
-                        <span className="inline-flex items-center gap-1.5">
-                            <Icon
-                                name={
-                                    world.isRunning
-                                        ? 'icon.pause'
-                                        : 'icon.play'
-                                }
-                            />
-                            {world.isRunning
-                                ? t('world.pause')
-                                : t('world.resume')}
-                        </span>
-                    </Button>
+                    {/* Pause nur im Entwicklermodus (19-3): In einer
+                        Mehrspielerwelt hielte sie die Welt für alle an. */}
+                    {world.devMode && (
+                        <Button
+                            onClick={() => void world.togglePause()}
+                        >
+                            <span className="inline-flex items-center gap-1.5">
+                                <Icon
+                                    name={
+                                        world.isRunning
+                                            ? 'icon.pause'
+                                            : 'icon.play'
+                                    }
+                                />
+                                {world.isRunning
+                                    ? t('world.pause')
+                                    : t('world.resume')}
+                            </span>
+                        </Button>
+                    )}
                     <span className="text-ink-light">
-                        {world.isRunning
-                            ? t('settings.running')
-                            : t('settings.paused')}
+                        {world.summary?.status === 'ended'
+                            ? t('settings.ended')
+                            : world.isRunning
+                              ? t('settings.running')
+                              : t('settings.paused')}
                     </span>
                     <Button variant="danger" onClick={onExit}>
                         {t('world.backToLobby')}

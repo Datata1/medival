@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS worlds (
   status TEXT NOT NULL DEFAULT 'paused',
   game_time_ms INTEGER NOT NULL DEFAULT 0,
   rng_state INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  epoch_zero_ms INTEGER
 );
 `;

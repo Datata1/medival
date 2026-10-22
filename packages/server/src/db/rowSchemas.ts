@@ -25,6 +25,8 @@ export const WorldMetaRowSchema = z.object({
     game_time_ms: z.number().int().nonnegative(),
     rng_state: z.number().int(),
     created_at: z.number().int(),
+    /** Fehlt bei Spielständen von vor 19-3; dann läuft die Uhr ab `game_time_ms`. */
+    epoch_zero_ms: z.number().nullable().optional(),
 });
 
 export type WorldMetaRow = z.infer<typeof WorldMetaRowSchema>;

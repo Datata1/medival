@@ -71,10 +71,19 @@ export interface WorldMeta {
     name: string;
     seed: number;
     settings: WorldSettings;
-    status: 'running' | 'paused' | 'won' | 'lost';
+    status: 'running' | 'paused' | 'ended';
     gameTimeMs: number;
     rngState: number;
+    /** Wanduhrzeit, zu der die Spielzeit 0 war; `null` vor 19-3. */
+    epochZeroMs: number | null;
 }
+
+export type MetaPatch = Partial<
+    Pick<
+        WorldMeta,
+        'status' | 'gameTimeMs' | 'rngState' | 'epochZeroMs'
+    >
+>;
 
 export type WorldMessage = Record<string, unknown> & { type: string };
 
@@ -111,11 +120,7 @@ export class World {
         meta: WorldMeta,
         readonly sqlite: SqliteDatabase,
         readonly db: BetterSQLite3Database<Record<string, unknown>>,
-        private readonly persistMeta: (
-            patch: Partial<
-                Pick<WorldMeta, 'status' | 'gameTimeMs' | 'rngState'>
-            >,
-        ) => void,
+        private readonly persistMeta: (patch: MetaPatch) => void,
     ) {
         this.id = meta.id;
         this.name = meta.name;
@@ -124,6 +129,7 @@ export class World {
         this.clock = new GameClock(
             meta.gameTimeMs,
             meta.status === 'running',
+            meta.epochZeroMs,
         );
         this.rng = createStatefulRng(meta.rngState || meta.seed || 1);
         this.scheduler = new Scheduler(
@@ -198,12 +204,7 @@ export class World {
     }
 
     resume(): void {
-        if (
-            this.clock.running ||
-            this.status === 'won' ||
-            this.status === 'lost'
-        )
-            return;
+        if (this.clock.running || this.status === 'ended') return;
         this.status = 'running';
         this.clock.resume();
         this.persist();
@@ -220,16 +221,39 @@ export class World {
             status: this.status,
             gameTimeMs: this.now(),
             rngState: this.rng.state,
+            epochZeroMs: this.clock.epochZeroMs,
+        });
+    }
+
+    /**
+     * Vorspulen — nur im Entwicklermodus erreichbar (19-3). Verschiebt den
+     * Nullpunkt der Uhr; alles dazwischen Fällige wird in Batches
+     * nachgeholt wie nach einem Neustart.
+     */
+    devSkip(d: Duration): void {
+        this.clock.skip(d);
+        this.persist();
+        this.scheduler.processDue();
+        this.broadcast({
+            type: 'world_status',
+            status: this.status,
+            gameTime: this.now(),
         });
     }
 
     close(): void {
+        // Nullpunkt vor dem Anhalten lesen: Die Welt läuft an der Wanduhr
+        // weiter, auch während der Server aus ist (19-3).
+        const epochZeroMs = this.clock.running
+            ? this.clock.epochZeroMs
+            : null;
         this.clock.pause();
         this.scheduler.dispose();
         this.pendingMessages.clear();
         this.persistMeta({
             gameTimeMs: this.now(),
             rngState: this.rng.state,
+            epochZeroMs,
         });
         this.sqlite.close();
     }

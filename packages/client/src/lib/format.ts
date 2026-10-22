@@ -32,3 +32,32 @@ export function formatGameTime(t: GameTimeLike): string {
     if (d > 0) return i18next.t('common.gameDay', { day: d + 1, time });
     return time;
 }
+
+/**
+ * Eine Uhrzeit (Epoch-ms) für Ankünfte und Berichte (plans/19-prototyp/19-3):
+ * `14:03:12`, mit `withMs` `14:03:12:437` wie in Tribal Wars — darüber
+ * verabreden sich Spieler im Stamm. Liegt der Zeitpunkt nicht heute, steht
+ * „morgen" bzw. das Datum davor.
+ */
+export function formatClock(
+    epochMs: number,
+    withMs = false,
+    today = Date.now(),
+): string {
+    const d = new Date(epochMs);
+    const pad = (x: number, n = 2) => String(x).padStart(n, '0');
+    const time =
+        `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+        (withMs ? `:${pad(d.getMilliseconds(), 3)}` : '');
+    const dayOf = (t: Date) =>
+        new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+    const days = Math.round(
+        (dayOf(d) - dayOf(new Date(today))) / 86_400_000,
+    );
+    if (days === 0) return time;
+    if (days === 1) return i18next.t('common.clockTomorrow', { time });
+    return i18next.t('common.clockOnDay', {
+        date: `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`,
+        time,
+    });
+}

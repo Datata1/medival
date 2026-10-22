@@ -1,6 +1,41 @@
 # Ticket 19-3: Wanduhr & Welt-Lebenszyklus
 
-**Status:** 📋 offen · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md), [19-4](19-4-bots-reparieren.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-2](19-2-zeit-engine-konsistenz.md), [19-4](19-4-bots-reparieren.md)
+
+> **Ergebnis:** Spielzeit läuft an der Wanduhr. Ein Serverausfall hält die Welt nicht mehr
+> an. Nach dem Neustart steht die Uhr dort, wo sie ohne Ausfall stünde, und Verpasstes
+> wird zu seiner ursprünglichen Zeit abgerechnet. Pause und Vorspulen gibt es nur noch
+> mit `MEDIVAL_DEV=1` (`pnpm dev` setzt es). Ohne Entwicklermodus existieren die Routen
+> nicht. Der Client zeigt Ankünfte als Serveruhrzeit auf die Millisekunde
+> (`14:03:12:437`, „morgen …", Datum), Berichte und die Uhr in der Dorfleiste ebenfalls.
+> Standard-Speed für neue Welten ist 1.
+>
+> **Am echten Server geprüft:** Welt anlegen, Server ~14 s laufen lassen, ~14 s aus,
+> neu starten. Die Spielzeit steht bei 29,6 s, also der gesamten Wanduhrzeit seit dem
+> Anlegen (vorher wären es ~14 s gewesen). `POST /pause` ohne Entwicklermodus: 404.
+>
+> **Tests** (`test/integration/clock.test.ts`, mit austauschbarer Wanduhr statt Warten):
+> Ausfall von 5 min, danach ist der Angriff zu seiner Ankunftszeit abgerechnet. Eine
+> verstellte `Date.now` verschiebt nichts. Ein Spielstand ohne Nullpunkt läuft ab seinem
+> gespeicherten Stand weiter, und `won` wird als `ended` gelesen und nicht neu gestartet.
+> Dev-Routen: 404 ohne Entwicklermodus, sonst Pause/Vorspulen/Fortsetzen. Uhrzeit =
+> Nullpunkt + Spielzeit. Im Client: `formatClock` und `WorldStore.clockOf`.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Ein Wert statt zwei:** Statt `started_at_epoch_ms` und `dev_offset_ms` gibt es
+>   `epoch_zero_ms`, die Wanduhrzeit, zu der die Spielzeit 0 war. Pause und Vorspulen
+>   verschieben nur diesen Wert, und die Uhrzeit eines Spielzeitpunkts ist
+>   `epoch_zero_ms + t`.
+> - **Keine Trennung in `WallClock`/`ManualClock`:** Es bleibt eine `GameClock`. Die
+>   Wanduhr-Quelle (`wallClock.now`) ist austauschbar, das reicht Tests und Harness.
+> - **Entwicklermodus über die Weltzusammenfassung** (`devMode`) statt `GET /api/me`, das
+>   erst mit 19-8 entsteht. Ebenso ab 19-8: Dev-Routen nur für Admins.
+> - **`ClockTime`** liest wie `Countdown` die Weltzeit aus dem Store, als zweite
+>   dokumentierte Ausnahme in `check-layering.mjs`. Die Umrechnung soll nicht in jeder
+>   Ansicht kopiert werden.
+> - **`game_time_ms`** bleibt. Bei laufenden Welten ist es ein Diagnosewert, bei
+>   pausierten die eingefrorene Zeit.
 
 ## Kontext
 

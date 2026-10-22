@@ -89,6 +89,8 @@ function worldSummary(
             seed: 1,
         },
         gameTime: 1_000,
+        epochZeroMs: 1_800_000_000_000,
+        devMode: false,
         playerVillages: [
             { id: 7, name: 'Heimatdorf', x: 20, y: 20, points: 26 },
         ],
@@ -225,6 +227,22 @@ describe('WorldStore: Spielzeit', () => {
         await vi.advanceTimersByTimeAsync(2_000);
         expect(world.gameTime).toBeGreaterThanOrEqual(3_000);
 
+        world.close();
+    });
+
+    it('rechnet Spielzeitpunkte in Serverzeit um (19-3)', async () => {
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({
+                epochZeroMs: 1_800_000_000_000,
+                devMode: true,
+            }),
+        );
+        const world = new WorldStore();
+        await world.open(1);
+        // Ankunft bei Spielzeit 90 s: 90 s nach dem Nullpunkt des Servers,
+        // unabhängig davon, wie die Uhr des Browsers steht.
+        expect(world.clockOf(90_000)).toBe(1_800_000_090_000);
+        expect(world.devMode).toBe(true);
         world.close();
     });
 
