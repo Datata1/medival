@@ -41,6 +41,20 @@ export class GameClock {
         this.runningSince = performance.now();
     }
 
+    /**
+     * Stellt die Uhr auf einen Zeitpunkt — nur vorwärts. Für Testwelten, die
+     * von Fälligkeit zu Fälligkeit laufen (plans/19-prototyp/19-1); eine Uhr,
+     * die zurückspringt, würde bereits abgerechnete Events wiederholen.
+     */
+    setTo(gameTimeMs: number): void {
+        const now = this.now();
+        if (gameTimeMs < now)
+            throw new RangeError(
+                `GameClock.setTo: ${gameTimeMs} liegt vor ${now}`,
+            );
+        this.accumulatedMs += gameTimeMs - now;
+    }
+
     /** Jump forward by the given duration (time warp / fast forward). */
     skip(d: DurationLike): void {
         this.accumulatedMs += d;

@@ -7,6 +7,7 @@
     "scripts": {
         "dev": "concurrently -n server,client -c blue,green \"pnpm --filter @medival/server dev\" \"pnpm --filter @medival/client dev\"",
         "test": "pnpm -r test",
+        "test:integration": "pnpm --filter @medival/server test:integration",
         "build": "pnpm -r build",
         "typecheck": "pnpm -r typecheck",
         "lint": "biome check . && node scripts/check-no-casts.mjs && node scripts/check-layering.mjs && node scripts/check-contrast.mjs && node scripts/check-assets.mjs && node scripts/check-ai-purity.mjs",

@@ -100,3 +100,63 @@ describe('Scheduler hardening', () => {
         expect(processed).toEqual(['first', 'chained']);
     });
 });
+
+describe('drainUntil (plans/19-prototyp/19-1)', () => {
+    it('verarbeitet 10k fällige Events in einem Aufruf, geordnet', () => {
+        const seen: number[] = [];
+        const { scheduler } = makeScheduler((ev) => {
+            seen.push(ev.dueGameTime);
+        });
+        const insert = sqlite.prepare(
+            "INSERT INTO events (due_game_time, type, payload_json) VALUES (?, 'tick', '{}')",
+        );
+        sqlite.transaction(() => {
+            // Absichtlich rückwärts eingefügt: Die Reihenfolge muss aus der
+            // Fälligkeit kommen, nicht aus der Einfügereihenfolge.
+            for (let i = 10_000; i >= 1; i--) insert.run(i);
+        })();
+
+        expect(scheduler.drainUntil(GameTime.of(10_000))).toBe(10_000);
+        expect(seen).toHaveLength(10_000);
+        for (let i = 1; i < seen.length; i++) {
+            expect(seen[i]!).toBeGreaterThanOrEqual(seen[i - 1]!);
+        }
+        expect(scheduler.nextDue()).toBeNull();
+    });
+
+    it('lässt Spätere liegen und arbeitet Nachgereichtes mit ab', () => {
+        const processed: string[] = [];
+        const { scheduler } = makeScheduler((ev) => {
+            processed.push(ev.type);
+            if (ev.type === 'first')
+                scheduler.insert('chained', GameTime.of(50), {});
+        });
+        scheduler.insert('first', GameTime.of(10), {});
+        scheduler.insert('later', GameTime.of(200), {});
+
+        expect(scheduler.drainUntil(GameTime.of(100))).toBe(2);
+        expect(processed).toEqual(['first', 'chained']);
+        expect(scheduler.nextDue()).toBe(200);
+    });
+
+    it('tut aus einem Handler heraus nichts (reentrant)', () => {
+        let inner = -1;
+        const { scheduler } = makeScheduler(() => {
+            inner = scheduler.drainUntil(GameTime.of(1_000));
+        });
+        scheduler.insert('a', GameTime.of(1), {});
+        scheduler.insert('b', GameTime.of(2), {});
+
+        expect(scheduler.drainUntil(GameTime.of(1_000))).toBe(2);
+        expect(inner).toBe(0);
+    });
+});
+
+describe('GameClock.setTo', () => {
+    it('stellt vorwärts und verweigert Rücksprünge', () => {
+        clock.setTo(5_000);
+        expect(clock.now()).toBe(5_000);
+        expect(() => clock.setTo(4_999)).toThrow(RangeError);
+        expect(clock.now()).toBe(5_000);
+    });
+});

@@ -6,6 +6,7 @@
         "dev": "tsx watch src/index.ts",
         "start": "tsx src/index.ts",
         "test": "vitest run",
+        "test:integration": "vitest run --project integration",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {

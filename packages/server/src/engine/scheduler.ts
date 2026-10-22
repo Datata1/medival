@@ -84,37 +84,9 @@ export class Scheduler {
         this.processing = true;
         let moreDue = false;
         try {
+            const until = Math.floor(this.clock.now());
             for (let i = 0; i < BATCH_SIZE; i++) {
-                // Re-query after each event: handlers may insert new events that are already due.
-                const next = this.db
-                    .select()
-                    .from(events)
-                    .where(
-                        lte(
-                            events.dueGameTime,
-                            Math.floor(this.clock.now()),
-                        ),
-                    )
-                    .orderBy(asc(events.dueGameTime), asc(events.id))
-                    .limit(1)
-                    .all()[0];
-                if (!next) break;
-                this.db
-                    .delete(events)
-                    .where(eq(events.id, next.id))
-                    .run();
-                const event: GameEvent = {
-                    id: next.id,
-                    dueGameTime: GameTime.of(next.dueGameTime),
-                    type: next.type,
-                    payload: JSON.parse(next.payload),
-                };
-                try {
-                    this.handler(event);
-                } catch (error) {
-                    // One poison event must never freeze the world.
-                    this.onHandlerError(event, error);
-                }
+                if (!this.runNext(until)) break;
                 if (i === BATCH_SIZE - 1) moreDue = true;
             }
         } finally {
@@ -126,6 +98,61 @@ export class Scheduler {
                 this.arm();
             }
         }
+    }
+
+    /**
+     * Verarbeitet **alle** Events mit Fälligkeit ≤ `until`, strikt geordnet
+     * und ohne Batch-Abbruch (plans/19-prototyp/19-1-integrationstest-harness.md).
+     *
+     * Anders als `processDue` gibt diese Methode den Event-Loop nicht frei.
+     * Sie ist für Testwelten gedacht, die Event für Event ablaufen, und für
+     * das Nachholen vor einem Befehl (19-2). Handler, die neue, bereits
+     * fällige Events anlegen, werden im selben Aufruf mit abgearbeitet.
+     *
+     * Reentrant aufgerufen (aus einem Handler heraus) tut sie nichts und
+     * liefert 0 — das laufende Abarbeiten holt ohnehin alles nach.
+     */
+    drainUntil(until: GameTime): number {
+        if (this.processing) return 0;
+        this.processing = true;
+        let count = 0;
+        try {
+            while (this.runNext(until)) count++;
+        } finally {
+            this.processing = false;
+            this.arm();
+        }
+        return count;
+    }
+
+    /**
+     * Nimmt das älteste Event mit Fälligkeit ≤ `until` aus der Tabelle und
+     * führt es aus. Liefert `false`, wenn keines fällig ist.
+     */
+    private runNext(until: number): boolean {
+        // Re-query after each event: handlers may insert new events that are already due.
+        const next = this.db
+            .select()
+            .from(events)
+            .where(lte(events.dueGameTime, until))
+            .orderBy(asc(events.dueGameTime), asc(events.id))
+            .limit(1)
+            .all()[0];
+        if (!next) return false;
+        this.db.delete(events).where(eq(events.id, next.id)).run();
+        const event: GameEvent = {
+            id: next.id,
+            dueGameTime: GameTime.of(next.dueGameTime),
+            type: next.type,
+            payload: JSON.parse(next.payload),
+        };
+        try {
+            this.handler(event);
+        } catch (error) {
+            // One poison event must never freeze the world.
+            this.onHandlerError(event, error);
+        }
+        return true;
     }
 
     /** (Re-)arm the timer for the next pending event. No-op while paused. */

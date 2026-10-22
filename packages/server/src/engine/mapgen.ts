@@ -96,7 +96,12 @@ function pickFreeSpot(
     throw new Error('Map too crowded: could not place village');
 }
 
-function insertVillage(
+/**
+ * Legt ein Dorf mit allen Gebäudezeilen an. Exportiert für die Test-Builder
+ * (plans/19-prototyp/19-1) — Testdörfer entstehen über denselben Weg wie
+ * Kartendörfer, sonst fehlt ihnen beim nächsten neuen Gebäudetyp eine Zeile.
+ */
+export function insertVillage(
     db: BetterSQLite3Database<Record<string, unknown>>,
     playerId: number | null,
     x: number,
