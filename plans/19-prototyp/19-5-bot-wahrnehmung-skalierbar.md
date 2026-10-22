@@ -1,6 +1,45 @@
 # Ticket 19-5: Bot-Wahrnehmung skalierbar
 
-**Status:** 📋 offen · **Voraussetzung:** [19-4](19-4-bots-reparieren.md) · **Vor:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md)
+**Status:** ✅ erledigt (2026-10-22) · **Voraussetzung:** [19-4](19-4-bots-reparieren.md) · **Vor:** [19-6](19-6-weltkarte-kreisfoermige-besiedlung.md)
+
+> **Ergebnis:** Die Wahrnehmung liest je Tick einen kleinen Kontext: Ansehen in beide
+> Richtungen und Dörfer im Umkreis samt Stamm ihres Besitzers (eine JOIN-Abfrage). Ziele,
+> Handelspartner und Gründungskandidaten werden daraus abgeleitet. Sie **schreibt nicht
+> mehr**: Ansehen über `World.standingsOf` ohne Zurückschreiben, abgelaufene Einladungen
+> werden übergangen statt gelöscht. Hilferufe kommen aus einer JOIN-Abfrage statt aus
+> einem Vollscan. Dazu gibt es vorbereitete Abfragen in Scheduler und `World` und die
+> Kennzahl `botTick` (p50/p99) in `/api/health`.
+>
+> **Gemessen:**
+>
+> | | vorher | nachher |
+> |---|---|---|
+> | Kosten je Event (10 Bots, 4 Spielstunden, Speed 100) | 2,16 ms | **0,59 ms** |
+> | `perceiveBot`, 5 000 Dörfer (dicht, ~3 600 in Reichweite) | p50 438 ms | **p50 5,2 ms** |
+> | `perceiveBot`, 10 000 Dörfer | p50 500 ms | **p50 5,0 ms** (wächst nicht mit der Welt) |
+> | Bots-Woche im Test | 13,4 s | 4,3 s |
+>
+> Vor der Umkreis-JOIN lag die neue Wahrnehmung bei 6,4 → 8,2 ms (+28 % bei doppelter
+> Dorfzahl), weil sie bei jedem Tick die Stämme *aller* Spieler lud.
+>
+> **Gleichwertigkeit:** In zwei laufenden Welten wurde an je zehn Zeitpunkten jeder Bot
+> mit der neuen und der alten Wahrnehmung verglichen. Die Snapshots sind identisch
+> (Gleitkomma auf 6 Stellen), Stämme und Einladungen sind abgedeckt.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Das Testorakel bleibt vorerst** (`test/integration/oracle/perceive-legacy.ts`).
+>   Gelöscht wird es, sobald 19-10 die Wahrnehmung inhaltlich ändert (Späher). Bis dahin
+>   sichert es jeden Umbau ab.
+> - **Eigene Dörfer werden noch einzeln gelesen** (Gebäude, Schleifen, Händler je Dorf).
+>   Im Profil sind das ~13 %, und bei Bots mit einem Dorf lohnt die Bündelung nicht.
+>   Kandidat für 19-15.
+> - **Ziel „p99 < 5 ms bei 5 000 Dörfern" knapp verfehlt** (7,4 ms) — gemessen in einer
+>   bewusst sehr dichten Testwelt (jedes vierte Feld belegt). Der Aufwand hängt nur noch
+>   an der Nachbarschaft. Ob das reicht, entscheidet die Lastprobe.
+> - **`settleRecruits` schreibt weiterhin** (über `getUnits`). Das ist faule Abrechnung wie
+>   bei Rohstoffen, kein Wahrnehmungszustand. Der Schreibtest prüft eine Welt ohne
+>   laufende Rekrutierung.
 
 ## Kontext
 

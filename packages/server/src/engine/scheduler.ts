@@ -81,7 +81,50 @@ export class Scheduler {
                 `[scheduler] event ${ev.type}#${ev.id} failed:`,
                 err,
             ),
-    ) {}
+    ) {
+        /*
+         * Vorbereitete Abfragen (plans/19-prototyp/19-5): Diese vier laufen
+         * für jedes einzelne Event. Ungebunden baute Drizzle sie jedes Mal
+         * neu zusammen, und SQLite kompilierte sie jedes Mal neu — im
+         * CPU-Profil die Hälfte der Zeit je Event.
+         */
+        this.q = {
+            next: db
+                .select()
+                .from(events)
+                .where(
+                    lte(events.dueGameTime, sql.placeholder('until')),
+                )
+                .orderBy(
+                    asc(events.dueGameTime),
+                    asc(events.priority),
+                    asc(events.id),
+                )
+                .limit(1)
+                .prepare(),
+            first: db
+                .select({ dueGameTime: events.dueGameTime })
+                .from(events)
+                .orderBy(asc(events.dueGameTime))
+                .limit(1)
+                .prepare(),
+            remove: db
+                .delete(events)
+                .where(eq(events.id, sql.placeholder('id')))
+                .prepare(),
+            insert: db
+                .insert(events)
+                .values({
+                    dueGameTime: sql.placeholder('due'),
+                    type: sql.placeholder('type'),
+                    priority: sql.placeholder('priority'),
+                    payload: sql.placeholder('payload'),
+                })
+                .prepare(),
+        };
+    }
+
+    private readonly q;
 
     /** Ob gerade Events abgearbeitet werden (dann ist `drainUntil` ein No-op). */
     get isProcessing(): boolean {
@@ -94,15 +137,12 @@ export class Scheduler {
         payload: Record<string, unknown>,
         priority = priorityOf(type),
     ): void {
-        this.db
-            .insert(events)
-            .values({
-                dueGameTime,
-                type,
-                priority,
-                payload: JSON.stringify(payload),
-            })
-            .run();
+        this.q.insert.run({
+            due: dueGameTime,
+            type,
+            priority,
+            payload: JSON.stringify(payload),
+        });
         // Während des Abarbeitens bewaffnet `finally` den Timer ohnehin neu;
         // ein `arm()` je eingefügtem Event wäre eine Abfrage je Event.
         if (!this.processing) this.arm();
@@ -126,12 +166,7 @@ export class Scheduler {
 
     /** Game time of the oldest pending event, or null if the queue is empty. */
     nextDue(): GameTime | null {
-        const next = this.db
-            .select()
-            .from(events)
-            .orderBy(asc(events.dueGameTime))
-            .limit(1)
-            .all()[0];
+        const next = this.q.first.all()[0];
         return next ? GameTime.of(next.dueGameTime) : null;
     }
 
@@ -197,19 +232,9 @@ export class Scheduler {
      */
     private runNext(until: number): boolean {
         // Re-query after each event: handlers may insert new events that are already due.
-        const next = this.db
-            .select()
-            .from(events)
-            .where(lte(events.dueGameTime, until))
-            .orderBy(
-                asc(events.dueGameTime),
-                asc(events.priority),
-                asc(events.id),
-            )
-            .limit(1)
-            .all()[0];
+        const next = this.q.next.all({ until })[0];
         if (!next) return false;
-        this.db.delete(events).where(eq(events.id, next.id)).run();
+        this.q.remove.run({ id: next.id });
         const event: GameEvent = {
             id: next.id,
             dueGameTime: GameTime.of(next.dueGameTime),

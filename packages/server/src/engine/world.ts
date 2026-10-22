@@ -34,7 +34,7 @@ import {
     effectiveStanding as withTribeModifier,
 } from '@medival/shared';
 import type { Database as SqliteDatabase } from 'better-sqlite3';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, or, sql } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { handleBarbarianTick } from '../ai/barbarian.js';
 import { handleBotTick, wakeBot } from '../ai/bot.js';
@@ -104,6 +104,8 @@ export class World {
     readonly clock: GameClock;
     readonly scheduler: Scheduler;
     readonly rng: StatefulRng;
+    /** Vorbereitete Abfragen, siehe Konstruktor. */
+    readonly q;
     private readonly subscribers = new Set<
         (msg: WorldMessage) => void
     >();
@@ -132,6 +134,44 @@ export class World {
             meta.epochZeroMs,
         );
         this.rng = createStatefulRng(meta.rngState || meta.seed || 1);
+        /*
+         * Vorbereitete Abfragen für die heißesten Lesepfade (19-5): Diese
+         * laufen bei fast jedem Event mehrfach. Vor `processDue` angelegt,
+         * weil schon das erste Nachholen sie braucht.
+         */
+        const byVillage = sql.placeholder('villageId');
+        this.q = {
+            buildings: db
+                .select()
+                .from(buildings)
+                .where(eq(buildings.villageId, byVillage))
+                .prepare(),
+            units: db
+                .select()
+                .from(units)
+                .where(eq(units.villageId, byVillage))
+                .prepare(),
+            village: db
+                .select()
+                .from(villages)
+                .where(eq(villages.id, byVillage))
+                .prepare(),
+            travelingUnits: db
+                .select({ unitsJson: movements.unitsJson })
+                .from(movements)
+                .where(eq(movements.originVillageId, byVillage))
+                .prepare(),
+            recruits: db
+                .select()
+                .from(recruitQueue)
+                .where(eq(recruitQueue.villageId, byVillage))
+                .orderBy(asc(recruitQueue.id))
+                .prepare(),
+            addUnits: sqlite.prepare(
+                `INSERT INTO units (village_id, unit_type, count_home) VALUES (?, ?, ?)
+                 ON CONFLICT(village_id, unit_type) DO UPDATE SET count_home = count_home + excluded.count_home`,
+            ),
+        };
         this.scheduler = new Scheduler(
             db,
             this.clock,
@@ -292,22 +332,13 @@ export class World {
     // ── queries ────────────────────────────────────────────────────────
 
     getBuildingLevels(villageId: number): BuildingLevels {
-        const rows = this.db
-            .select()
-            .from(buildings)
-            .where(eq(buildings.villageId, villageId))
-            .all();
-        return buildingLevelsFrom(rows);
+        return buildingLevelsFrom(this.q.buildings.all({ villageId }));
     }
 
     getUnits(villageId: number): Units {
         // Was in der Kaserne inzwischen fertig ist, zählt mit (19-2).
         settleRecruits(this, villageId);
-        const rows = this.db
-            .select()
-            .from(units)
-            .where(eq(units.villageId, villageId))
-            .all();
+        const rows = this.q.units.all({ villageId });
         const result: Units = {};
         for (const r of rows)
             if (r.countHome > 0) result[r.unitType] = r.countHome;
@@ -316,11 +347,7 @@ export class World {
 
     getVillageRow(villageId: number) {
         return firstOrThrow(
-            this.db
-                .select()
-                .from(villages)
-                .where(eq(villages.id, villageId))
-                .all(),
+            this.q.village.all({ villageId }),
             'village_not_found',
         );
     }
@@ -329,12 +356,7 @@ export class World {
     addUnits(villageId: number, delta: Units): void {
         for (const [type, n] of entriesOf(delta)) {
             if (!n) continue;
-            this.sqlite
-                .prepare(
-                    `INSERT INTO units (village_id, unit_type, count_home) VALUES (?, ?, ?)
-           ON CONFLICT(village_id, unit_type) DO UPDATE SET count_home = count_home + excluded.count_home`,
-                )
-                .run(villageId, type, n);
+            this.q.addUnits.run(villageId, type, n);
         }
     }
 
@@ -412,6 +434,43 @@ export class World {
             )
             .run();
         return standing;
+    }
+
+    /**
+     * Das Ansehen eines Spielers in beide Richtungen, auf einmal und **ohne
+     * Zurückschreiben** (plans/19-prototyp/19-5).
+     *
+     * `towards`: was `playerId` von anderen hält; `from`: was andere von ihm
+     * halten. Roh, ohne Stammes-Sockel. Für die Wahrnehmung der Bots — vorher
+     * rief sie `settleStanding` je Paar auf: eine Abfrage und ein Schreibzugriff
+     * für jedes Nachbarpaar bei jedem Tick. Weil der Verfall eine reine
+     * Funktion der Zeit ist, ergibt Lesen ohne Schreiben denselben Wert.
+     */
+    standingsOf(
+        playerId: number,
+        now = this.now(),
+    ): { towards: Map<number, number>; from: Map<number, number> } {
+        const towards = new Map<number, number>();
+        const from = new Map<number, number>();
+        for (const row of this.db
+            .select()
+            .from(relations)
+            .where(
+                or(
+                    eq(relations.playerId, playerId),
+                    eq(relations.otherPlayerId, playerId),
+                ),
+            )
+            .all()) {
+            const standing = decayStanding(
+                row.standing,
+                GameTime.between(row.updatedAt, now),
+            );
+            if (row.playerId === playerId)
+                towards.set(row.otherPlayerId, standing);
+            else from.set(row.playerId, standing);
+        }
+        return { towards, from };
     }
 
     /**
@@ -596,11 +655,7 @@ export class World {
         let pop =
             totalBuildingPop(levels) +
             unitPop(this.getUnits(villageId));
-        const traveling = this.db
-            .select({ unitsJson: movements.unitsJson })
-            .from(movements)
-            .where(eq(movements.originVillageId, villageId))
-            .all();
+        const traveling = this.q.travelingUnits.all({ villageId });
         for (const m of traveling)
             pop += unitPop(
                 parseJsonColumn(
@@ -609,11 +664,7 @@ export class World {
                     'movement.units',
                 ),
             );
-        const queued = this.db
-            .select()
-            .from(recruitQueue)
-            .where(eq(recruitQueue.villageId, villageId))
-            .all();
+        const queued = this.q.recruits.all({ villageId });
         for (const q of queued)
             pop += unitPop(singleEntry(q.unitType, q.count));
         return pop;

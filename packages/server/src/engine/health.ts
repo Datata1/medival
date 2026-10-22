@@ -4,6 +4,43 @@ import {
 } from 'node:perf_hooks';
 import type { World } from './world.js';
 
+/**
+ * Dauer einzelner Vorgänge, gesammelt zwischen zwei Health-Checks
+ * (plans/19-prototyp/19-5). Ein einfacher Puffer statt eines Histogramms:
+ * Für p50/p99 über ein 15-s-Fenster reicht das, und es braucht nichts.
+ */
+export class Timings {
+    private samples: number[] = [];
+
+    record(ms: number): void {
+        // Obergrenze, damit ein langes Fenster den Speicher nicht füllt.
+        if (this.samples.length < 50_000) this.samples.push(ms);
+    }
+
+    snapshot(): { count: number; p50Ms: number; p99Ms: number } {
+        const sorted = [...this.samples].sort((a, b) => a - b);
+        const at = (q: number) =>
+            sorted[
+                Math.min(
+                    sorted.length - 1,
+                    Math.floor(sorted.length * q),
+                )
+            ] ?? 0;
+        return {
+            count: sorted.length,
+            p50Ms: at(0.5),
+            p99Ms: at(0.99),
+        };
+    }
+
+    reset(): void {
+        this.samples = [];
+    }
+}
+
+/** Dauer je Bot-Tick (wahrnehmen, entscheiden, ausführen) über alle Welten. */
+export const botTickTimings = new Timings();
+
 const LOOP_DELAY_WARN_MS = 50;
 const BACKLOG_WARN_MS = 1_000;
 
@@ -40,6 +77,7 @@ export class EngineHealth {
                 p99Ms: this.histogram.percentile(99) / 1e6,
                 maxMs: this.histogram.max / 1e6,
             },
+            botTick: botTickTimings.snapshot(),
             worlds: worldStats,
         };
     }
@@ -63,5 +101,6 @@ export class EngineHealth {
             }
         }
         this.histogram.reset();
+        botTickTimings.reset();
     }
 }

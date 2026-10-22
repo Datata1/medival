@@ -19,7 +19,7 @@ zusammen. Die Reihenfolge unten ist keine Empfehlung, sondern weitgehend erzwung
 | 19-2 | [Zeit-Engine: Konsistenz & Millisekunden](19-2-zeit-engine-konsistenz.md) | server + shared | ✅ erledigt |
 | 19-3 | [Wanduhr & Welt-Lebenszyklus](19-3-wanduhr-und-lebenszyklus.md) | server + client | ✅ erledigt |
 | 19-4 | [Bots reparieren](19-4-bots-reparieren.md) | server | ✅ erledigt |
-| 19-5 | [Bot-Wahrnehmung skalierbar](19-5-bot-wahrnehmung-skalierbar.md) | server | 📋 offen |
+| 19-5 | [Bot-Wahrnehmung skalierbar](19-5-bot-wahrnehmung-skalierbar.md) | server | ✅ erledigt |
 | 19-6 | [Weltkarte 1000×1000, kreisförmige Besiedlung](19-6-weltkarte-kreisfoermige-besiedlung.md) | shared + server | 📋 offen |
 | 19-7 | [Karten-API nach Ausschnitt](19-7-karten-api-ausschnitt.md) | server + client | 📋 offen |
 | 19-8 | [Accounts & Session](19-8-accounts-und-session.md) | server + shared + client | 📋 offen |
