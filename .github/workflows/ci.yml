@@ -1,0 +1,35 @@
+# Prüft jeden PR und jeden Push auf main mit denselben vier Befehlen, die
+# plans/README.md nach jedem Plan verlangt: lint, typecheck, test, build.
+name: CI
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    check:
+        name: lint · typecheck · test · build
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        steps:
+            - uses: actions/checkout@v4
+
+            # Liest die pnpm-Version aus `packageManager` in package.json.
+            - uses: pnpm/action-setup@v4
+
+            # Node 22 ist die Mindestversion laut README.
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm lint
+            - run: pnpm typecheck
+            - run: pnpm test
+            - run: pnpm build
