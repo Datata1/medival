@@ -4,6 +4,7 @@ import {
     farmCapacity,
     type Resources,
     STARTING_BUILDINGS,
+    UNIT_ORDER,
 } from '@medival/shared';
 import { describe, expect, it } from 'vitest';
 import { maxThinkInterval, planBot } from '../src/ai/bot.js';
@@ -408,6 +409,7 @@ describe('planBot', () => {
         difficulty: 'normal' as const,
         state: { savingFor: {} },
         villages,
+        enabledUnits: [...UNIT_ORDER],
         partners: [],
         targets: [],
         distressCalls: [],

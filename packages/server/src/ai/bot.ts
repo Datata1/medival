@@ -159,6 +159,7 @@ export function planBot(snapshot: BotSnapshot): {
             rest,
             snapshot.personality,
             village.recruiting,
+            snapshot.enabledUnits,
         );
         if (!order) continue;
         intents.push({

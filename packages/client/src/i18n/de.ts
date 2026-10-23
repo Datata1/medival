@@ -11,6 +11,7 @@ const de = {
         clockOnDay: '{{date}} {{time}}',
     },
     lobby: {
+        archers: 'Bogenschützen',
         title: 'Medival',
         subtitle: 'Eine Die-Stämme-Welt im Browser',
         signedInAs: 'Angemeldet als {{name}}',
@@ -111,6 +112,8 @@ const de = {
         units: 'Einheiten',
         unitsHint:
             'Ein Angriff wertet Angriff gegen Verteidigung; berittene Angreifer treffen auf die Kavallerie-Verteidigung. Die langsamste Einheit bestimmt das Tempo des ganzen Heeres.',
+        unitsHintArchers:
+            'Bogenschützen treffen auf die Bogen-Verteidigung. Bei gemischten Angriffen zählt jede Verteidigung nach dem Anteil ihrer Klasse am Angriff.',
         buildings: 'Gebäude',
         buildingsHint:
             'Kosten und Bauzeit gelten für Stufe 1 und wachsen je Stufe um den Faktor des Gebäudes.',
@@ -119,6 +122,7 @@ const de = {
         colAttack: 'Angriff',
         colDefense: 'Vert.',
         colDefenseCav: 'Vert. Kav.',
+        colDefenseArcher: 'Vert. Bogen',
         colSpeed: 'Tempo',
         colCarry: 'Tragkraft',
         colPop: 'Plätze',
@@ -393,8 +397,10 @@ const de = {
         spear: 'Speerträger',
         sword: 'Schwertkämpfer',
         axe: 'Axtkämpfer',
+        archer: 'Bogenschütze',
         spy: 'Späher',
         light_cavalry: 'Leichte Kavallerie',
+        mounted_archer: 'Berittener Bogenschütze',
         heavy_cavalry: 'Schwere Kavallerie',
         ram: 'Ramme',
         catapult: 'Katapult',
@@ -426,6 +432,7 @@ const de = {
         not_enough_resources: 'Nicht genug Rohstoffe',
         barracks_missing: 'Kaserne fehlt',
         stable_missing: 'Stall fehlt',
+        unit_disabled: 'Diese Einheit gibt es in dieser Welt nicht',
         workshop_missing: 'Werkstatt fehlt',
         academy_missing: 'Adelshof fehlt',
         no_units_selected: 'Keine Einheiten ausgewählt',

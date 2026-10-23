@@ -46,10 +46,12 @@ import buildingTimber_camp from './sprites/buildings/timber_camp.png';
 import buildingWorkshop from './sprites/buildings/workshop.png';
 import buildingWall from './sprites/buildings/wall.png';
 import buildingWarehouse from './sprites/buildings/warehouse.png';
+import unitArcher from './sprites/units/archer.png';
 import unitAxe from './sprites/units/axe.png';
 import unitCatapult from './sprites/units/catapult.png';
 import unitHeavy_cavalry from './sprites/units/heavy_cavalry.png';
 import unitLight_cavalry from './sprites/units/light_cavalry.png';
+import unitMounted_archer from './sprites/units/mounted_archer.png';
 import unitNoble from './sprites/units/noble.png';
 import unitRam from './sprites/units/ram.png';
 import unitSpear from './sprites/units/spear.png';
@@ -121,6 +123,8 @@ export const SPRITES = {
     'unit.ram': unitRam,
     'unit.spear': unitSpear,
     'unit.spy': unitSpy,
+    'unit.archer': unitArcher,
+    'unit.mounted_archer': unitMounted_archer,
     'unit.catapult': unitCatapult,
     'unit.sword': unitSword,
     'map.village.barbarian': mapVillageBarbarian,

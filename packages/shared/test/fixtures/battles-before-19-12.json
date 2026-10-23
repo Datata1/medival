@@ -1,0 +1,5074 @@
+[
+    {
+        "input": {
+            "attacker": {
+                "sword": 945,
+                "axe": 1586,
+                "heavy_cavalry": 689,
+                "noble": 1247
+            },
+            "defender": { "spy": 919, "noble": 948 },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 607567285
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 386,
+                "axe": 648,
+                "heavy_cavalry": 281,
+                "noble": 509
+            },
+            "defenderLosses": { "spy": 919, "noble": 948 },
+            "attackerSurvivors": {
+                "sword": 559,
+                "axe": 938,
+                "heavy_cavalry": 408,
+                "noble": 738
+            },
+            "defenderSurvivors": { "spy": 0, "noble": 0 },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 12,
+            "loyaltyDamage": 20321,
+            "luck": -0.043947737803682684
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 871, "spy": 1466, "noble": 1412 },
+            "defender": { "noble": 1835 },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 226931526
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 871,
+                "spy": 1466,
+                "noble": 1412
+            },
+            "defenderLosses": { "noble": 251 },
+            "attackerSurvivors": { "axe": 0, "spy": 0, "noble": 0 },
+            "defenderSurvivors": { "noble": 1584 },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 12,
+            "loyaltyDamage": 0,
+            "luck": 0.011054399167187512
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 27,
+                "spy": 1791,
+                "light_cavalry": 795,
+                "ram": 787,
+                "catapult": 1770
+            },
+            "defender": {
+                "spy": 407,
+                "light_cavalry": 824,
+                "heavy_cavalry": 1213,
+                "catapult": 1339,
+                "noble": 1210
+            },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 269491299
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 27,
+                "spy": 1791,
+                "light_cavalry": 795,
+                "ram": 787,
+                "catapult": 1770
+            },
+            "defenderLosses": {
+                "spy": 190,
+                "light_cavalry": 384,
+                "heavy_cavalry": 565,
+                "catapult": 624,
+                "noble": 564
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "ram": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spy": 217,
+                "light_cavalry": 440,
+                "heavy_cavalry": 648,
+                "catapult": 715,
+                "noble": 646
+            },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": 0.1344165294896811
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spy": 920, "catapult": 146, "noble": 902 },
+            "defender": {
+                "spear": 101,
+                "sword": 1560,
+                "spy": 343,
+                "ram": 482
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 113888954
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spy": 920,
+                "catapult": 146,
+                "noble": 902
+            },
+            "defenderLosses": {
+                "spear": 28,
+                "sword": 427,
+                "spy": 94,
+                "ram": 132
+            },
+            "attackerSurvivors": {
+                "spy": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 73,
+                "sword": 1133,
+                "spy": 249,
+                "ram": 350
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": 0.04647056192625314
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 889, "spy": 566 },
+            "defender": { "sword": 1386, "axe": 473, "spy": 1741 },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 772112613
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "axe": 889, "spy": 566 },
+            "defenderLosses": { "sword": 214, "axe": 73, "spy": 269 },
+            "attackerSurvivors": { "axe": 0, "spy": 0 },
+            "defenderSurvivors": {
+                "sword": 1172,
+                "axe": 400,
+                "spy": 1472
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 0,
+            "luck": -0.024718973133713008
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 1705,
+                "ram": 975,
+                "catapult": 283,
+                "noble": 1499
+            },
+            "defender": {
+                "spear": 1431,
+                "sword": 772,
+                "spy": 1384,
+                "heavy_cavalry": 1289,
+                "ram": 102,
+                "catapult": 1268
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 759643876
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 1705,
+                "ram": 975,
+                "catapult": 283,
+                "noble": 1499
+            },
+            "defenderLosses": {
+                "spear": 163,
+                "sword": 88,
+                "spy": 158,
+                "heavy_cavalry": 147,
+                "ram": 12,
+                "catapult": 145
+            },
+            "attackerSurvivors": {
+                "axe": 0,
+                "ram": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1268,
+                "sword": 684,
+                "spy": 1226,
+                "heavy_cavalry": 1142,
+                "ram": 90,
+                "catapult": 1123
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 7,
+            "loyaltyDamage": 0,
+            "luck": -0.004204147774726152
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 264,
+                "spy": 637,
+                "heavy_cavalry": 1275,
+                "catapult": 860
+            },
+            "defender": { "spy": 432, "noble": 1914 },
+            "wallLevel": 1,
+            "loyalty": 100,
+            "seed": 554315054
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 71,
+                "spy": 171,
+                "heavy_cavalry": 342,
+                "catapult": 231
+            },
+            "defenderLosses": { "spy": 432, "noble": 1914 },
+            "attackerSurvivors": {
+                "sword": 193,
+                "spy": 466,
+                "heavy_cavalry": 933,
+                "catapult": 629
+            },
+            "defenderSurvivors": { "spy": 0, "noble": 0 },
+            "wallLevelBefore": 1,
+            "wallLevelAfter": 1,
+            "loyaltyDamage": 0,
+            "luck": 0.1333901608362794
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 29,
+                "axe": 727,
+                "light_cavalry": 925,
+                "catapult": 523
+            },
+            "defender": {
+                "axe": 902,
+                "spy": 488,
+                "light_cavalry": 1315
+            },
+            "wallLevel": 13,
+            "loyalty": 100,
+            "seed": 190124494
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 7,
+                "axe": 183,
+                "light_cavalry": 232,
+                "catapult": 131
+            },
+            "defenderLosses": {
+                "axe": 902,
+                "spy": 488,
+                "light_cavalry": 1315
+            },
+            "attackerSurvivors": {
+                "spear": 22,
+                "axe": 544,
+                "light_cavalry": 693,
+                "catapult": 392
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0
+            },
+            "wallLevelBefore": 13,
+            "wallLevelAfter": 13,
+            "loyaltyDamage": 0,
+            "luck": 0.11904975422658026
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 40, "ram": 861, "noble": 1274 },
+            "defender": { "spear": 1366, "spy": 1308, "ram": 625 },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 51367137
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "axe": 40, "ram": 861, "noble": 1274 },
+            "defenderLosses": {
+                "spear": 1223,
+                "spy": 1171,
+                "ram": 559
+            },
+            "attackerSurvivors": { "axe": 0, "ram": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "spear": 143,
+                "spy": 137,
+                "ram": 66
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 2,
+            "loyaltyDamage": 0,
+            "luck": -0.12295243756379931
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 799,
+                "axe": 797,
+                "ram": 898,
+                "catapult": 1855,
+                "noble": 1742
+            },
+            "defender": {
+                "spear": 1428,
+                "sword": 292,
+                "light_cavalry": 583,
+                "ram": 504,
+                "noble": 1050
+            },
+            "wallLevel": 7,
+            "loyalty": 100,
+            "seed": 726028629
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 399,
+                "axe": 398,
+                "ram": 449,
+                "catapult": 927,
+                "noble": 871
+            },
+            "defenderLosses": {
+                "spear": 1428,
+                "sword": 292,
+                "light_cavalry": 583,
+                "ram": 504,
+                "noble": 1050
+            },
+            "attackerSurvivors": {
+                "sword": 400,
+                "axe": 399,
+                "ram": 449,
+                "catapult": 928,
+                "noble": 871
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "light_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 7,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 24004,
+            "luck": 0.10287870483007282
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spy": 1081,
+                "light_cavalry": 942,
+                "catapult": 138
+            },
+            "defender": {
+                "spear": 767,
+                "heavy_cavalry": 909,
+                "noble": 1243
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 38582573
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spy": 1081,
+                "light_cavalry": 942,
+                "catapult": 138
+            },
+            "defenderLosses": {
+                "spear": 341,
+                "heavy_cavalry": 404,
+                "noble": 553
+            },
+            "attackerSurvivors": {
+                "spy": 0,
+                "light_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 426,
+                "heavy_cavalry": 505,
+                "noble": 690
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": -0.0930955947143957
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 873,
+                "sword": 1910,
+                "heavy_cavalry": 1272,
+                "ram": 337,
+                "noble": 878
+            },
+            "defender": {
+                "spear": 79,
+                "sword": 569,
+                "spy": 1977,
+                "catapult": 1246,
+                "noble": 1756
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 134983364
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 873,
+                "sword": 1910,
+                "heavy_cavalry": 1272,
+                "ram": 337,
+                "noble": 878
+            },
+            "defenderLosses": {
+                "spear": 67,
+                "sword": 479,
+                "spy": 1664,
+                "catapult": 1049,
+                "noble": 1478
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "heavy_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 12,
+                "sword": 90,
+                "spy": 313,
+                "catapult": 197,
+                "noble": 278
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 10,
+            "loyaltyDamage": 0,
+            "luck": 0.0531826900318265
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1109,
+                "light_cavalry": 975,
+                "noble": 1231
+            },
+            "defender": {
+                "axe": 1579,
+                "spy": 1326,
+                "light_cavalry": 560,
+                "ram": 1410
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 291184480
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 724,
+                "light_cavalry": 637,
+                "noble": 804
+            },
+            "defenderLosses": {
+                "axe": 1579,
+                "spy": 1326,
+                "light_cavalry": 560,
+                "ram": 1410
+            },
+            "attackerSurvivors": {
+                "sword": 385,
+                "light_cavalry": 338,
+                "noble": 427
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "ram": 0
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 11737,
+            "luck": 0.05353988644201308
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 1881,
+                "heavy_cavalry": 1561,
+                "catapult": 373,
+                "noble": 1446
+            },
+            "defender": {
+                "axe": 1891,
+                "spy": 845,
+                "light_cavalry": 1416,
+                "ram": 1478
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 2282847
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "axe": 626,
+                "heavy_cavalry": 519,
+                "catapult": 124,
+                "noble": 481
+            },
+            "defenderLosses": {
+                "axe": 1891,
+                "spy": 845,
+                "light_cavalry": 1416,
+                "ram": 1478
+            },
+            "attackerSurvivors": {
+                "axe": 1255,
+                "heavy_cavalry": 1042,
+                "catapult": 249,
+                "noble": 965
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "ram": 0
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 26589,
+            "luck": 0.0077556726755574346
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 630,
+                "spy": 467,
+                "ram": 527,
+                "noble": 1866
+            },
+            "defender": {
+                "spy": 1775,
+                "light_cavalry": 214,
+                "ram": 346,
+                "noble": 1268
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 853023298
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 630,
+                "spy": 467,
+                "ram": 527,
+                "noble": 1866
+            },
+            "defenderLosses": {
+                "spy": 276,
+                "light_cavalry": 33,
+                "ram": 54,
+                "noble": 197
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spy": 1499,
+                "light_cavalry": 181,
+                "ram": 292,
+                "noble": 1071
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 10,
+            "loyaltyDamage": 0,
+            "luck": -0.14301079201977698
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 463,
+                "light_cavalry": 72,
+                "ram": 666,
+                "catapult": 558
+            },
+            "defender": {
+                "spear": 1335,
+                "sword": 770,
+                "axe": 1957,
+                "spy": 1507,
+                "light_cavalry": 1547,
+                "heavy_cavalry": 157
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 560172464
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 463,
+                "light_cavalry": 72,
+                "ram": 666,
+                "catapult": 558
+            },
+            "defenderLosses": {
+                "spear": 219,
+                "sword": 126,
+                "axe": 321,
+                "spy": 247,
+                "light_cavalry": 254,
+                "heavy_cavalry": 26
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "light_cavalry": 0,
+                "ram": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1116,
+                "sword": 644,
+                "axe": 1636,
+                "spy": 1260,
+                "light_cavalry": 1293,
+                "heavy_cavalry": 131
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 7,
+            "loyaltyDamage": 0,
+            "luck": -0.09678914886899292
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 1258, "catapult": 1192 },
+            "defender": {
+                "spear": 1814,
+                "axe": 1189,
+                "spy": 1442,
+                "heavy_cavalry": 1579,
+                "ram": 537
+            },
+            "wallLevel": 2,
+            "loyalty": 100,
+            "seed": 285330979
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "axe": 1258, "catapult": 1192 },
+            "defenderLosses": {
+                "spear": 465,
+                "axe": 305,
+                "spy": 370,
+                "heavy_cavalry": 405,
+                "ram": 138
+            },
+            "attackerSurvivors": { "axe": 0, "catapult": 0 },
+            "defenderSurvivors": {
+                "spear": 1349,
+                "axe": 884,
+                "spy": 1072,
+                "heavy_cavalry": 1174,
+                "ram": 399
+            },
+            "wallLevelBefore": 2,
+            "wallLevelAfter": 2,
+            "loyaltyDamage": 0,
+            "luck": -0.0350627050967887
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 907,
+                "spy": 1947,
+                "heavy_cavalry": 86,
+                "noble": 815
+            },
+            "defender": {
+                "spear": 373,
+                "sword": 517,
+                "heavy_cavalry": 514,
+                "ram": 383
+            },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 481296960
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 907,
+                "spy": 1947,
+                "heavy_cavalry": 86,
+                "noble": 815
+            },
+            "defenderLosses": {
+                "spear": 85,
+                "sword": 118,
+                "heavy_cavalry": 118,
+                "ram": 88
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 288,
+                "sword": 399,
+                "heavy_cavalry": 396,
+                "ram": 295
+            },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": 0.01096813736949116
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1816,
+                "axe": 1032,
+                "spy": 1091,
+                "light_cavalry": 1141,
+                "noble": 485
+            },
+            "defender": {
+                "spear": 853,
+                "light_cavalry": 79,
+                "catapult": 1176,
+                "noble": 1481
+            },
+            "wallLevel": 0,
+            "loyalty": 100,
+            "seed": 238961369
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1816,
+                "axe": 1032,
+                "spy": 1091,
+                "light_cavalry": 1141,
+                "noble": 485
+            },
+            "defenderLosses": {
+                "spear": 746,
+                "light_cavalry": 69,
+                "catapult": 1029,
+                "noble": 1295
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 107,
+                "light_cavalry": 10,
+                "catapult": 147,
+                "noble": 186
+            },
+            "wallLevelBefore": 0,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.13680704471189528
+        }
+    },
+    {
+        "input": {
+            "attacker": { "light_cavalry": 651, "noble": 1466 },
+            "defender": {
+                "ram": 1552,
+                "catapult": 1443,
+                "noble": 1809
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 552431810
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "light_cavalry": 651, "noble": 1466 },
+            "defenderLosses": {
+                "ram": 271,
+                "catapult": 252,
+                "noble": 316
+            },
+            "attackerSurvivors": { "light_cavalry": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "ram": 1281,
+                "catapult": 1191,
+                "noble": 1493
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 0,
+            "luck": 0.05528305205516517
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spy": 1179,
+                "heavy_cavalry": 60,
+                "ram": 495,
+                "noble": 1564
+            },
+            "defender": {
+                "sword": 1951,
+                "spy": 963,
+                "heavy_cavalry": 1170
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 47440464
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spy": 1179,
+                "heavy_cavalry": 60,
+                "ram": 495,
+                "noble": 1564
+            },
+            "defenderLosses": {
+                "sword": 100,
+                "spy": 50,
+                "heavy_cavalry": 60
+            },
+            "attackerSurvivors": {
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "sword": 1851,
+                "spy": 913,
+                "heavy_cavalry": 1110
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 8,
+            "loyaltyDamage": 0,
+            "luck": 0.022601304645650088
+        }
+    },
+    {
+        "input": {
+            "attacker": { "heavy_cavalry": 1838 },
+            "defender": {
+                "spear": 1028,
+                "axe": 547,
+                "heavy_cavalry": 181,
+                "ram": 1956
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 170019690
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "heavy_cavalry": 1838 },
+            "defenderLosses": {
+                "spear": 1009,
+                "axe": 537,
+                "heavy_cavalry": 178,
+                "ram": 1919
+            },
+            "attackerSurvivors": { "heavy_cavalry": 0 },
+            "defenderSurvivors": {
+                "spear": 19,
+                "axe": 10,
+                "heavy_cavalry": 3,
+                "ram": 37
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 0,
+            "luck": -0.1036008819239214
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1479,
+                "sword": 442,
+                "light_cavalry": 1110,
+                "ram": 1049,
+                "catapult": 1676
+            },
+            "defender": {
+                "sword": 363,
+                "spy": 1642,
+                "light_cavalry": 772,
+                "ram": 430
+            },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 263931889
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 149,
+                "sword": 45,
+                "light_cavalry": 112,
+                "ram": 106,
+                "catapult": 169
+            },
+            "defenderLosses": {
+                "sword": 363,
+                "spy": 1642,
+                "light_cavalry": 772,
+                "ram": 430
+            },
+            "attackerSurvivors": {
+                "spear": 1330,
+                "sword": 397,
+                "light_cavalry": 998,
+                "ram": 943,
+                "catapult": 1507
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "ram": 0
+            },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.05061394299846143
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 283,
+                "heavy_cavalry": 1648,
+                "ram": 103,
+                "noble": 1210
+            },
+            "defender": {
+                "spear": 974,
+                "spy": 249,
+                "heavy_cavalry": 1592,
+                "catapult": 566,
+                "noble": 1413
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 540698966
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 283,
+                "heavy_cavalry": 1648,
+                "ram": 103,
+                "noble": 1210
+            },
+            "defenderLosses": {
+                "spear": 678,
+                "spy": 173,
+                "heavy_cavalry": 1108,
+                "catapult": 394,
+                "noble": 983
+            },
+            "attackerSurvivors": {
+                "axe": 0,
+                "heavy_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 296,
+                "spy": 76,
+                "heavy_cavalry": 484,
+                "catapult": 172,
+                "noble": 430
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 7,
+            "loyaltyDamage": 0,
+            "luck": 0.1242780189961195
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 543,
+                "spy": 962,
+                "heavy_cavalry": 1410
+            },
+            "defender": {
+                "sword": 1801,
+                "axe": 1926,
+                "ram": 930,
+                "catapult": 252
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 919780588
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 494,
+                "spy": 876,
+                "heavy_cavalry": 1284
+            },
+            "defenderLosses": {
+                "sword": 1801,
+                "axe": 1926,
+                "ram": 930,
+                "catapult": 252
+            },
+            "attackerSurvivors": {
+                "sword": 49,
+                "spy": 86,
+                "heavy_cavalry": 126
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "ram": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 19,
+            "loyaltyDamage": 0,
+            "luck": -0.08247734257020056
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "heavy_cavalry": 1693,
+                "ram": 1396,
+                "noble": 539
+            },
+            "defender": { "catapult": 388, "noble": 1183 },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 629771218
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "heavy_cavalry": 471,
+                "ram": 389,
+                "noble": 150
+            },
+            "defenderLosses": { "catapult": 388, "noble": 1183 },
+            "attackerSurvivors": {
+                "heavy_cavalry": 1222,
+                "ram": 1007,
+                "noble": 389
+            },
+            "defenderSurvivors": { "catapult": 0, "noble": 0 },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 10709,
+            "luck": 0.012691142689436673
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1826,
+                "sword": 1950,
+                "axe": 848,
+                "light_cavalry": 22,
+                "heavy_cavalry": 1174,
+                "noble": 1279
+            },
+            "defender": {
+                "sword": 597,
+                "light_cavalry": 580,
+                "noble": 1037
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 853149526
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 865,
+                "sword": 924,
+                "axe": 402,
+                "light_cavalry": 10,
+                "heavy_cavalry": 556,
+                "noble": 606
+            },
+            "defenderLosses": {
+                "sword": 597,
+                "light_cavalry": 580,
+                "noble": 1037
+            },
+            "attackerSurvivors": {
+                "spear": 961,
+                "sword": 1026,
+                "axe": 446,
+                "light_cavalry": 12,
+                "heavy_cavalry": 618,
+                "noble": 673
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "light_cavalry": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 19,
+            "loyaltyDamage": 18502,
+            "luck": 0.14535902123898267
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1600,
+                "spy": 289,
+                "heavy_cavalry": 210,
+                "ram": 1650
+            },
+            "defender": {
+                "spear": 561,
+                "axe": 889,
+                "spy": 436,
+                "catapult": 823,
+                "noble": 93
+            },
+            "wallLevel": 8,
+            "loyalty": 100,
+            "seed": 93148573
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1600,
+                "spy": 289,
+                "heavy_cavalry": 210,
+                "ram": 1650
+            },
+            "defenderLosses": {
+                "spear": 190,
+                "axe": 302,
+                "spy": 148,
+                "catapult": 279,
+                "noble": 32
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "ram": 0
+            },
+            "defenderSurvivors": {
+                "spear": 371,
+                "axe": 587,
+                "spy": 288,
+                "catapult": 544,
+                "noble": 61
+            },
+            "wallLevelBefore": 8,
+            "wallLevelAfter": 4,
+            "loyaltyDamage": 0,
+            "luck": 0.021859737276099623
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 42,
+                "sword": 1287,
+                "spy": 1118,
+                "ram": 1346,
+                "noble": 732
+            },
+            "defender": {
+                "spear": 1812,
+                "sword": 173,
+                "axe": 1065,
+                "light_cavalry": 1122,
+                "noble": 1966
+            },
+            "wallLevel": 6,
+            "loyalty": 100,
+            "seed": 550029144
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 42,
+                "sword": 1287,
+                "spy": 1118,
+                "ram": 1346,
+                "noble": 732
+            },
+            "defenderLosses": {
+                "spear": 129,
+                "sword": 12,
+                "axe": 76,
+                "light_cavalry": 80,
+                "noble": 140
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "spy": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1683,
+                "sword": 161,
+                "axe": 989,
+                "light_cavalry": 1042,
+                "noble": 1826
+            },
+            "wallLevelBefore": 6,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": -0.04604609676171094
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1755,
+                "light_cavalry": 1312,
+                "ram": 1306,
+                "noble": 650
+            },
+            "defender": {
+                "spear": 1889,
+                "axe": 323,
+                "spy": 1567,
+                "heavy_cavalry": 708
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 552040565
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1755,
+                "light_cavalry": 1312,
+                "ram": 1306,
+                "noble": 650
+            },
+            "defenderLosses": {
+                "spear": 1883,
+                "axe": 322,
+                "spy": 1562,
+                "heavy_cavalry": 706
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "light_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 6,
+                "axe": 1,
+                "spy": 5,
+                "heavy_cavalry": 2
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 8,
+            "loyaltyDamage": 0,
+            "luck": -0.09165163307916373
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 587,
+                "light_cavalry": 94,
+                "heavy_cavalry": 1444,
+                "ram": 457,
+                "catapult": 364,
+                "noble": 1815
+            },
+            "defender": { "sword": 239, "spy": 433 },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 268969549
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 2,
+                "light_cavalry": 0,
+                "heavy_cavalry": 5,
+                "ram": 2,
+                "catapult": 1,
+                "noble": 6
+            },
+            "defenderLosses": { "sword": 239, "spy": 433 },
+            "attackerSurvivors": {
+                "sword": 585,
+                "light_cavalry": 94,
+                "heavy_cavalry": 1439,
+                "ram": 455,
+                "catapult": 363,
+                "noble": 1809
+            },
+            "defenderSurvivors": { "sword": 0, "spy": 0 },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 49711,
+            "luck": 0.028005496272817253
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spy": 1573,
+                "light_cavalry": 525,
+                "heavy_cavalry": 293,
+                "ram": 1489,
+                "catapult": 130,
+                "noble": 1297
+            },
+            "defender": { "sword": 230, "light_cavalry": 1331 },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 989714295
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spy": 526,
+                "light_cavalry": 175,
+                "heavy_cavalry": 98,
+                "ram": 498,
+                "catapult": 43,
+                "noble": 433
+            },
+            "defenderLosses": { "sword": 230, "light_cavalry": 1331 },
+            "attackerSurvivors": {
+                "spy": 1047,
+                "light_cavalry": 350,
+                "heavy_cavalry": 195,
+                "ram": 991,
+                "catapult": 87,
+                "noble": 864
+            },
+            "defenderSurvivors": { "sword": 0, "light_cavalry": 0 },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 23922,
+            "luck": -0.006297471793368458
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 500,
+                "axe": 180,
+                "spy": 506,
+                "heavy_cavalry": 818
+            },
+            "defender": {},
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 794122744
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 0,
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0
+            },
+            "defenderLosses": {},
+            "attackerSurvivors": {
+                "spear": 500,
+                "axe": 180,
+                "spy": 506,
+                "heavy_cavalry": 818
+            },
+            "defenderSurvivors": {},
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": -0.12594678222667424
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 588, "ram": 911, "noble": 496 },
+            "defender": {
+                "sword": 1954,
+                "axe": 1181,
+                "light_cavalry": 383,
+                "ram": 295,
+                "noble": 80
+            },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 229350966
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "axe": 588, "ram": 911, "noble": 496 },
+            "defenderLosses": {
+                "sword": 239,
+                "axe": 145,
+                "light_cavalry": 47,
+                "ram": 36,
+                "noble": 10
+            },
+            "attackerSurvivors": { "axe": 0, "ram": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "sword": 1715,
+                "axe": 1036,
+                "light_cavalry": 336,
+                "ram": 259,
+                "noble": 70
+            },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 0,
+            "luck": 0.07662560173776001
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spy": 1336, "ram": 1434, "noble": 1 },
+            "defender": {
+                "spear": 1530,
+                "sword": 342,
+                "spy": 856,
+                "heavy_cavalry": 1319,
+                "ram": 592,
+                "noble": 1089
+            },
+            "wallLevel": 0,
+            "loyalty": 100,
+            "seed": 285536875
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "spy": 1336, "ram": 1434, "noble": 1 },
+            "defenderLosses": {
+                "spear": 1,
+                "sword": 0,
+                "spy": 1,
+                "heavy_cavalry": 1,
+                "ram": 0,
+                "noble": 1
+            },
+            "attackerSurvivors": { "spy": 0, "ram": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "spear": 1529,
+                "sword": 342,
+                "spy": 855,
+                "heavy_cavalry": 1318,
+                "ram": 592,
+                "noble": 1088
+            },
+            "wallLevelBefore": 0,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": 0.09307674982119352
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 808,
+                "axe": 1648,
+                "spy": 370,
+                "heavy_cavalry": 1858,
+                "noble": 639
+            },
+            "defender": { "spear": 692, "spy": 764, "ram": 35 },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 129900515
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 32,
+                "axe": 66,
+                "spy": 15,
+                "heavy_cavalry": 74,
+                "noble": 26
+            },
+            "defenderLosses": { "spear": 692, "spy": 764, "ram": 35 },
+            "attackerSurvivors": {
+                "sword": 776,
+                "axe": 1582,
+                "spy": 355,
+                "heavy_cavalry": 1784,
+                "noble": 613
+            },
+            "defenderSurvivors": { "spear": 0, "spy": 0, "ram": 0 },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 15,
+            "loyaltyDamage": 16994,
+            "luck": 0.09602160011418163
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1179,
+                "axe": 992,
+                "light_cavalry": 507,
+                "heavy_cavalry": 299,
+                "ram": 1377,
+                "catapult": 1429,
+                "noble": 496
+            },
+            "defender": { "spear": 549, "spy": 211, "catapult": 909 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 282947971
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 217,
+                "axe": 183,
+                "light_cavalry": 93,
+                "heavy_cavalry": 55,
+                "ram": 254,
+                "catapult": 263,
+                "noble": 91
+            },
+            "defenderLosses": {
+                "spear": 549,
+                "spy": 211,
+                "catapult": 909
+            },
+            "attackerSurvivors": {
+                "sword": 962,
+                "axe": 809,
+                "light_cavalry": 414,
+                "heavy_cavalry": 244,
+                "ram": 1123,
+                "catapult": 1166,
+                "noble": 405
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 11029,
+            "luck": 0.10537956326734274
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 232,
+                "light_cavalry": 1021,
+                "ram": 1741,
+                "catapult": 1728
+            },
+            "defender": {
+                "sword": 1862,
+                "axe": 344,
+                "spy": 56,
+                "light_cavalry": 1988,
+                "heavy_cavalry": 536
+            },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 986752318
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 195,
+                "light_cavalry": 856,
+                "ram": 1460,
+                "catapult": 1449
+            },
+            "defenderLosses": {
+                "sword": 1862,
+                "axe": 344,
+                "spy": 56,
+                "light_cavalry": 1988,
+                "heavy_cavalry": 536
+            },
+            "attackerSurvivors": {
+                "sword": 37,
+                "light_cavalry": 165,
+                "ram": 281,
+                "catapult": 279
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0
+            },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.0327115350170061
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 1270, "noble": 1323 },
+            "defender": { "spy": 1287, "heavy_cavalry": 219 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 525934277
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "sword": 1270, "noble": 1323 },
+            "defenderLosses": { "spy": 1226, "heavy_cavalry": 209 },
+            "attackerSurvivors": { "sword": 0, "noble": 0 },
+            "defenderSurvivors": { "spy": 61, "heavy_cavalry": 10 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 0,
+            "luck": 0.07415429418906569
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 3,
+                "light_cavalry": 296,
+                "catapult": 1675
+            },
+            "defender": {
+                "axe": 1006,
+                "spy": 1650,
+                "light_cavalry": 7,
+                "heavy_cavalry": 709,
+                "ram": 571,
+                "catapult": 568
+            },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 412454613
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 3,
+                "light_cavalry": 296,
+                "catapult": 1675
+            },
+            "defenderLosses": {
+                "axe": 718,
+                "spy": 1178,
+                "light_cavalry": 5,
+                "heavy_cavalry": 506,
+                "ram": 408,
+                "catapult": 406
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "light_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "axe": 288,
+                "spy": 472,
+                "light_cavalry": 2,
+                "heavy_cavalry": 203,
+                "ram": 163,
+                "catapult": 162
+            },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": -0.008730800938792527
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1456,
+                "spy": 1783,
+                "light_cavalry": 1233,
+                "noble": 808
+            },
+            "defender": { "spear": 1751, "sword": 1302, "spy": 1251 },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 736483761
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 841,
+                "spy": 1030,
+                "light_cavalry": 712,
+                "noble": 467
+            },
+            "defenderLosses": {
+                "spear": 1751,
+                "sword": 1302,
+                "spy": 1251
+            },
+            "attackerSurvivors": {
+                "sword": 615,
+                "spy": 753,
+                "light_cavalry": 521,
+                "noble": 341
+            },
+            "defenderSurvivors": { "spear": 0, "sword": 0, "spy": 0 },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 9351,
+            "luck": -0.006612552423030138
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 898,
+                "spy": 1798,
+                "ram": 931,
+                "catapult": 1182,
+                "noble": 1100
+            },
+            "defender": { "spear": 184, "spy": 304, "catapult": 1157 },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 717978422
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 738,
+                "spy": 1478,
+                "ram": 766,
+                "catapult": 972,
+                "noble": 904
+            },
+            "defenderLosses": {
+                "spear": 184,
+                "spy": 304,
+                "catapult": 1157
+            },
+            "attackerSurvivors": {
+                "spear": 160,
+                "spy": 320,
+                "ram": 165,
+                "catapult": 210,
+                "noble": 196
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 5398,
+            "luck": -0.07865887668449431
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1906,
+                "heavy_cavalry": 333,
+                "ram": 1012
+            },
+            "defender": {
+                "spear": 1111,
+                "sword": 61,
+                "axe": 1115,
+                "spy": 184,
+                "light_cavalry": 1879,
+                "ram": 568
+            },
+            "wallLevel": 6,
+            "loyalty": 100,
+            "seed": 36671994
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1906,
+                "heavy_cavalry": 333,
+                "ram": 1012
+            },
+            "defenderLosses": {
+                "spear": 549,
+                "sword": 30,
+                "axe": 551,
+                "spy": 91,
+                "light_cavalry": 929,
+                "ram": 281
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "heavy_cavalry": 0,
+                "ram": 0
+            },
+            "defenderSurvivors": {
+                "spear": 562,
+                "sword": 31,
+                "axe": 564,
+                "spy": 93,
+                "light_cavalry": 950,
+                "ram": 287
+            },
+            "wallLevelBefore": 6,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": -0.06326095014810562
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1402,
+                "axe": 1456,
+                "light_cavalry": 1682,
+                "heavy_cavalry": 1491,
+                "catapult": 1202,
+                "noble": 1760
+            },
+            "defender": { "noble": 83 },
+            "wallLevel": 1,
+            "loyalty": 100,
+            "seed": 618272341
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 1,
+                "axe": 1,
+                "light_cavalry": 1,
+                "heavy_cavalry": 1,
+                "catapult": 1,
+                "noble": 1
+            },
+            "defenderLosses": { "noble": 83 },
+            "attackerSurvivors": {
+                "sword": 1401,
+                "axe": 1455,
+                "light_cavalry": 1681,
+                "heavy_cavalry": 1490,
+                "catapult": 1201,
+                "noble": 1759
+            },
+            "defenderSurvivors": { "noble": 0 },
+            "wallLevelBefore": 1,
+            "wallLevelAfter": 1,
+            "loyaltyDamage": 48328,
+            "luck": 0.04664575383067131
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 949, "ram": 1085, "catapult": 1714 },
+            "defender": {
+                "spear": 1976,
+                "sword": 1231,
+                "axe": 422,
+                "spy": 175,
+                "heavy_cavalry": 1290
+            },
+            "wallLevel": 10,
+            "loyalty": 100,
+            "seed": 461559463
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 949,
+                "ram": 1085,
+                "catapult": 1714
+            },
+            "defenderLosses": {
+                "spear": 684,
+                "sword": 426,
+                "axe": 146,
+                "spy": 61,
+                "heavy_cavalry": 446
+            },
+            "attackerSurvivors": { "axe": 0, "ram": 0, "catapult": 0 },
+            "defenderSurvivors": {
+                "spear": 1292,
+                "sword": 805,
+                "axe": 276,
+                "spy": 114,
+                "heavy_cavalry": 844
+            },
+            "wallLevelBefore": 10,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": 0.03046320027206093
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1490,
+                "sword": 1874,
+                "axe": 1330,
+                "spy": 1322,
+                "light_cavalry": 626,
+                "heavy_cavalry": 1649
+            },
+            "defender": {
+                "spear": 1625,
+                "spy": 338,
+                "light_cavalry": 70,
+                "catapult": 1763
+            },
+            "wallLevel": 6,
+            "loyalty": 100,
+            "seed": 179259
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 565,
+                "sword": 711,
+                "axe": 504,
+                "spy": 501,
+                "light_cavalry": 237,
+                "heavy_cavalry": 625
+            },
+            "defenderLosses": {
+                "spear": 1625,
+                "spy": 338,
+                "light_cavalry": 70,
+                "catapult": 1763
+            },
+            "attackerSurvivors": {
+                "spear": 925,
+                "sword": 1163,
+                "axe": 826,
+                "spy": 821,
+                "light_cavalry": 389,
+                "heavy_cavalry": 1024
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 6,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 0,
+            "luck": -0.023151962785050273
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 1251,
+                "spy": 587,
+                "catapult": 923,
+                "noble": 1
+            },
+            "defender": {
+                "spear": 1683,
+                "spy": 56,
+                "heavy_cavalry": 1023,
+                "ram": 576,
+                "noble": 241
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 751878909
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 1251,
+                "spy": 587,
+                "catapult": 923,
+                "noble": 1
+            },
+            "defenderLosses": {
+                "spear": 467,
+                "spy": 16,
+                "heavy_cavalry": 284,
+                "ram": 160,
+                "noble": 67
+            },
+            "attackerSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1216,
+                "spy": 40,
+                "heavy_cavalry": 739,
+                "ram": 416,
+                "noble": 174
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": -0.0872816145652905
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 937,
+                "heavy_cavalry": 386,
+                "catapult": 1343
+            },
+            "defender": {
+                "spear": 4,
+                "heavy_cavalry": 1581,
+                "ram": 1788,
+                "catapult": 377
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 552722074
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 937,
+                "heavy_cavalry": 386,
+                "catapult": 1343
+            },
+            "defenderLosses": {
+                "spear": 1,
+                "heavy_cavalry": 297,
+                "ram": 336,
+                "catapult": 71
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 3,
+                "heavy_cavalry": 1284,
+                "ram": 1452,
+                "catapult": 306
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 19,
+            "loyaltyDamage": 0,
+            "luck": 0.0343630030285567
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1881,
+                "heavy_cavalry": 1048,
+                "ram": 1709,
+                "catapult": 1458,
+                "noble": 1360
+            },
+            "defender": {
+                "axe": 817,
+                "spy": 884,
+                "ram": 670,
+                "noble": 416
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 14955402
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 169,
+                "heavy_cavalry": 94,
+                "ram": 154,
+                "catapult": 131,
+                "noble": 122
+            },
+            "defenderLosses": {
+                "axe": 817,
+                "spy": 884,
+                "ram": 670,
+                "noble": 416
+            },
+            "attackerSurvivors": {
+                "sword": 1712,
+                "heavy_cavalry": 954,
+                "ram": 1555,
+                "catapult": 1327,
+                "noble": 1238
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 33730,
+            "luck": 0.112564482470043
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 425,
+                "sword": 1645,
+                "axe": 60,
+                "ram": 316,
+                "noble": 172
+            },
+            "defender": {
+                "sword": 772,
+                "ram": 1615,
+                "catapult": 1415,
+                "noble": 518
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 615809444
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 425,
+                "sword": 1645,
+                "axe": 60,
+                "ram": 316,
+                "noble": 172
+            },
+            "defenderLosses": {
+                "sword": 55,
+                "ram": 115,
+                "catapult": 101,
+                "noble": 37
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "axe": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "sword": 717,
+                "ram": 1500,
+                "catapult": 1314,
+                "noble": 481
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 0,
+            "luck": 0.10370501638390124
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 546, "axe": 658 },
+            "defender": {
+                "spear": 1097,
+                "heavy_cavalry": 1073,
+                "ram": 101
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 400325379
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "sword": 546, "axe": 658 },
+            "defenderLosses": {
+                "spear": 30,
+                "heavy_cavalry": 29,
+                "ram": 3
+            },
+            "attackerSurvivors": { "sword": 0, "axe": 0 },
+            "defenderSurvivors": {
+                "spear": 1067,
+                "heavy_cavalry": 1044,
+                "ram": 98
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 0,
+            "luck": -0.10033765439875424
+        }
+    },
+    {
+        "input": {
+            "attacker": { "light_cavalry": 791, "noble": 1165 },
+            "defender": {
+                "spear": 1589,
+                "sword": 12,
+                "spy": 610,
+                "ram": 747,
+                "noble": 1948
+            },
+            "wallLevel": 13,
+            "loyalty": 100,
+            "seed": 380583191
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "light_cavalry": 791, "noble": 1165 },
+            "defenderLosses": {
+                "spear": 388,
+                "sword": 3,
+                "spy": 149,
+                "ram": 183,
+                "noble": 476
+            },
+            "attackerSurvivors": { "light_cavalry": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "spear": 1201,
+                "sword": 9,
+                "spy": 461,
+                "ram": 564,
+                "noble": 1472
+            },
+            "wallLevelBefore": 13,
+            "wallLevelAfter": 13,
+            "loyaltyDamage": 0,
+            "luck": 0.004248195164836943
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1725,
+                "sword": 373,
+                "axe": 219,
+                "spy": 776,
+                "ram": 1372,
+                "catapult": 431,
+                "noble": 978
+            },
+            "defender": { "light_cavalry": 1645, "ram": 923 },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 25212221
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 1341,
+                "sword": 290,
+                "axe": 170,
+                "spy": 603,
+                "ram": 1067,
+                "catapult": 335,
+                "noble": 761
+            },
+            "defenderLosses": { "light_cavalry": 1645, "ram": 923 },
+            "attackerSurvivors": {
+                "spear": 384,
+                "sword": 83,
+                "axe": 49,
+                "spy": 173,
+                "ram": 305,
+                "catapult": 96,
+                "noble": 217
+            },
+            "defenderSurvivors": { "light_cavalry": 0, "ram": 0 },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 5984,
+            "luck": 0.09153701453469694
+        }
+    },
+    {
+        "input": {
+            "attacker": { "heavy_cavalry": 195, "catapult": 823 },
+            "defender": {},
+            "wallLevel": 17,
+            "loyalty": 100,
+            "seed": 410566014
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "heavy_cavalry": 0, "catapult": 0 },
+            "defenderLosses": {},
+            "attackerSurvivors": {
+                "heavy_cavalry": 195,
+                "catapult": 823
+            },
+            "defenderSurvivors": {},
+            "wallLevelBefore": 17,
+            "wallLevelAfter": 17,
+            "loyaltyDamage": 0,
+            "luck": 0.0077499547507613896
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 473, "sword": 354, "axe": 1592 },
+            "defender": { "ram": 1508 },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 40807158
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 327,
+                "sword": 245,
+                "axe": 1102
+            },
+            "defenderLosses": { "ram": 1508 },
+            "attackerSurvivors": {
+                "spear": 146,
+                "sword": 109,
+                "axe": 490
+            },
+            "defenderSurvivors": { "ram": 0 },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 15,
+            "loyaltyDamage": 0,
+            "luck": -0.11929444607812911
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1790,
+                "catapult": 1445,
+                "noble": 1761
+            },
+            "defender": {
+                "spear": 1575,
+                "light_cavalry": 1001,
+                "ram": 112,
+                "catapult": 1913
+            },
+            "wallLevel": 13,
+            "loyalty": 100,
+            "seed": 977735747
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1790,
+                "catapult": 1445,
+                "noble": 1761
+            },
+            "defenderLosses": {
+                "spear": 552,
+                "light_cavalry": 351,
+                "ram": 39,
+                "catapult": 671
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1023,
+                "light_cavalry": 650,
+                "ram": 73,
+                "catapult": 1242
+            },
+            "wallLevelBefore": 13,
+            "wallLevelAfter": 13,
+            "loyaltyDamage": 0,
+            "luck": -0.05691585063468665
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 1646, "heavy_cavalry": 1864 },
+            "defender": {
+                "spear": 1912,
+                "sword": 1109,
+                "light_cavalry": 301,
+                "ram": 945
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 445544370
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "axe": 653, "heavy_cavalry": 739 },
+            "defenderLosses": {
+                "spear": 1912,
+                "sword": 1109,
+                "light_cavalry": 301,
+                "ram": 945
+            },
+            "attackerSurvivors": { "axe": 993, "heavy_cavalry": 1125 },
+            "defenderSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "light_cavalry": 0,
+                "ram": 0
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 0,
+            "luck": -0.0592231195885688
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1487,
+                "axe": 220,
+                "spy": 159,
+                "heavy_cavalry": 1265
+            },
+            "defender": { "heavy_cavalry": 694, "noble": 1842 },
+            "wallLevel": 13,
+            "loyalty": 100,
+            "seed": 59306946
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1487,
+                "axe": 220,
+                "spy": 159,
+                "heavy_cavalry": 1265
+            },
+            "defenderLosses": { "heavy_cavalry": 519, "noble": 1378 },
+            "attackerSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0
+            },
+            "defenderSurvivors": { "heavy_cavalry": 175, "noble": 464 },
+            "wallLevelBefore": 13,
+            "wallLevelAfter": 13,
+            "loyaltyDamage": 0,
+            "luck": 0.05000652659218758
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1529,
+                "heavy_cavalry": 1335,
+                "noble": 1543
+            },
+            "defender": {
+                "axe": 1766,
+                "spy": 818,
+                "heavy_cavalry": 532,
+                "noble": 359
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 452781291
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 594,
+                "heavy_cavalry": 518,
+                "noble": 599
+            },
+            "defenderLosses": {
+                "axe": 1766,
+                "spy": 818,
+                "heavy_cavalry": 532,
+                "noble": 359
+            },
+            "attackerSurvivors": {
+                "sword": 935,
+                "heavy_cavalry": 817,
+                "noble": 944
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 26063,
+            "luck": 0.09426690547261386
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 1075, "noble": 1655 },
+            "defender": { "axe": 910, "ram": 415 },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 894439302
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "sword": 326, "noble": 502 },
+            "defenderLosses": { "axe": 910, "ram": 415 },
+            "attackerSurvivors": { "sword": 749, "noble": 1153 },
+            "defenderSurvivors": { "axe": 0, "ram": 0 },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 19,
+            "loyaltyDamage": 31779,
+            "luck": -0.001166032673791051
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1135,
+                "axe": 938,
+                "spy": 362,
+                "heavy_cavalry": 1481,
+                "noble": 446
+            },
+            "defender": { "heavy_cavalry": 1565, "catapult": 29 },
+            "wallLevel": 2,
+            "loyalty": 100,
+            "seed": 374214755
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 574,
+                "axe": 475,
+                "spy": 183,
+                "heavy_cavalry": 750,
+                "noble": 226
+            },
+            "defenderLosses": { "heavy_cavalry": 1565, "catapult": 29 },
+            "attackerSurvivors": {
+                "spear": 561,
+                "axe": 463,
+                "spy": 179,
+                "heavy_cavalry": 731,
+                "noble": 220
+            },
+            "defenderSurvivors": { "heavy_cavalry": 0, "catapult": 0 },
+            "wallLevelBefore": 2,
+            "wallLevelAfter": 2,
+            "loyaltyDamage": 6087,
+            "luck": 0.02387519390322268
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "light_cavalry": 904,
+                "heavy_cavalry": 210,
+                "ram": 640
+            },
+            "defender": { "spear": 467, "heavy_cavalry": 1856 },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 666374824
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "light_cavalry": 904,
+                "heavy_cavalry": 210,
+                "ram": 640
+            },
+            "defenderLosses": { "spear": 204, "heavy_cavalry": 810 },
+            "attackerSurvivors": {
+                "light_cavalry": 0,
+                "heavy_cavalry": 0,
+                "ram": 0
+            },
+            "defenderSurvivors": {
+                "spear": 263,
+                "heavy_cavalry": 1046
+            },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 0,
+            "luck": -0.14709408406633884
+        }
+    },
+    {
+        "input": {
+            "attacker": { "catapult": 1833, "noble": 862 },
+            "defender": { "axe": 1607, "spy": 830, "catapult": 343 },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 781154811
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "catapult": 471, "noble": 221 },
+            "defenderLosses": {
+                "axe": 1607,
+                "spy": 830,
+                "catapult": 343
+            },
+            "attackerSurvivors": { "catapult": 1362, "noble": 641 },
+            "defenderSurvivors": { "axe": 0, "spy": 0, "catapult": 0 },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 12,
+            "loyaltyDamage": 17525,
+            "luck": -0.010485804383642971
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 1393,
+                "heavy_cavalry": 1354,
+                "ram": 267,
+                "catapult": 721
+            },
+            "defender": {
+                "sword": 106,
+                "axe": 68,
+                "light_cavalry": 1995,
+                "ram": 368,
+                "noble": 282
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 315222620
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "axe": 524,
+                "heavy_cavalry": 510,
+                "ram": 100,
+                "catapult": 271
+            },
+            "defenderLosses": {
+                "sword": 106,
+                "axe": 68,
+                "light_cavalry": 1995,
+                "ram": 368,
+                "noble": 282
+            },
+            "attackerSurvivors": {
+                "axe": 869,
+                "heavy_cavalry": 844,
+                "ram": 167,
+                "catapult": 450
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "light_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.14506445496808737
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 484, "ram": 932 },
+            "defender": {
+                "spear": 127,
+                "axe": 1641,
+                "ram": 215,
+                "catapult": 1379
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 520244199
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "spear": 484, "ram": 932 },
+            "defenderLosses": {
+                "spear": 0,
+                "axe": 6,
+                "ram": 1,
+                "catapult": 5
+            },
+            "attackerSurvivors": { "spear": 0, "ram": 0 },
+            "defenderSurvivors": {
+                "spear": 127,
+                "axe": 1635,
+                "ram": 214,
+                "catapult": 1374
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 10,
+            "loyaltyDamage": 0,
+            "luck": -0.12506538319867103
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1278,
+                "spy": 534,
+                "light_cavalry": 535,
+                "catapult": 947
+            },
+            "defender": {
+                "spear": 708,
+                "sword": 236,
+                "axe": 1394,
+                "ram": 1335,
+                "catapult": 1123
+            },
+            "wallLevel": 19,
+            "loyalty": 100,
+            "seed": 450984488
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1278,
+                "spy": 534,
+                "light_cavalry": 535,
+                "catapult": 947
+            },
+            "defenderLosses": {
+                "spear": 320,
+                "sword": 107,
+                "axe": 629,
+                "ram": 603,
+                "catapult": 507
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 388,
+                "sword": 129,
+                "axe": 765,
+                "ram": 732,
+                "catapult": 616
+            },
+            "wallLevelBefore": 19,
+            "wallLevelAfter": 19,
+            "loyaltyDamage": 0,
+            "luck": 0.006521504977717995
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1726,
+                "spy": 478,
+                "heavy_cavalry": 1244,
+                "ram": 1894,
+                "noble": 1961
+            },
+            "defender": { "spear": 808, "axe": 731, "ram": 454 },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 453691086
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 255,
+                "spy": 71,
+                "heavy_cavalry": 184,
+                "ram": 280,
+                "noble": 290
+            },
+            "defenderLosses": { "spear": 808, "axe": 731, "ram": 454 },
+            "attackerSurvivors": {
+                "sword": 1471,
+                "spy": 407,
+                "heavy_cavalry": 1060,
+                "ram": 1614,
+                "noble": 1671
+            },
+            "defenderSurvivors": { "spear": 0, "axe": 0, "ram": 0 },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 45772,
+            "luck": -0.10443587482441216
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "light_cavalry": 949,
+                "heavy_cavalry": 500,
+                "noble": 382
+            },
+            "defender": { "spear": 1504, "sword": 835, "spy": 396 },
+            "wallLevel": 20,
+            "loyalty": 100,
+            "seed": 195738077
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "light_cavalry": 518,
+                "heavy_cavalry": 273,
+                "noble": 208
+            },
+            "defenderLosses": {
+                "spear": 1504,
+                "sword": 835,
+                "spy": 396
+            },
+            "attackerSurvivors": {
+                "light_cavalry": 431,
+                "heavy_cavalry": 227,
+                "noble": 174
+            },
+            "defenderSurvivors": { "spear": 0, "sword": 0, "spy": 0 },
+            "wallLevelBefore": 20,
+            "wallLevelAfter": 20,
+            "loyaltyDamage": 4884,
+            "luck": 0.14306568978354334
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spy": 520, "light_cavalry": 709 },
+            "defender": {
+                "light_cavalry": 1576,
+                "heavy_cavalry": 511,
+                "catapult": 46
+            },
+            "wallLevel": 17,
+            "loyalty": 100,
+            "seed": 90738009
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "spy": 520, "light_cavalry": 709 },
+            "defenderLosses": {
+                "light_cavalry": 577,
+                "heavy_cavalry": 187,
+                "catapult": 17
+            },
+            "attackerSurvivors": { "spy": 0, "light_cavalry": 0 },
+            "defenderSurvivors": {
+                "light_cavalry": 999,
+                "heavy_cavalry": 324,
+                "catapult": 29
+            },
+            "wallLevelBefore": 17,
+            "wallLevelAfter": 17,
+            "loyaltyDamage": 0,
+            "luck": 0.09456937867216765
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 1481 },
+            "defender": {
+                "spy": 1711,
+                "heavy_cavalry": 53,
+                "catapult": 1331
+            },
+            "wallLevel": 10,
+            "loyalty": 100,
+            "seed": 522002436
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "axe": 1481 },
+            "defenderLosses": {
+                "spy": 272,
+                "heavy_cavalry": 8,
+                "catapult": 212
+            },
+            "attackerSurvivors": { "axe": 0 },
+            "defenderSurvivors": {
+                "spy": 1439,
+                "heavy_cavalry": 45,
+                "catapult": 1119
+            },
+            "wallLevelBefore": 10,
+            "wallLevelAfter": 10,
+            "loyaltyDamage": 0,
+            "luck": 0.09518584900069982
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 978,
+                "sword": 1466,
+                "heavy_cavalry": 1441,
+                "ram": 445
+            },
+            "defender": {
+                "spear": 1949,
+                "spy": 1801,
+                "light_cavalry": 242,
+                "ram": 1417,
+                "catapult": 1665
+            },
+            "wallLevel": 7,
+            "loyalty": 100,
+            "seed": 397391898
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 978,
+                "sword": 1466,
+                "heavy_cavalry": 1441,
+                "ram": 445
+            },
+            "defenderLosses": {
+                "spear": 1476,
+                "spy": 1364,
+                "light_cavalry": 183,
+                "ram": 1073,
+                "catapult": 1261
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "heavy_cavalry": 0,
+                "ram": 0
+            },
+            "defenderSurvivors": {
+                "spear": 473,
+                "spy": 437,
+                "light_cavalry": 59,
+                "ram": 344,
+                "catapult": 404
+            },
+            "wallLevelBefore": 7,
+            "wallLevelAfter": 4,
+            "loyaltyDamage": 0,
+            "luck": -0.05358771930914372
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spy": 624,
+                "heavy_cavalry": 1400,
+                "catapult": 1581
+            },
+            "defender": {
+                "spear": 1626,
+                "sword": 1029,
+                "axe": 758,
+                "heavy_cavalry": 27,
+                "catapult": 180
+            },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 486629965
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spy": 191,
+                "heavy_cavalry": 428,
+                "catapult": 484
+            },
+            "defenderLosses": {
+                "spear": 1626,
+                "sword": 1029,
+                "axe": 758,
+                "heavy_cavalry": 27,
+                "catapult": 180
+            },
+            "attackerSurvivors": {
+                "spy": 433,
+                "heavy_cavalry": 972,
+                "catapult": 1097
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "axe": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 12,
+            "loyaltyDamage": 0,
+            "luck": 0.006953422212973237
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 534,
+                "axe": 1155,
+                "spy": 212,
+                "heavy_cavalry": 672,
+                "ram": 882,
+                "noble": 323
+            },
+            "defender": { "spear": 1634, "ram": 699 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 785826818
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 289,
+                "axe": 625,
+                "spy": 115,
+                "heavy_cavalry": 363,
+                "ram": 477,
+                "noble": 175
+            },
+            "defenderLosses": { "spear": 1634, "ram": 699 },
+            "attackerSurvivors": {
+                "sword": 245,
+                "axe": 530,
+                "spy": 97,
+                "heavy_cavalry": 309,
+                "ram": 405,
+                "noble": 148
+            },
+            "defenderSurvivors": { "spear": 0, "ram": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 4115,
+            "luck": -0.05647304453887045
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1942,
+                "sword": 1131,
+                "light_cavalry": 166,
+                "noble": 1882
+            },
+            "defender": {
+                "spy": 1005,
+                "light_cavalry": 361,
+                "heavy_cavalry": 1910,
+                "catapult": 873
+            },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 471490150
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1942,
+                "sword": 1131,
+                "light_cavalry": 166,
+                "noble": 1882
+            },
+            "defenderLosses": {
+                "spy": 132,
+                "light_cavalry": 47,
+                "heavy_cavalry": 251,
+                "catapult": 115
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "light_cavalry": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spy": 873,
+                "light_cavalry": 314,
+                "heavy_cavalry": 1659,
+                "catapult": 758
+            },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": 0.1209801859455183
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 537,
+                "light_cavalry": 1632,
+                "catapult": 1358,
+                "noble": 1016
+            },
+            "defender": {
+                "sword": 1090,
+                "axe": 607,
+                "light_cavalry": 1387,
+                "heavy_cavalry": 844
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 463685330
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 201,
+                "light_cavalry": 611,
+                "catapult": 509,
+                "noble": 381
+            },
+            "defenderLosses": {
+                "sword": 1090,
+                "axe": 607,
+                "light_cavalry": 1387,
+                "heavy_cavalry": 844
+            },
+            "attackerSurvivors": {
+                "sword": 336,
+                "light_cavalry": 1021,
+                "catapult": 849,
+                "noble": 635
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 17411,
+            "luck": 0.13773850912693889
+        }
+    },
+    {
+        "input": {
+            "attacker": { "light_cavalry": 1036, "noble": 32 },
+            "defender": {
+                "sword": 239,
+                "axe": 1704,
+                "light_cavalry": 1089,
+                "heavy_cavalry": 1731,
+                "ram": 342,
+                "catapult": 110
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 577437462
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "light_cavalry": 1036, "noble": 32 },
+            "defenderLosses": {
+                "sword": 64,
+                "axe": 453,
+                "light_cavalry": 289,
+                "heavy_cavalry": 460,
+                "ram": 91,
+                "catapult": 29
+            },
+            "attackerSurvivors": { "light_cavalry": 0, "noble": 0 },
+            "defenderSurvivors": {
+                "sword": 175,
+                "axe": 1251,
+                "light_cavalry": 800,
+                "heavy_cavalry": 1271,
+                "ram": 251,
+                "catapult": 81
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 0,
+            "luck": 0.03186879088170826
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 521,
+                "spy": 1126,
+                "light_cavalry": 732,
+                "heavy_cavalry": 126,
+                "catapult": 1481,
+                "noble": 1800
+            },
+            "defender": { "spy": 158 },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 614683425
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderLosses": { "spy": 158 },
+            "attackerSurvivors": {
+                "sword": 521,
+                "spy": 1126,
+                "light_cavalry": 732,
+                "heavy_cavalry": 126,
+                "catapult": 1481,
+                "noble": 1800
+            },
+            "defenderSurvivors": { "spy": 0 },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 16,
+            "loyaltyDamage": 49815,
+            "luck": -0.026326512917876244
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 1481, "axe": 1893, "ram": 1425 },
+            "defender": {
+                "spear": 181,
+                "axe": 718,
+                "spy": 1767,
+                "heavy_cavalry": 1497,
+                "ram": 108
+            },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 102489792
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1481,
+                "axe": 1893,
+                "ram": 1425
+            },
+            "defenderLosses": {
+                "spear": 24,
+                "axe": 96,
+                "spy": 237,
+                "heavy_cavalry": 200,
+                "ram": 14
+            },
+            "attackerSurvivors": { "sword": 0, "axe": 0, "ram": 0 },
+            "defenderSurvivors": {
+                "spear": 157,
+                "axe": 622,
+                "spy": 1530,
+                "heavy_cavalry": 1297,
+                "ram": 94
+            },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 0,
+            "luck": -0.07232648273929954
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 225,
+                "axe": 1472,
+                "light_cavalry": 462,
+                "catapult": 908
+            },
+            "defender": {
+                "axe": 1940,
+                "light_cavalry": 1017,
+                "catapult": 1962
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 311791672
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 225,
+                "axe": 1472,
+                "light_cavalry": 462,
+                "catapult": 908
+            },
+            "defenderLosses": {
+                "axe": 916,
+                "light_cavalry": 480,
+                "catapult": 926
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "light_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "axe": 1024,
+                "light_cavalry": 537,
+                "catapult": 1036
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 16,
+            "loyaltyDamage": 0,
+            "luck": 0.11029390634503215
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 195,
+                "spy": 408,
+                "light_cavalry": 93,
+                "heavy_cavalry": 46,
+                "catapult": 1997
+            },
+            "defender": {
+                "spy": 897,
+                "light_cavalry": 1200,
+                "heavy_cavalry": 1979
+            },
+            "wallLevel": 2,
+            "loyalty": 100,
+            "seed": 720798587
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 195,
+                "spy": 408,
+                "light_cavalry": 93,
+                "heavy_cavalry": 46,
+                "catapult": 1997
+            },
+            "defenderLosses": {
+                "spy": 371,
+                "light_cavalry": 496,
+                "heavy_cavalry": 818
+            },
+            "attackerSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spy": 526,
+                "light_cavalry": 704,
+                "heavy_cavalry": 1161
+            },
+            "wallLevelBefore": 2,
+            "wallLevelAfter": 2,
+            "loyaltyDamage": 0,
+            "luck": 0.11723744573537259
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 854, "ram": 393, "noble": 264 },
+            "defender": { "catapult": 636 },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 760670521
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 854,
+                "ram": 393,
+                "noble": 264
+            },
+            "defenderLosses": { "catapult": 155 },
+            "attackerSurvivors": { "sword": 0, "ram": 0, "noble": 0 },
+            "defenderSurvivors": { "catapult": 481 },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": 0.03587433106731623
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "heavy_cavalry": 643,
+                "ram": 1008,
+                "catapult": 1898
+            },
+            "defender": {
+                "spear": 985,
+                "sword": 674,
+                "heavy_cavalry": 397
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 332475054
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "heavy_cavalry": 338,
+                "ram": 530,
+                "catapult": 998
+            },
+            "defenderLosses": {
+                "spear": 985,
+                "sword": 674,
+                "heavy_cavalry": 397
+            },
+            "attackerSurvivors": {
+                "heavy_cavalry": 305,
+                "ram": 478,
+                "catapult": 900
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "heavy_cavalry": 0
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.14936324791051447
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 1284, "axe": 676, "catapult": 1668 },
+            "defender": {
+                "sword": 748,
+                "axe": 344,
+                "spy": 284,
+                "catapult": 1873
+            },
+            "wallLevel": 0,
+            "loyalty": 100,
+            "seed": 199772794
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 1273,
+                "axe": 670,
+                "catapult": 1654
+            },
+            "defenderLosses": {
+                "sword": 748,
+                "axe": 344,
+                "spy": 284,
+                "catapult": 1873
+            },
+            "attackerSurvivors": {
+                "sword": 11,
+                "axe": 6,
+                "catapult": 14
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "spy": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 0,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": 0.018018557829782365
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1345,
+                "heavy_cavalry": 169,
+                "catapult": 1074
+            },
+            "defender": {
+                "spear": 1504,
+                "sword": 1643,
+                "heavy_cavalry": 1331,
+                "ram": 608,
+                "catapult": 834
+            },
+            "wallLevel": 11,
+            "loyalty": 100,
+            "seed": 954123194
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1345,
+                "heavy_cavalry": 169,
+                "catapult": 1074
+            },
+            "defenderLosses": {
+                "spear": 190,
+                "sword": 208,
+                "heavy_cavalry": 169,
+                "ram": 77,
+                "catapult": 106
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1314,
+                "sword": 1435,
+                "heavy_cavalry": 1162,
+                "ram": 531,
+                "catapult": 728
+            },
+            "wallLevelBefore": 11,
+            "wallLevelAfter": 11,
+            "loyaltyDamage": 0,
+            "luck": 0.026474519027397034
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 213,
+                "axe": 1270,
+                "heavy_cavalry": 403
+            },
+            "defender": {
+                "spear": 1679,
+                "spy": 444,
+                "ram": 1334,
+                "catapult": 1248,
+                "noble": 1578
+            },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 840399267
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 213,
+                "axe": 1270,
+                "heavy_cavalry": 403
+            },
+            "defenderLosses": {
+                "spear": 171,
+                "spy": 45,
+                "ram": 136,
+                "catapult": 127,
+                "noble": 161
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "axe": 0,
+                "heavy_cavalry": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1508,
+                "spy": 399,
+                "ram": 1198,
+                "catapult": 1121,
+                "noble": 1417
+            },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 15,
+            "loyaltyDamage": 0,
+            "luck": 0.03825710280798376
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 1882,
+                "spy": 103,
+                "heavy_cavalry": 750,
+                "ram": 1762,
+                "catapult": 817,
+                "noble": 53
+            },
+            "defender": { "heavy_cavalry": 1592, "noble": 1906 },
+            "wallLevel": 1,
+            "loyalty": 100,
+            "seed": 727910403
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 1882,
+                "spy": 103,
+                "heavy_cavalry": 750,
+                "ram": 1762,
+                "catapult": 817,
+                "noble": 53
+            },
+            "defenderLosses": { "heavy_cavalry": 810, "noble": 970 },
+            "attackerSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "ram": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": { "heavy_cavalry": 782, "noble": 936 },
+            "wallLevelBefore": 1,
+            "wallLevelAfter": 1,
+            "loyaltyDamage": 0,
+            "luck": -0.04535312089137733
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spy": 443, "catapult": 803 },
+            "defender": { "spear": 1359, "axe": 1832 },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 580266894
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "spy": 399, "catapult": 724 },
+            "defenderLosses": { "spear": 1359, "axe": 1832 },
+            "attackerSurvivors": { "spy": 44, "catapult": 79 },
+            "defenderSurvivors": { "spear": 0, "axe": 0 },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 18,
+            "loyaltyDamage": 0,
+            "luck": -0.01130360655952245
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1414,
+                "sword": 1487,
+                "spy": 227,
+                "ram": 1535,
+                "catapult": 725
+            },
+            "defender": {
+                "sword": 411,
+                "heavy_cavalry": 1105,
+                "catapult": 1549
+            },
+            "wallLevel": 8,
+            "loyalty": 100,
+            "seed": 543204274
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1414,
+                "sword": 1487,
+                "spy": 227,
+                "ram": 1535,
+                "catapult": 725
+            },
+            "defenderLosses": {
+                "sword": 51,
+                "heavy_cavalry": 138,
+                "catapult": 194
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "spy": 0,
+                "ram": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "sword": 360,
+                "heavy_cavalry": 967,
+                "catapult": 1355
+            },
+            "wallLevelBefore": 8,
+            "wallLevelAfter": 4,
+            "loyaltyDamage": 0,
+            "luck": -0.06120094663929194
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spy": 1964, "light_cavalry": 1803 },
+            "defender": { "axe": 322, "ram": 1538, "catapult": 1162 },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 465363496
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "spy": 1964, "light_cavalry": 1803 },
+            "defenderLosses": {
+                "axe": 224,
+                "ram": 1072,
+                "catapult": 810
+            },
+            "attackerSurvivors": { "spy": 0, "light_cavalry": 0 },
+            "defenderSurvivors": {
+                "axe": 98,
+                "ram": 466,
+                "catapult": 352
+            },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 18,
+            "loyaltyDamage": 0,
+            "luck": -0.12770647848956287
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 1490 },
+            "defender": { "light_cavalry": 38 },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 341432989
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "spear": 103 },
+            "defenderLosses": { "light_cavalry": 38 },
+            "attackerSurvivors": { "spear": 1387 },
+            "defenderSurvivors": { "light_cavalry": 0 },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 15,
+            "loyaltyDamage": 0,
+            "luck": -0.028717344906181094
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 996,
+                "light_cavalry": 865,
+                "catapult": 1931
+            },
+            "defender": {
+                "axe": 110,
+                "spy": 1930,
+                "heavy_cavalry": 177,
+                "ram": 1945,
+                "noble": 768
+            },
+            "wallLevel": 12,
+            "loyalty": 100,
+            "seed": 695398259
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "axe": 565,
+                "light_cavalry": 491,
+                "catapult": 1096
+            },
+            "defenderLosses": {
+                "axe": 110,
+                "spy": 1930,
+                "heavy_cavalry": 177,
+                "ram": 1945,
+                "noble": 768
+            },
+            "attackerSurvivors": {
+                "axe": 431,
+                "light_cavalry": 374,
+                "catapult": 835
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 12,
+            "wallLevelAfter": 12,
+            "loyaltyDamage": 0,
+            "luck": 0.04768367316573858
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "axe": 878,
+                "spy": 1364,
+                "heavy_cavalry": 686,
+                "ram": 406,
+                "catapult": 271
+            },
+            "defender": { "spear": 1631, "ram": 716 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 82035569
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "axe": 589,
+                "spy": 915,
+                "heavy_cavalry": 460,
+                "ram": 272,
+                "catapult": 182
+            },
+            "defenderLosses": { "spear": 1631, "ram": 716 },
+            "attackerSurvivors": {
+                "axe": 289,
+                "spy": 449,
+                "heavy_cavalry": 226,
+                "ram": 134,
+                "catapult": 89
+            },
+            "defenderSurvivors": { "spear": 0, "ram": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.12316348368767649
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1674,
+                "sword": 1033,
+                "spy": 1033,
+                "heavy_cavalry": 663
+            },
+            "defender": {},
+            "wallLevel": 8,
+            "loyalty": 100,
+            "seed": 472449928
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 0,
+                "sword": 0,
+                "spy": 0,
+                "heavy_cavalry": 0
+            },
+            "defenderLosses": {},
+            "attackerSurvivors": {
+                "spear": 1674,
+                "sword": 1033,
+                "spy": 1033,
+                "heavy_cavalry": 663
+            },
+            "defenderSurvivors": {},
+            "wallLevelBefore": 8,
+            "wallLevelAfter": 8,
+            "loyaltyDamage": 0,
+            "luck": -0.025964752351865173
+        }
+    },
+    {
+        "input": {
+            "attacker": { "sword": 459, "axe": 1610, "ram": 487 },
+            "defender": { "sword": 161, "axe": 1070, "noble": 46 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 895037014
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "sword": 149, "axe": 522, "ram": 158 },
+            "defenderLosses": {
+                "sword": 161,
+                "axe": 1070,
+                "noble": 46
+            },
+            "attackerSurvivors": {
+                "sword": 310,
+                "axe": 1088,
+                "ram": 329
+            },
+            "defenderSurvivors": { "sword": 0, "axe": 0, "noble": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.12500341453123837
+        }
+    },
+    {
+        "input": {
+            "attacker": { "light_cavalry": 1884 },
+            "defender": {
+                "spear": 681,
+                "axe": 334,
+                "heavy_cavalry": 630,
+                "ram": 1095,
+                "noble": 1822
+            },
+            "wallLevel": 17,
+            "loyalty": 100,
+            "seed": 523869058
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "light_cavalry": 1884 },
+            "defenderLosses": {
+                "spear": 235,
+                "axe": 115,
+                "heavy_cavalry": 217,
+                "ram": 378,
+                "noble": 628
+            },
+            "attackerSurvivors": { "light_cavalry": 0 },
+            "defenderSurvivors": {
+                "spear": 446,
+                "axe": 219,
+                "heavy_cavalry": 413,
+                "ram": 717,
+                "noble": 1194
+            },
+            "wallLevelBefore": 17,
+            "wallLevelAfter": 17,
+            "loyaltyDamage": 0,
+            "luck": -0.14992367955856026
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 1393, "sword": 699, "spy": 375 },
+            "defender": { "axe": 1020, "ram": 158 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 313806106
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 1025,
+                "sword": 514,
+                "spy": 276
+            },
+            "defenderLosses": { "axe": 1020, "ram": 158 },
+            "attackerSurvivors": {
+                "spear": 368,
+                "sword": 185,
+                "spy": 99
+            },
+            "defenderSurvivors": { "axe": 0, "ram": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 0,
+            "luck": -0.09636881437618285
+        }
+    },
+    {
+        "input": {
+            "attacker": {},
+            "defender": {
+                "spear": 466,
+                "sword": 197,
+                "spy": 196,
+                "heavy_cavalry": 1688
+            },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 159278306
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {},
+            "defenderLosses": {
+                "spear": 0,
+                "sword": 0,
+                "spy": 0,
+                "heavy_cavalry": 0
+            },
+            "attackerSurvivors": {},
+            "defenderSurvivors": {
+                "spear": 466,
+                "sword": 197,
+                "spy": 196,
+                "heavy_cavalry": 1688
+            },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 18,
+            "loyaltyDamage": 0,
+            "luck": -0.088850055844523
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 1290, "axe": 393, "noble": 1391 },
+            "defender": {
+                "axe": 123,
+                "spy": 1533,
+                "light_cavalry": 468
+            },
+            "wallLevel": 3,
+            "loyalty": 100,
+            "seed": 101507669
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "spear": 220, "axe": 67, "noble": 237 },
+            "defenderLosses": {
+                "axe": 123,
+                "spy": 1533,
+                "light_cavalry": 468
+            },
+            "attackerSurvivors": {
+                "spear": 1070,
+                "axe": 326,
+                "noble": 1154
+            },
+            "defenderSurvivors": {
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0
+            },
+            "wallLevelBefore": 3,
+            "wallLevelAfter": 3,
+            "loyaltyDamage": 31827,
+            "luck": -0.021528416010551155
+        }
+    },
+    {
+        "input": {
+            "attacker": { "light_cavalry": 566 },
+            "defender": {
+                "sword": 911,
+                "light_cavalry": 1147,
+                "heavy_cavalry": 883,
+                "ram": 1830,
+                "catapult": 679
+            },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 543165578
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "light_cavalry": 566 },
+            "defenderLosses": {
+                "sword": 81,
+                "light_cavalry": 102,
+                "heavy_cavalry": 78,
+                "ram": 163,
+                "catapult": 60
+            },
+            "attackerSurvivors": { "light_cavalry": 0 },
+            "defenderSurvivors": {
+                "sword": 830,
+                "light_cavalry": 1045,
+                "heavy_cavalry": 805,
+                "ram": 1667,
+                "catapult": 619
+            },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": -0.13515741247683763
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 822,
+                "sword": 564,
+                "axe": 1277,
+                "light_cavalry": 736,
+                "heavy_cavalry": 258,
+                "noble": 217
+            },
+            "defender": { "axe": 1109, "spy": 1440 },
+            "wallLevel": 6,
+            "loyalty": 100,
+            "seed": 916057098
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 13,
+                "sword": 9,
+                "axe": 20,
+                "light_cavalry": 11,
+                "heavy_cavalry": 4,
+                "noble": 3
+            },
+            "defenderLosses": { "axe": 1109, "spy": 1440 },
+            "attackerSurvivors": {
+                "spear": 809,
+                "sword": 555,
+                "axe": 1257,
+                "light_cavalry": 725,
+                "heavy_cavalry": 254,
+                "noble": 214
+            },
+            "defenderSurvivors": { "axe": 0, "spy": 0 },
+            "wallLevelBefore": 6,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 5880,
+            "luck": -0.05106101247947663
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 561,
+                "catapult": 1947,
+                "noble": 197
+            },
+            "defender": { "sword": 29, "heavy_cavalry": 1571 },
+            "wallLevel": 17,
+            "loyalty": 100,
+            "seed": 272856496
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 561,
+                "catapult": 1947,
+                "noble": 197
+            },
+            "defenderLosses": { "sword": 6, "heavy_cavalry": 307 },
+            "attackerSurvivors": {
+                "spear": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": { "sword": 23, "heavy_cavalry": 1264 },
+            "wallLevelBefore": 17,
+            "wallLevelAfter": 17,
+            "loyaltyDamage": 0,
+            "luck": -0.0452795592835173
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1468,
+                "light_cavalry": 1846,
+                "catapult": 368
+            },
+            "defender": { "light_cavalry": 1977, "catapult": 1983 },
+            "wallLevel": 0,
+            "loyalty": 100,
+            "seed": 63229283
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 659,
+                "light_cavalry": 828,
+                "catapult": 165
+            },
+            "defenderLosses": {
+                "light_cavalry": 1977,
+                "catapult": 1983
+            },
+            "attackerSurvivors": {
+                "spear": 809,
+                "light_cavalry": 1018,
+                "catapult": 203
+            },
+            "defenderSurvivors": { "light_cavalry": 0, "catapult": 0 },
+            "wallLevelBefore": 0,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": 0.12557470898609607
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 221, "spy": 332, "catapult": 1619 },
+            "defender": {
+                "axe": 1693,
+                "light_cavalry": 532,
+                "ram": 429,
+                "catapult": 1686,
+                "noble": 1289
+            },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 808529634
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "axe": 221,
+                "spy": 332,
+                "catapult": 1619
+            },
+            "defenderLosses": {
+                "axe": 292,
+                "light_cavalry": 92,
+                "ram": 74,
+                "catapult": 290,
+                "noble": 222
+            },
+            "attackerSurvivors": { "axe": 0, "spy": 0, "catapult": 0 },
+            "defenderSurvivors": {
+                "axe": 1401,
+                "light_cavalry": 440,
+                "ram": 355,
+                "catapult": 1396,
+                "noble": 1067
+            },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 14,
+            "loyaltyDamage": 0,
+            "luck": 0.04569129988085478
+        }
+    },
+    {
+        "input": {
+            "attacker": { "axe": 816, "heavy_cavalry": 848 },
+            "defender": { "spy": 252, "ram": 1123 },
+            "wallLevel": 15,
+            "loyalty": 100,
+            "seed": 427949119
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": { "axe": 409, "heavy_cavalry": 425 },
+            "defenderLosses": { "spy": 252, "ram": 1123 },
+            "attackerSurvivors": { "axe": 407, "heavy_cavalry": 423 },
+            "defenderSurvivors": { "spy": 0, "ram": 0 },
+            "wallLevelBefore": 15,
+            "wallLevelAfter": 15,
+            "loyaltyDamage": 0,
+            "luck": -0.13584546286147087
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1810,
+                "axe": 1357,
+                "light_cavalry": 863
+            },
+            "defender": { "spy": 231, "noble": 740 },
+            "wallLevel": 5,
+            "loyalty": 100,
+            "seed": 63444796
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 340,
+                "axe": 255,
+                "light_cavalry": 162
+            },
+            "defenderLosses": { "spy": 231, "noble": 740 },
+            "attackerSurvivors": {
+                "sword": 1470,
+                "axe": 1102,
+                "light_cavalry": 701
+            },
+            "defenderSurvivors": { "spy": 0, "noble": 0 },
+            "wallLevelBefore": 5,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": -0.013303346768952905
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 295,
+                "axe": 196,
+                "heavy_cavalry": 1869,
+                "catapult": 1448,
+                "noble": 1814
+            },
+            "defender": {
+                "sword": 1358,
+                "axe": 513,
+                "spy": 1914,
+                "heavy_cavalry": 689,
+                "noble": 842
+            },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 703770277
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 237,
+                "axe": 158,
+                "heavy_cavalry": 1503,
+                "catapult": 1165,
+                "noble": 1459
+            },
+            "defenderLosses": {
+                "sword": 1358,
+                "axe": 513,
+                "spy": 1914,
+                "heavy_cavalry": 689,
+                "noble": 842
+            },
+            "attackerSurvivors": {
+                "sword": 58,
+                "axe": 38,
+                "heavy_cavalry": 366,
+                "catapult": 283,
+                "noble": 355
+            },
+            "defenderSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "spy": 0,
+                "heavy_cavalry": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 18,
+            "loyaltyDamage": 9683,
+            "luck": -0.11659589717164635
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1124,
+                "spy": 453,
+                "ram": 250,
+                "noble": 121
+            },
+            "defender": {
+                "sword": 1333,
+                "axe": 1413,
+                "spy": 1423,
+                "light_cavalry": 1291,
+                "noble": 740
+            },
+            "wallLevel": 18,
+            "loyalty": 100,
+            "seed": 680571642
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 1124,
+                "spy": 453,
+                "ram": 250,
+                "noble": 121
+            },
+            "defenderLosses": {
+                "sword": 59,
+                "axe": 63,
+                "spy": 63,
+                "light_cavalry": 58,
+                "noble": 33
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "sword": 1274,
+                "axe": 1350,
+                "spy": 1360,
+                "light_cavalry": 1233,
+                "noble": 707
+            },
+            "wallLevelBefore": 18,
+            "wallLevelAfter": 9,
+            "loyaltyDamage": 0,
+            "luck": 0.11138445124961435
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1762,
+                "axe": 154,
+                "spy": 1622,
+                "light_cavalry": 1886,
+                "heavy_cavalry": 1858,
+                "ram": 507,
+                "catapult": 1759
+            },
+            "defender": {
+                "spear": 1607,
+                "heavy_cavalry": 1196,
+                "catapult": 1020
+            },
+            "wallLevel": 0,
+            "loyalty": 100,
+            "seed": 978623039
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 353,
+                "axe": 31,
+                "spy": 325,
+                "light_cavalry": 378,
+                "heavy_cavalry": 372,
+                "ram": 102,
+                "catapult": 352
+            },
+            "defenderLosses": {
+                "spear": 1607,
+                "heavy_cavalry": 1196,
+                "catapult": 1020
+            },
+            "attackerSurvivors": {
+                "spear": 1409,
+                "axe": 123,
+                "spy": 1297,
+                "light_cavalry": 1508,
+                "heavy_cavalry": 1486,
+                "ram": 405,
+                "catapult": 1407
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "heavy_cavalry": 0,
+                "catapult": 0
+            },
+            "wallLevelBefore": 0,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": 0.04635534379631281
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 949,
+                "sword": 330,
+                "axe": 1210,
+                "ram": 1796,
+                "catapult": 623,
+                "noble": 1409
+            },
+            "defender": {
+                "spear": 1506,
+                "sword": 1918,
+                "ram": 1481,
+                "noble": 1026
+            },
+            "wallLevel": 1,
+            "loyalty": 100,
+            "seed": 81941815
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 949,
+                "sword": 330,
+                "axe": 1210,
+                "ram": 1796,
+                "catapult": 623,
+                "noble": 1409
+            },
+            "defenderLosses": {
+                "spear": 799,
+                "sword": 1018,
+                "ram": 786,
+                "noble": 545
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "axe": 0,
+                "ram": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 707,
+                "sword": 900,
+                "ram": 695,
+                "noble": 481
+            },
+            "wallLevelBefore": 1,
+            "wallLevelAfter": 1,
+            "loyaltyDamage": 0,
+            "luck": -0.009720694413408637
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spy": 720,
+                "light_cavalry": 975,
+                "heavy_cavalry": 960,
+                "ram": 1399,
+                "catapult": 1265,
+                "noble": 99
+            },
+            "defender": {
+                "spy": 1544,
+                "light_cavalry": 1559,
+                "heavy_cavalry": 1488
+            },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 163316777
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spy": 549,
+                "light_cavalry": 743,
+                "heavy_cavalry": 732,
+                "ram": 1066,
+                "catapult": 964,
+                "noble": 75
+            },
+            "defenderLosses": {
+                "spy": 1544,
+                "light_cavalry": 1559,
+                "heavy_cavalry": 1488
+            },
+            "attackerSurvivors": {
+                "spy": 171,
+                "light_cavalry": 232,
+                "heavy_cavalry": 228,
+                "ram": 333,
+                "catapult": 301,
+                "noble": 24
+            },
+            "defenderSurvivors": {
+                "spy": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0
+            },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 671,
+            "luck": -0.11882216962985694
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 189,
+                "light_cavalry": 1913,
+                "catapult": 551,
+                "noble": 514
+            },
+            "defender": {
+                "spear": 754,
+                "sword": 1111,
+                "ram": 1696,
+                "catapult": 1500,
+                "noble": 252
+            },
+            "wallLevel": 6,
+            "loyalty": 100,
+            "seed": 242308526
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 175,
+                "light_cavalry": 1767,
+                "catapult": 509,
+                "noble": 475
+            },
+            "defenderLosses": {
+                "spear": 754,
+                "sword": 1111,
+                "ram": 1696,
+                "catapult": 1500,
+                "noble": 252
+            },
+            "attackerSurvivors": {
+                "sword": 14,
+                "light_cavalry": 146,
+                "catapult": 42,
+                "noble": 39
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "ram": 0,
+                "catapult": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 6,
+            "wallLevelAfter": 6,
+            "loyaltyDamage": 1094,
+            "luck": -0.003655780758708715
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 319,
+                "spy": 1136,
+                "ram": 1925,
+                "noble": 1586
+            },
+            "defender": {
+                "spear": 1907,
+                "sword": 114,
+                "spy": 232,
+                "heavy_cavalry": 1074,
+                "catapult": 397,
+                "noble": 752
+            },
+            "wallLevel": 10,
+            "loyalty": 100,
+            "seed": 677992074
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 319,
+                "spy": 1136,
+                "ram": 1925,
+                "noble": 1586
+            },
+            "defenderLosses": {
+                "spear": 72,
+                "sword": 4,
+                "spy": 9,
+                "heavy_cavalry": 41,
+                "catapult": 15,
+                "noble": 28
+            },
+            "attackerSurvivors": {
+                "sword": 0,
+                "spy": 0,
+                "ram": 0,
+                "noble": 0
+            },
+            "defenderSurvivors": {
+                "spear": 1835,
+                "sword": 110,
+                "spy": 223,
+                "heavy_cavalry": 1033,
+                "catapult": 382,
+                "noble": 724
+            },
+            "wallLevelBefore": 10,
+            "wallLevelAfter": 5,
+            "loyaltyDamage": 0,
+            "luck": -0.13486773271579294
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 155,
+                "sword": 220,
+                "heavy_cavalry": 1588,
+                "ram": 629,
+                "catapult": 727,
+                "noble": 539
+            },
+            "defender": { "spear": 586, "heavy_cavalry": 1574 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 809258493
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 141,
+                "sword": 200,
+                "heavy_cavalry": 1447,
+                "ram": 573,
+                "catapult": 662,
+                "noble": 491
+            },
+            "defenderLosses": { "spear": 586, "heavy_cavalry": 1574 },
+            "attackerSurvivors": {
+                "spear": 14,
+                "sword": 20,
+                "heavy_cavalry": 141,
+                "ram": 56,
+                "catapult": 65,
+                "noble": 48
+            },
+            "defenderSurvivors": { "spear": 0, "heavy_cavalry": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 1362,
+            "luck": -0.13451628175098448
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 1289,
+                "spy": 1040,
+                "heavy_cavalry": 1825,
+                "ram": 808,
+                "catapult": 1605
+            },
+            "defender": { "spear": 1377, "noble": 1736 },
+            "wallLevel": 14,
+            "loyalty": 100,
+            "seed": 597464805
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "spear": 580,
+                "spy": 468,
+                "heavy_cavalry": 822,
+                "ram": 364,
+                "catapult": 723
+            },
+            "defenderLosses": { "spear": 1377, "noble": 1736 },
+            "attackerSurvivors": {
+                "spear": 709,
+                "spy": 572,
+                "heavy_cavalry": 1003,
+                "ram": 444,
+                "catapult": 882
+            },
+            "defenderSurvivors": { "spear": 0, "noble": 0 },
+            "wallLevelBefore": 14,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 0,
+            "luck": -0.14661625544540582
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 414,
+                "axe": 1672,
+                "spy": 1121,
+                "light_cavalry": 20,
+                "heavy_cavalry": 6
+            },
+            "defender": { "spy": 1917, "ram": 1593, "noble": 888 },
+            "wallLevel": 4,
+            "loyalty": 100,
+            "seed": 676063806
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "sword": 414,
+                "axe": 1672,
+                "spy": 1121,
+                "light_cavalry": 20,
+                "heavy_cavalry": 6
+            },
+            "defenderLosses": { "spy": 619, "ram": 515, "noble": 287 },
+            "attackerSurvivors": {
+                "sword": 0,
+                "axe": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "heavy_cavalry": 0
+            },
+            "defenderSurvivors": {
+                "spy": 1298,
+                "ram": 1078,
+                "noble": 601
+            },
+            "wallLevelBefore": 4,
+            "wallLevelAfter": 4,
+            "loyaltyDamage": 0,
+            "luck": -0.12748792658094316
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "sword": 1197,
+                "light_cavalry": 1015,
+                "heavy_cavalry": 836,
+                "ram": 796,
+                "catapult": 1724,
+                "noble": 60
+            },
+            "defender": {
+                "spear": 1200,
+                "spy": 551,
+                "light_cavalry": 1867,
+                "noble": 310
+            },
+            "wallLevel": 10,
+            "loyalty": 100,
+            "seed": 545836453
+        },
+        "result": {
+            "attackerWon": true,
+            "attackerLosses": {
+                "sword": 263,
+                "light_cavalry": 223,
+                "heavy_cavalry": 184,
+                "ram": 175,
+                "catapult": 379,
+                "noble": 13
+            },
+            "defenderLosses": {
+                "spear": 1200,
+                "spy": 551,
+                "light_cavalry": 1867,
+                "noble": 310
+            },
+            "attackerSurvivors": {
+                "sword": 934,
+                "light_cavalry": 792,
+                "heavy_cavalry": 652,
+                "ram": 621,
+                "catapult": 1345,
+                "noble": 47
+            },
+            "defenderSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "noble": 0
+            },
+            "wallLevelBefore": 10,
+            "wallLevelAfter": 0,
+            "loyaltyDamage": 1263,
+            "luck": -0.05352489848155528
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 389,
+                "spy": 881,
+                "light_cavalry": 154,
+                "ram": 1294
+            },
+            "defender": { "spear": 316, "axe": 1976, "ram": 610 },
+            "wallLevel": 20,
+            "loyalty": 100,
+            "seed": 821550985
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 389,
+                "spy": 881,
+                "light_cavalry": 154,
+                "ram": 1294
+            },
+            "defenderLosses": { "spear": 80, "axe": 500, "ram": 154 },
+            "attackerSurvivors": {
+                "spear": 0,
+                "spy": 0,
+                "light_cavalry": 0,
+                "ram": 0
+            },
+            "defenderSurvivors": {
+                "spear": 236,
+                "axe": 1476,
+                "ram": 456
+            },
+            "wallLevelBefore": 20,
+            "wallLevelAfter": 10,
+            "loyaltyDamage": 0,
+            "luck": 0.14199946217704565
+        }
+    },
+    {
+        "input": {
+            "attacker": { "spear": 1215, "ram": 1206, "catapult": 4 },
+            "defender": {
+                "spear": 140,
+                "heavy_cavalry": 274,
+                "ram": 1632,
+                "noble": 1800
+            },
+            "wallLevel": 16,
+            "loyalty": 100,
+            "seed": 185159876
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 1215,
+                "ram": 1206,
+                "catapult": 4
+            },
+            "defenderLosses": {
+                "spear": 1,
+                "heavy_cavalry": 2,
+                "ram": 13,
+                "noble": 14
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "ram": 0,
+                "catapult": 0
+            },
+            "defenderSurvivors": {
+                "spear": 139,
+                "heavy_cavalry": 272,
+                "ram": 1619,
+                "noble": 1786
+            },
+            "wallLevelBefore": 16,
+            "wallLevelAfter": 8,
+            "loyaltyDamage": 0,
+            "luck": -0.0052703000837937
+        }
+    },
+    {
+        "input": {
+            "attacker": { "heavy_cavalry": 422 },
+            "defender": {
+                "sword": 936,
+                "axe": 570,
+                "spy": 854,
+                "catapult": 1441
+            },
+            "wallLevel": 9,
+            "loyalty": 100,
+            "seed": 467941952
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": { "heavy_cavalry": 422 },
+            "defenderLosses": {
+                "sword": 259,
+                "axe": 158,
+                "spy": 236,
+                "catapult": 399
+            },
+            "attackerSurvivors": { "heavy_cavalry": 0 },
+            "defenderSurvivors": {
+                "sword": 677,
+                "axe": 412,
+                "spy": 618,
+                "catapult": 1042
+            },
+            "wallLevelBefore": 9,
+            "wallLevelAfter": 9,
+            "loyaltyDamage": 0,
+            "luck": -0.12463841505814344
+        }
+    },
+    {
+        "input": {
+            "attacker": {
+                "spear": 868,
+                "sword": 1912,
+                "spy": 359,
+                "light_cavalry": 527
+            },
+            "defender": {
+                "axe": 1756,
+                "spy": 755,
+                "light_cavalry": 1333,
+                "heavy_cavalry": 151,
+                "noble": 135
+            },
+            "wallLevel": 17,
+            "loyalty": 100,
+            "seed": 375069182
+        },
+        "result": {
+            "attackerWon": false,
+            "attackerLosses": {
+                "spear": 868,
+                "sword": 1912,
+                "spy": 359,
+                "light_cavalry": 527
+            },
+            "defenderLosses": {
+                "axe": 1344,
+                "spy": 578,
+                "light_cavalry": 1020,
+                "heavy_cavalry": 116,
+                "noble": 103
+            },
+            "attackerSurvivors": {
+                "spear": 0,
+                "sword": 0,
+                "spy": 0,
+                "light_cavalry": 0
+            },
+            "defenderSurvivors": {
+                "axe": 412,
+                "spy": 177,
+                "light_cavalry": 313,
+                "heavy_cavalry": 35,
+                "noble": 32
+            },
+            "wallLevelBefore": 17,
+            "wallLevelAfter": 17,
+            "loyaltyDamage": 0,
+            "luck": 0.1331155622145161
+        }
+    }
+]

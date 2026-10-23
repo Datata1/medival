@@ -57,12 +57,15 @@ const TARGET_MIX: Record<
     // Verteidigt und greift nicht an — bleibt bewusst ohne Offensive.
     // Späher (19-10) überall in kleinem Anteil: zur Abwehr fremder Späher
     // und, bei allen außer `turtle`, zum Ausspähen vor dem Angriff.
-    turtle: { spear: 0.67, sword: 0.28, spy: 0.05 },
+    // Bogenschützen (19-12) verteidigen gegen Bogenangriffe. In Welten ohne
+    // sie werden die übrigen Anteile auf 1 hochgerechnet.
+    turtle: { spear: 0.55, sword: 0.25, archer: 0.15, spy: 0.05 },
     // Plündert: Äxte, dazu leichte Kavallerie für die Beute.
     // Katapulte (19-11) erst mit Werkstatt; bis dahin übersprungen.
     raider: {
-        axe: 0.5,
-        light_cavalry: 0.25,
+        axe: 0.45,
+        light_cavalry: 0.2,
+        mounted_archer: 0.1,
         spear: 0.15,
         spy: 0.05,
         catapult: 0.05,
@@ -83,6 +86,7 @@ export function decideRecruit(
     resources: Resources,
     personality: Personality,
     recruiting: boolean,
+    enabledUnits: readonly UnitType[],
 ): RecruitChoice | null {
     if (recruiting) return null;
 
@@ -103,11 +107,22 @@ export function decideRecruit(
         entriesOf(village.units).reduce((s, [, n]) => s + n, 0),
     );
 
+    /*
+     * Nur Einheiten dieser Welt, die Anteile auf 1 hochgerechnet: Ohne das
+     * summierte sich die Mischung ohne Bogenschützen auf 0,85, und sobald
+     * jede Einheit ihren Anteil erreicht hätte, rekrutierte der Bot nie mehr.
+     */
+    const enabledMix = entriesOf(mix).filter(([unit]) =>
+        enabledUnits.includes(unit),
+    );
+    const shareSum = enabledMix.reduce((s, [, share]) => s + share, 0);
+
     // Die Einheit mit dem größten Rückstand auf ihren Zielanteil zuerst.
-    const ranked = entriesOf(mix)
+    const ranked = enabledMix
         .map(([unit, share]) => ({
             unit,
-            deficit: share - (village.units[unit] ?? 0) / total,
+            deficit:
+                share / shareSum - (village.units[unit] ?? 0) / total,
         }))
         .sort((a, b) => b.deficit - a.deficit);
 

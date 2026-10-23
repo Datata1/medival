@@ -26,7 +26,7 @@ zusammen. Die Reihenfolge unten ist keine Empfehlung, sondern weitgehend erzwung
 | 19-9 | [Welt beitreten & Mehrspieler-Rechte](19-9-welt-beitreten-und-rechte.md) | server + client | ✅ erledigt |
 | 19-10 | [Späher & Spähberichte](19-10-spaeher.md) | shared + server + client | ✅ erledigt |
 | 19-11 | [Werkstatt, Katapult, Rammbock-Umzug](19-11-werkstatt-katapult.md) | shared + server + client | ✅ erledigt |
-| 19-12 | [Bogenschützen](19-12-bogenschuetzen.md) | shared + server + client | 📋 offen |
+| 19-12 | [Bogenschützen](19-12-bogenschuetzen.md) | shared + server + client | ✅ erledigt |
 | 19-13 | [Schmiede, Versammlungsplatz, Versteck](19-13-schmiede-versammlungsplatz-versteck.md) | shared + server + client | 📋 offen |
 | 19-14 | [Paladin & Statue](19-14-paladin-und-statue.md) | shared + server + client | 📋 offen |
 | 19-15 | [Lastprobe & Abnahme](19-15-lastprobe.md) | server + scripts | 📋 offen |

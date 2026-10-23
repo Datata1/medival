@@ -10,6 +10,7 @@ import {
     farmCapacity,
     GameTime,
     isScoutMission,
+    isUnitEnabled,
     type MovementKind,
     type Resources,
     recruitTime,
@@ -109,6 +110,9 @@ export function recruitUnits(
     count: number,
 ): void {
     if (!UNITS[unitType]) throw new GameError('invalid_unit');
+    // Was es in dieser Welt nicht gibt, kann man nicht ausheben (19-12).
+    if (!isUnitEnabled(world.settings, unitType))
+        throw new GameError('unit_disabled');
     count = Math.floor(count);
     if (count < 1) throw new GameError('invalid_count');
     const now = world.now();
