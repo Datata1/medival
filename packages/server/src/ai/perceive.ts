@@ -8,6 +8,8 @@ import {
     resourceRatePerHour,
     type Units,
     UnitsSchema,
+    type UnitType,
+    unitsEnabled,
     warehouseCapacity,
     effectiveStanding as withTribeModifier,
 } from '@medival/shared';
@@ -67,6 +69,8 @@ export interface BotSnapshot {
     difficulty: Difficulty;
     state: BotState;
     villages: VillageSnapshot[];
+    /** Was es in dieser Welt gibt (19-12, `unitsEnabled`). */
+    enabledUnits: readonly UnitType[];
     /**
      * Mögliche Handelspartner in Reichweite, samt eigener Haltung zu ihnen
      * (plans/16-ansehen-und-handel.md). Ferne Spieler fehlen bewusst: Die
@@ -181,6 +185,7 @@ export function perceiveBot(
         difficulty: DifficultySchema.parse(player.difficulty),
         state: readBotState(player.aiState),
         villages: snapshots,
+        enabledUnits: unitsEnabled(world.settings),
         partners: social.partners,
         targets: social.targets,
         distressCalls: perceiveDistress(world, playerId, social, now),

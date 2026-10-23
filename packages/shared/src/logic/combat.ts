@@ -29,35 +29,62 @@ function entries(units: Units): [UnitType, number][] {
     return entriesOf(units).filter(([, n]) => n > 0);
 }
 
-function attackPower(units: Units): {
+/** Anteil jeder Angriffsklasse am Gesamtangriff (19-12: drei Klassen). */
+interface AttackShares {
     total: number;
     infRatio: number;
     cavRatio: number;
-} {
-    let inf = 0;
-    let cav = 0;
-    for (const [t, n] of entries(units)) {
-        if (UNITS[t].attackClass === 'cavalry')
-            cav += UNITS[t].attack * n;
-        else inf += UNITS[t].attack * n;
-    }
-    const total = inf + cav;
-    if (total === 0) return { total: 0, infRatio: 1, cavRatio: 0 };
-    return { total, infRatio: inf / total, cavRatio: cav / total };
+    arcRatio: number;
 }
 
-function defensePower(
-    units: Units,
-    infRatio: number,
-    cavRatio: number,
-): number {
+function attackPower(units: Units): AttackShares {
+    let inf = 0;
+    let cav = 0;
+    let arc = 0;
+    for (const [t, n] of entries(units)) {
+        const power = UNITS[t].attack * n;
+        switch (UNITS[t].attackClass) {
+            case 'cavalry':
+                cav += power;
+                break;
+            case 'archer':
+                arc += power;
+                break;
+            case 'infantry':
+                inf += power;
+                break;
+        }
+    }
+    const total = inf + cav + arc;
+    if (total === 0)
+        return { total: 0, infRatio: 1, cavRatio: 0, arcRatio: 0 };
+    return {
+        total,
+        infRatio: inf / total,
+        cavRatio: cav / total,
+        arcRatio: arc / total,
+    };
+}
+
+/**
+ * Verteidigung gewichtet nach den Anteilen des Angriffs. Ohne Bogenschützen
+ * ist `arcRatio` genau 0 und der dritte Summand fällt bitgenau weg — das
+ * Ergebnis ist dasselbe wie vor 19-12 (Fixture in `combat.test.ts`).
+ */
+function defensePower(units: Units, shares: AttackShares): number {
     let defInf = 0;
     let defCav = 0;
+    let defArc = 0;
     for (const [t, n] of entries(units)) {
         defInf += UNITS[t].defense * n;
         defCav += UNITS[t].defenseCavalry * n;
+        defArc += UNITS[t].defenseArcher * n;
     }
-    return defInf * infRatio + defCav * cavRatio;
+    return (
+        defInf * shares.infRatio +
+        defCav * shares.cavRatio +
+        defArc * shares.arcRatio
+    );
 }
 
 function applyLosses(
@@ -91,7 +118,7 @@ export interface BattleInput {
 /**
  * Resolve a battle at the moment of impact. Single-round model:
  * - Rams batter the wall down during the fight (half of final damage counts mid-battle).
- * - Defense is weighted by the attacker's infantry/cavalry composition.
+ * - Defense is weighted by the attacker's infantry/cavalry/archer composition.
  * - The wall multiplies defense and adds flat base defense.
  * - Winner-side losses follow the classic (loser/winner)^1.5 power rule.
  * - Each surviving noble on a winning attack deals one loyalty hit
@@ -111,7 +138,7 @@ export function resolveBattle(input: BattleInput): BattleResult {
     const luck = (rng() * 2 - 1) * LUCK_RANGE;
     const effectiveAttack = atk.total * (1 + luck);
 
-    let defense = defensePower(defender, atk.infRatio, atk.cavRatio);
+    let defense = defensePower(defender, atk);
     defense *= 1 + WALL_DEFENSE_FACTOR_PER_LEVEL * wallDuringBattle;
     defense += WALL_BASE_DEFENSE_PER_LEVEL * wallDuringBattle;
 

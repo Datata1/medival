@@ -8,8 +8,8 @@ import {
     MERCHANT_MIN_PER_FIELD,
     marketCapacity,
     productionPerHour,
-    UNIT_ORDER,
     UNITS,
+    type UnitType,
     WALL_BASE_DEFENSE_PER_LEVEL,
     WALL_DEFENSE_FACTOR_PER_LEVEL,
     warehouseCapacity,
@@ -44,7 +44,11 @@ export const HandbookView = observer(function HandbookView() {
                 {t('handbook.intro', { speed, unitSpeed })}
             </p>
 
-            <UnitTable unitSpeed={unitSpeed} speed={speed} />
+            <UnitTable
+                units={world.enabledUnits}
+                unitSpeed={unitSpeed}
+                speed={speed}
+            />
             <BuildingTable speed={speed} />
             <EffectsCard speed={speed} />
         </div>
@@ -52,13 +56,19 @@ export const HandbookView = observer(function HandbookView() {
 });
 
 function UnitTable({
+    units,
     unitSpeed,
     speed,
 }: {
+    units: readonly UnitType[];
     unitSpeed: number;
     speed: number;
 }) {
     const { t } = useTranslation();
+    // Die dritte Verteidigung zählt nur, wo es Bogenschützen gibt (19-12).
+    const archers = units.some(
+        (u) => UNITS[u].attackClass === 'archer',
+    );
     return (
         <Card>
             <h2>{t('handbook.units')}</h2>
@@ -70,6 +80,11 @@ function UnitTable({
                             <Th>{t('handbook.colAttack')}</Th>
                             <Th>{t('handbook.colDefense')}</Th>
                             <Th>{t('handbook.colDefenseCav')}</Th>
+                            {archers && (
+                                <Th>
+                                    {t('handbook.colDefenseArcher')}
+                                </Th>
+                            )}
                             <Th>{t('handbook.colSpeed')}</Th>
                             <Th>{t('handbook.colCarry')}</Th>
                             <Th>{t('handbook.colPop')}</Th>
@@ -79,7 +94,7 @@ function UnitTable({
                         </tr>
                     </thead>
                     <tbody className="tabular-nums">
-                        {UNIT_ORDER.map((type) => {
+                        {units.map((type) => {
                             const u = UNITS[type];
                             return (
                                 <tr key={type}>
@@ -90,6 +105,9 @@ function UnitTable({
                                     <Td>{u.attack}</Td>
                                     <Td>{u.defense}</Td>
                                     <Td>{u.defenseCavalry}</Td>
+                                    {archers && (
+                                        <Td>{u.defenseArcher}</Td>
+                                    )}
                                     <Td className="whitespace-nowrap">
                                         {t('handbook.minPerField', {
                                             minutes: (
@@ -123,7 +141,10 @@ function UnitTable({
                     </tbody>
                 </Table>
             </div>
-            <p className="text-ink-light">{t('handbook.unitsHint')}</p>
+            <p className="text-ink-light">
+                {t('handbook.unitsHint')}
+                {archers && ` ${t('handbook.unitsHintArchers')}`}
+            </p>
         </Card>
     );
 }

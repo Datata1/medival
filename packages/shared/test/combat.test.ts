@@ -4,13 +4,20 @@ import {
     catapultDamage,
     createRng,
     Duration,
+    estimateBattle,
     isScoutMission,
+    isUnitEnabled,
     ramDamage,
     resolveBattle,
     resolveSpying,
     spyTier,
     travelTime,
+    UNIT_ORDER,
+    unitsEnabled,
 } from '../src/index.js';
+import BATTLES_BEFORE from './fixtures/battles-before-19-12.json' with {
+    type: 'json',
+};
 
 const rng = () => createRng(42);
 
@@ -229,5 +236,65 @@ describe('Katapulte (19-11)', () => {
     it('wirken bei verlorenem Kampf nur zur Hälfte', () => {
         expect(catapultDamage(4, 'barracks', 3, false)).toBe(2);
         expect(catapultDamage(4, 'barracks', 3, true)).toBe(1);
+    });
+});
+
+describe('Bogenschützen (19-12)', () => {
+    it('ohne Bogenschützen bitgenau wie vor dem Umbau', () => {
+        for (const { input, result } of BATTLES_BEFORE) {
+            expect(
+                resolveBattle({ ...input, rng: createRng(input.seed) }),
+            ).toEqual(result);
+        }
+        expect(BATTLES_BEFORE).toHaveLength(120);
+    });
+
+    it('gegen reine Bogenangriffe zählt nur defenseArcher', () => {
+        // 1 000 Bogenschützen greifen an: Angriff 15 000.
+        // 1 000 Speere verteidigen mit 20 000, 1 000 Bogenschützen mit 5 000.
+        const vsSpears = estimateBattle(
+            { archer: 1000 },
+            { spear: 1000 },
+            0,
+        );
+        const vsArchers = estimateBattle(
+            { archer: 1000 },
+            { archer: 1000 },
+            0,
+        );
+        expect(vsSpears.attackerWon).toBe(false);
+        expect(vsArchers.attackerWon).toBe(true);
+        // Verluste des Siegers: (5 000 / 15 000)^1,5 der Angreifer.
+        expect(vsArchers.attackerLosses.archer).toBe(
+            Math.round(1000 * (5000 / 15000) ** 1.5),
+        );
+    });
+
+    it('gewichtet gemischte Angriffe nach Anteilen', () => {
+        // 100 Äxte (4 000) + 50 berittene Bogenschützen (6 000):
+        // 40 % Infanterie, 60 % Bogen. 100 Schwerter: 0,4·5 000 + 0,6·4 000.
+        const r = estimateBattle(
+            { axe: 100, mounted_archer: 50 },
+            { sword: 100 },
+            0,
+        );
+        const defense = 0.4 * 5000 + 0.6 * 4000;
+        expect(r.attackerWon).toBe(true);
+        expect(r.attackerLosses.axe).toBe(
+            Math.round(100 * (defense / 10000) ** 1.5),
+        );
+    });
+
+    it('unitsEnabled blendet Bogenschützen nur bei ausgeschalteter Option aus', () => {
+        expect(unitsEnabled({ archers: true })).toEqual([
+            ...UNIT_ORDER,
+        ]);
+        expect(unitsEnabled({ archers: false })).not.toContain(
+            'archer',
+        );
+        expect(unitsEnabled({ archers: false })).not.toContain(
+            'mounted_archer',
+        );
+        expect(isUnitEnabled({ archers: false }, 'spear')).toBe(true);
     });
 });

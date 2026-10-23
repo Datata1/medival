@@ -53,7 +53,7 @@ export const SendUnitsForm = observer(function SendUnitsForm({
                   unitSpeed,
               )
             : null;
-    const available = UNIT_ORDER.filter(
+    const available = world.enabledUnits.filter(
         (type) => (homeUnits[type] ?? 0) > 0,
     );
 

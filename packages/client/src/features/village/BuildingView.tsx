@@ -184,6 +184,7 @@ export const BuildingView = observer(function BuildingView({
                     village={view}
                     live={live}
                     speed={speed}
+                    enabledUnits={world.enabledUnits}
                     busy={village.isRecruiting}
                     error={village.recruitError}
                     onRecruit={(unit, count) =>

@@ -16,8 +16,10 @@ export type UnitType =
     | 'spear'
     | 'sword'
     | 'axe'
+    | 'archer'
     | 'spy'
     | 'light_cavalry'
+    | 'mounted_archer'
     | 'heavy_cavalry'
     | 'ram'
     | 'catapult'
@@ -67,6 +69,8 @@ export interface UnitSpec {
     defense: number;
     /** Defense against cavalry */
     defenseCavalry: number;
+    /** Verteidigung gegen Bogenschützen (19-12) */
+    defenseArcher: number;
     /** Minutes per map field at world speed 1 */
     speedMinPerField: number;
     /** Loot capacity */
@@ -79,12 +83,12 @@ export interface UnitSpec {
     recruitedAt: 'barracks' | 'stable' | 'workshop' | 'academy';
     /**
      * Gegen welche Verteidigung die Einheit angreift (19-10; vorher
-     * `isCavalry`). 19-12 ergänzt `archer`.
+     * `isCavalry`), seit 19-12 mit eigener Klasse für Bogenschützen.
      */
     attackClass: AttackClass;
 }
 
-export type AttackClass = 'infantry' | 'cavalry';
+export type AttackClass = 'infantry' | 'cavalry' | 'archer';
 
 export type MovementKind =
     | 'attack'
@@ -125,6 +129,11 @@ export interface WorldSettings {
     barbarianMaxPoints: number;
     /** Fraction of all villages the player must own to win, 0..1 */
     victoryVillageShare: number;
+    /**
+     * Gibt es Bogenschützen in dieser Welt (19-12)? Ist sie aus, sind
+     * `archer` und `mounted_archer` weder rekrutierbar noch sichtbar.
+     */
+    archers: boolean;
     seed: number;
 }
 

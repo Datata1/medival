@@ -50,6 +50,7 @@ export const CreateWorldForm = observer(function CreateWorldForm({
     const [name, setName] = useState('');
     const [preset, setPreset] = useState<PresetKey>('fast');
     const [barbarians, setBarbarians] = useState<BarbarianKey>('calm');
+    const [archers, setArchers] = useState(true);
 
     const submit = async () => {
         const chosen = SPEED_PRESETS[preset];
@@ -60,6 +61,7 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                 unitSpeed: chosen.unitSpeed,
                 barbarianAttemptsPerHour:
                     BARBARIAN_PRESETS[barbarians].rate,
+                archers,
             },
         );
         if (id !== null) onCreated(id);
@@ -100,6 +102,14 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                         </option>
                     ))}
                 </select>
+                <label className="flex items-center gap-1">
+                    <input
+                        type="checkbox"
+                        checked={archers}
+                        onChange={(e) => setArchers(e.target.checked)}
+                    />
+                    {t('lobby.archers')}
+                </label>
                 <Button
                     onClick={() => void submit()}
                     disabled={lobby.isSubmitting}

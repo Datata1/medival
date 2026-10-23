@@ -11,6 +11,7 @@ export * from './logic/rng.js';
 export * from './logic/terrain.js';
 export * from './logic/tiles.js';
 export * from './logic/travel.js';
+export * from './logic/units.js';
 export * from './schema/api.js';
 export * from './schema/events.js';
 export * from './schema/primitives.js';
@@ -36,6 +37,7 @@ export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     barbarianAttemptsPerHour: 1,
     barbarianMaxPoints: 1500,
     victoryVillageShare: 0.6,
+    archers: true,
     seed: 0,
 };
 

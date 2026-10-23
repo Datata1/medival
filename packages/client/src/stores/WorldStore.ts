@@ -2,6 +2,9 @@ import {
     Duration,
     GameTime,
     type GameTimeLike,
+    UNIT_ORDER,
+    type UnitType,
+    unitsEnabled,
     type WorldSummary,
 } from '@medival/shared';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -62,6 +65,15 @@ export class WorldStore {
     }
 
     /** Läuft der Server im Entwicklermodus (Pause, Vorspulen)? */
+    /**
+     * Die Einheiten dieser Welt (19-12). Alle Listen im Client gehen
+     * hierüber, damit keine eine Einheit zeigt, die es nicht gibt.
+     */
+    get enabledUnits(): UnitType[] {
+        const settings = this.summary?.settings;
+        return settings ? unitsEnabled(settings) : [...UNIT_ORDER];
+    }
+
     get devMode(): boolean {
         return this.summary?.devMode ?? false;
     }

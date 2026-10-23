@@ -1,10 +1,5 @@
 import type { UnitSpec, VillageView } from '@medival/shared';
-import {
-    type Resources,
-    UNIT_ORDER,
-    UNITS,
-    type UnitType,
-} from '@medival/shared';
+import { type Resources, UNITS, type UnitType } from '@medival/shared';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
 import { Table, Th } from '../../components/Table.js';
@@ -21,10 +16,13 @@ export function RecruitTable({
     village,
     live,
     speed,
+    enabledUnits,
     busy,
     error,
     onRecruit,
 }: {
+    /** Was es in dieser Welt gibt (`world.enabledUnits`, 19-12). */
+    enabledUnits: readonly UnitType[];
     /** Zeigt nur die Einheiten, die hier ausgebildet werden. */
     building: UnitSpec['recruitedAt'];
     village: VillageView;
@@ -36,7 +34,7 @@ export function RecruitTable({
 }) {
     const { t } = useTranslation();
     const popFree = village.popMax - village.popUsed;
-    const available = UNIT_ORDER.filter(
+    const available = enabledUnits.filter(
         (type) => UNITS[type].recruitedAt === building,
     );
 
