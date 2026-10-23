@@ -3,6 +3,7 @@ import { asc, eq, lte, sql } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { events } from '../db/schema.js';
 import type { GameClock } from './clock.js';
+import { recordEvent } from './health.js';
 
 export interface GameEvent {
     id: number;
@@ -242,12 +243,15 @@ export class Scheduler {
             type: next.type,
             payload: JSON.parse(next.payload),
         };
+        const started = performance.now();
+        const lag = this.clock.now() - event.dueGameTime;
         try {
             this.handler(event);
         } catch (error) {
             // One poison event must never freeze the world.
             this.onHandlerError(event, error);
         }
+        recordEvent(event.type, performance.now() - started, lag);
         return true;
     }
 

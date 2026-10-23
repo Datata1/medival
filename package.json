@@ -18,7 +18,9 @@
         "check:contrast": "node scripts/check-contrast.mjs --self-test && node scripts/check-contrast.mjs --verbose",
         "check:assets": "node scripts/check-assets.mjs --self-test && node scripts/check-assets.mjs",
         "check:ai-purity": "node scripts/check-ai-purity.mjs --self-test && node scripts/check-ai-purity.mjs",
-        "assets:generate": "node scripts/generate-placeholder-assets.mjs"
+        "assets:generate": "node scripts/generate-placeholder-assets.mjs",
+        "loadtest": "pnpm --filter @medival/server exec tsx ../../scripts/loadtest/run.ts",
+        "loadtest:smoke": "pnpm --filter @medival/server exec tsx ../../scripts/loadtest/run.ts --smoke"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.5.6",
