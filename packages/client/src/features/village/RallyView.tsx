@@ -1,5 +1,9 @@
 import type { MovementInfo, Units } from '@medival/shared';
-import { entriesOf, MOVEMENT_KINDS } from '@medival/shared';
+import {
+    entriesOf,
+    MOVEMENT_KINDS,
+    RALLY_POINT,
+} from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Arrival } from '../../components/Arrival.js';
@@ -59,8 +63,9 @@ function MovementRow({
 /**
  * Der Versammlungsplatz (plans/18-ux/18-2-dorfuebersicht.md).
  *
- * Kein Gebäude, sondern ein Ort: immer da, immer Stufe 1, nichts zu bauen.
- * Hier laufen **alle** Bewegungen dieses Dorfes zusammen — Angriffe,
+ * Seit 19-13 ein Gebäude mit einer Stufe: ab Start da, aber zerstörbar —
+ * dann marschiert nichts mehr ab, bis er im Hauptgebäude neu gebaut ist. Hier
+ * laufen **alle** Bewegungen dieses Dorfes zusammen — Angriffe,
  * Unterstützung, Rückkehr und Lieferungen, ein- und ausgehend. Die Übersicht
  * zeigt davon nur, ob etwas kommt, und verweist hierher.
  */
@@ -70,7 +75,8 @@ export const RallyView = observer(function RallyView({
     villageId: number;
 }) {
     const { t } = useTranslation();
-    const { movements } = useStores();
+    const { movements, village } = useStores();
+    const destroyed = (village.view?.buildings[RALLY_POINT] ?? 1) < 1;
 
     const rows = movementRows(movements, villageId, MOVEMENT_KINDS);
     const incoming = rows.filter((r) => r.incoming);
@@ -79,10 +85,15 @@ export const RallyView = observer(function RallyView({
     return (
         <Card>
             <h1 className="flex items-center gap-2">
-                <Icon name="yard.rally" size={32} />
-                {t('buildings.rally')}
+                <Icon name={`yard.${RALLY_POINT}`} size={32} />
+                {t(`buildings.${RALLY_POINT}`)}
             </h1>
             <p className="text-ink-light">{t('village.rally.intro')}</p>
+            {destroyed && (
+                <p className="text-seal">
+                    {t('village.rally.destroyed')}
+                </p>
+            )}
 
             {rows.length === 0 && (
                 <p className="text-ink-light">

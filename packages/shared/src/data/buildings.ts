@@ -91,7 +91,36 @@ export const BUILDINGS: Record<BuildingType, BuildingSpec> = {
         maxLevel: 15,
         basePop: 8,
         popFactor: 1.17,
-        requires: { headquarters: 10 },
+        // Schmiede 10 (19-13): Belagerungsgerät kommt nach der Forschung.
+        requires: { headquarters: 10, smithy: 10 },
+    },
+    /**
+     * Schmiede (plans/19-prototyp/19-13): erforscht Einheiten. Ohne Forschung
+     * gibt es nur Speerträger. Werte nach Tribal Wars.
+     */
+    smithy: {
+        baseCost: { wood: 220, clay: 180, iron: 240 },
+        costFactor: 1.26,
+        baseTimeS: 6000,
+        timeFactor: 1.2,
+        maxLevel: 20,
+        basePop: 20,
+        popFactor: 1.17,
+        requires: { headquarters: 5, barracks: 1 },
+    },
+    /**
+     * Versammlungsplatz (19-13): ohne ihn kann ein Dorf keine Truppen
+     * schicken. Jedes Dorf hat ihn ab Start; Katapulte können ihn
+     * zerstören, dann muss er neu gebaut werden.
+     */
+    rally_point: {
+        baseCost: { wood: 10, clay: 40, iron: 30 },
+        costFactor: 1.26,
+        baseTimeS: 600,
+        timeFactor: 1.2,
+        maxLevel: 1,
+        basePop: 0,
+        popFactor: 1,
     },
     wall: {
         baseCost: { wood: 50, clay: 100, iron: 20 },
@@ -102,6 +131,19 @@ export const BUILDINGS: Record<BuildingType, BuildingSpec> = {
         basePop: 5,
         popFactor: 1.17,
         requires: { barracks: 1 },
+    },
+    /**
+     * Versteck (19-13): schützt je Rohstoff `hiddenCapacity(level)` vor
+     * Plünderung. Werte nach Tribal Wars.
+     */
+    hiding_place: {
+        baseCost: { wood: 50, clay: 60, iron: 50 },
+        costFactor: 1.25,
+        baseTimeS: 1800,
+        timeFactor: 1.2,
+        maxLevel: 10,
+        basePop: 2,
+        popFactor: 1.17,
     },
     market: {
         baseCost: { wood: 100, clay: 120, iron: 70 },
@@ -135,7 +177,10 @@ export const BUILDING_ORDER = [
     'barracks',
     'stable',
     'workshop',
+    'smithy',
+    'rally_point',
     'wall',
+    'hiding_place',
     'market',
     'academy',
 ] as const satisfies readonly BuildingType[];
@@ -155,7 +200,10 @@ export const EMPTY_BUILDING_LEVELS: BuildingLevels = {
     barracks: 0,
     stable: 0,
     workshop: 0,
+    smithy: 0,
+    rally_point: 0,
     wall: 0,
+    hiding_place: 0,
     market: 0,
     academy: 0,
 };
@@ -163,6 +211,15 @@ export const EMPTY_BUILDING_LEVELS: BuildingLevels = {
 /** Wall: multiplies total defense and contributes flat base defense. */
 export const WALL_DEFENSE_FACTOR_PER_LEVEL = 0.05;
 export const WALL_BASE_DEFENSE_PER_LEVEL = 30;
+
+/**
+ * Geschützte Menge je Rohstoff im Versteck (19-13): Sie bleibt bei einer
+ * Plünderung im Dorf. Stufe 10 schützt knapp 2 000.
+ */
+export function hiddenCapacity(level: number): number {
+    if (level <= 0) return 0;
+    return Math.round(150 * 1.3335 ** (level - 1));
+}
 
 /** Warehouse capacity at a given level. */
 export function warehouseCapacity(level: number): number {

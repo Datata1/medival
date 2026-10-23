@@ -55,11 +55,17 @@ export const BotTickPayloadSchema = z.object({
     playerId: z.number().int().positive(),
 });
 
+/** Eine Forschung in der Schmiede ist fertig (19-13). */
+export const ResearchCompletePayloadSchema = z.object({
+    queueId: z.number().int().positive(),
+});
+
 /** Alle bekannten Event-Typen mit ihren Payloads. */
 export const EVENT_SCHEMAS = {
     build_complete: BuildCompletePayloadSchema,
     recruit_tick: RecruitTickPayloadSchema,
     recruit_done: RecruitDonePayloadSchema,
+    research_complete: ResearchCompletePayloadSchema,
     arrival: ArrivalPayloadSchema,
     barbarian_tick: BarbarianTickPayloadSchema,
     bot_tick: BotTickPayloadSchema,

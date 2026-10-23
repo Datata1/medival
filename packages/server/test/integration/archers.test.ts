@@ -121,9 +121,10 @@ describe('Welt-Option archers', () => {
 });
 
 /**
- * Zwei Spielwochen mit vier `turtle`-Bots; Bogenschützen zu Hause und in
- * Auftrag. Zwei, weil nach einer Woche noch kein Bot überhaupt eine Einheit
- * hatte (gemessen).
+ * Drei Spielwochen mit vier `turtle`-Bots; Bogenschützen zu Hause und in
+ * Auftrag. Drei, weil Bogenschützen seit 19-13 Schmiede 5 verlangen: Nach
+ * zwei Wochen hatte noch kein Bot eine Schmiede, nach drei alle Stufe 5
+ * (gemessen).
  */
 async function turtleWeek(archers: boolean): Promise<number> {
     tw = createTestWorld(
@@ -144,7 +145,7 @@ async function turtleWeek(archers: boolean): Promise<number> {
             "UPDATE players SET personality = 'turtle' WHERE is_bot = 1",
         )
         .run();
-    await advanceYielding(world, gameWeeks(world, 2));
+    await advanceYielding(world, gameWeeks(world, 3));
     const n = (type: string) =>
         (
             world.sqlite
@@ -160,7 +161,8 @@ async function turtleWeek(archers: boolean): Promise<number> {
 
 describe('Bots und Bogenschützen', () => {
     it('turtle-Bots heben Bogenschützen aus, wenn es sie gibt', async () => {
-        // Gemessen (19-12): 24 Bogenschützen neben 75 Speeren und 30 Schwertern.
+        // Gemessen (19-13): 69 Bogenschützen neben 230 Speeren und 104
+        // Schwertern, dazu 3 in Ausbildung.
         expect(await turtleWeek(true)).toBeGreaterThan(0);
     }, 90_000);
 

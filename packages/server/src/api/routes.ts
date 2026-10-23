@@ -14,6 +14,7 @@ import {
     MapTilesQuerySchema,
     NumericIdSchema,
     RecruitRequestSchema,
+    ResearchRequestSchema,
     ScoutReportPayloadSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
@@ -39,6 +40,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
+import { researchUnit } from '../engine/research.js';
 import { settleNewPlayer } from '../engine/settle.js';
 import { sendResources } from '../engine/trade.js';
 import {
@@ -612,6 +614,21 @@ export function registerRoutes(
             );
             const body = parseInput(RecruitRequestSchema, req.body);
             recruitUnits(world, villageId, body.unit, body.count);
+            return world.villageView(villageId);
+        },
+    );
+
+    app.post<{ Params: { id: string; vid: string } }>(
+        '/api/worlds/:id/villages/:vid/research',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const { villageId } = ownVillage(
+                world,
+                req,
+                req.params.vid,
+            );
+            const body = parseInput(ResearchRequestSchema, req.body);
+            researchUnit(world, villageId, body.unit);
             return world.villageView(villageId);
         },
     );

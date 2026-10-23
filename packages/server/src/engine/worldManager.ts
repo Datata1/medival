@@ -5,7 +5,12 @@ import {
     BUILDING_ORDER,
     createRng,
     DEFAULT_WORLD_SETTINGS,
+    keysOf,
+    RESEARCH,
     UNIT_ORDER,
+    UnitsSchema,
+    type UnitType,
+    UnitTypeSchema,
     WorldSettingsPatchSchema,
     WorldSettingsSchema,
 } from '@medival/shared';
@@ -15,7 +20,7 @@ import { z } from 'zod';
 import { startBarbarianTicks } from '../ai/barbarian.js';
 import { startBotTicks } from '../ai/bot.js';
 import { Accounts } from '../auth/accounts.js';
-import { META_DDL, WORLD_DDL } from '../db/ddl.js';
+import { META_DDL, RESEARCH_DDL, WORLD_DDL } from '../db/ddl.js';
 import { parseJsonColumn, parseRow } from '../db/parse.js';
 import {
     TableColumnSchema,
@@ -137,6 +142,14 @@ function migrateWorldDb(sqlite: Database.Database): void {
             'ALTER TABLE movements ADD COLUMN catapult_target TEXT',
         );
 
+    // Plan 19-13: Forschung. Eine Welt von vorher hatte keine Schmiede; damit
+    // ihr Spielstand keine Fähigkeit verliert, gilt jede Einheit als
+    // erforscht, die ein Dorf schon hat, ausbildet oder auf dem Marsch hat.
+    if (!tableExists(sqlite, 'research')) {
+        sqlite.exec(RESEARCH_DDL);
+        grantExistingResearch(sqlite);
+    }
+
     // Zuletzt (19-10): CHECK-Listen auf den Stand von UNIT_ORDER bzw.
     // BUILDING_ORDER bringen — nach allen Spaltenmigrationen oben, damit die
     // Neuanlage die bereits umgerechneten Spalten übernimmt.
@@ -146,10 +159,66 @@ function migrateWorldDb(sqlite: Database.Database): void {
         buildings: BUILDING_ORDER,
         build_queue: BUILDING_ORDER,
     });
+    // Den Versammlungsplatz hatte jedes Dorf schon vor 19-13 — als
+    // Unterseite ohne Stufe. Als Gebäude steht er deshalb auf 1, nicht 0.
+    sqlite.exec(
+        "INSERT OR IGNORE INTO buildings (village_id, type, level) SELECT id, 'rally_point', 1 FROM villages",
+    );
     const addRows = sqlite.prepare(
         'INSERT OR IGNORE INTO buildings (village_id, type, level) SELECT id, ?, 0 FROM villages',
     );
     for (const type of BUILDING_ORDER) addRows.run(type);
+}
+
+function tableExists(sqlite: Database.Database, name: string): boolean {
+    return (
+        sqlite
+            .prepare(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            )
+            .get(name) !== undefined
+    );
+}
+
+const UnitRowSchema = z.object({
+    village_id: z.number().int(),
+    unit_type: UnitTypeSchema,
+});
+const MarchRowSchema = z.object({
+    village_id: z.number().int(),
+    units_json: z.string(),
+});
+
+/** Bestandsschutz für 19-13: Was ein Dorf hat, gilt als erforscht. */
+function grantExistingResearch(sqlite: Database.Database): void {
+    const insert = sqlite.prepare(
+        'INSERT OR IGNORE INTO research (village_id, unit_type) VALUES (?, ?)',
+    );
+    const grant = (villageId: number, unit: UnitType) => {
+        if (RESEARCH[unit] !== null) insert.run(villageId, unit);
+    };
+    for (const row of sqlite
+        .prepare(
+            `SELECT village_id, unit_type FROM units WHERE count_home > 0
+             UNION SELECT village_id, unit_type FROM recruit_queue`,
+        )
+        .all()) {
+        const r = parseRow(UnitRowSchema, row, 'units');
+        grant(r.village_id, r.unit_type);
+    }
+    for (const row of sqlite
+        .prepare(
+            'SELECT origin_village_id AS village_id, units_json FROM movements',
+        )
+        .all()) {
+        const r = parseRow(MarchRowSchema, row, 'movements');
+        const units = parseJsonColumn(
+            UnitsSchema,
+            r.units_json,
+            'movements.units_json',
+        );
+        for (const unit of keysOf(units)) grant(r.village_id, unit);
+    }
 }
 
 function loadSecret(dataDir: string): string {

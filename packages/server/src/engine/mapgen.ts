@@ -12,6 +12,7 @@ import {
     villagePoints,
     type WorldSettings,
 } from '@medival/shared';
+import { sql } from 'drizzle-orm';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { firstOrThrow } from '../db/parse.js';
 import { buildings, players, units, villages } from '../db/schema.js';
@@ -251,18 +252,29 @@ export interface BarbarianSpec {
 
 /** Ausstattung eines Barbarendorfs würfeln — vier Würfe für Stufen, zwei für Truppen. */
 export function rollBarbarian(rng: Rng): BarbarianSpec {
+    const levels = {
+        ...STARTING_BUILDINGS,
+        timber_camp: randInt(rng, 2, 6),
+        clay_pit: randInt(rng, 2, 6),
+        iron_mine: randInt(rng, 1, 5),
+        warehouse: randInt(rng, 1, 4),
+    };
+    // A token garrison so farming isn't entirely free.
+    const spear = randInt(rng, 3, 25);
+    const sword = randInt(rng, 0, 12);
     return {
-        // Modest resource buildings so early farming pays off.
         levels: {
-            ...STARTING_BUILDINGS,
-            timber_camp: randInt(rng, 2, 6),
-            clay_pit: randInt(rng, 2, 6),
-            iron_mine: randInt(rng, 1, 5),
-            warehouse: randInt(rng, 1, 4),
+            ...levels,
+            /*
+             * Versteck 0–3 (19-13), ohne eigenen Wurf: Ein fünfter Wurf
+             * verschöbe jeden folgenden Zufallswert und damit Lage und
+             * Ausstattung aller Dörfer bestehender Seeds. Die Garnison ist
+             * selbst gewürfelt und reicht als Quelle.
+             */
+            hiding_place: (spear + sword) % 4,
         },
-        // A token garrison so farming isn't entirely free.
-        spear: randInt(rng, 3, 25),
-        sword: randInt(rng, 0, 12),
+        spear,
+        sword,
     };
 }
 
@@ -285,5 +297,9 @@ export function insertBarbarian(
             { villageId: id, unitType: 'sword', countHome: spec.sword },
         ])
         .run();
+    // Barbaren heben Schwertkämpfer aus, ohne zu forschen (19-13).
+    db.run(
+        sql`INSERT OR IGNORE INTO research (village_id, unit_type) VALUES (${id}, 'sword')`,
+    );
     return id;
 }

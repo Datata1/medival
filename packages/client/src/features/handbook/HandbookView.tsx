@@ -8,6 +8,7 @@ import {
     MERCHANT_MIN_PER_FIELD,
     marketCapacity,
     productionPerHour,
+    RESEARCH,
     UNITS,
     type UnitType,
     WALL_BASE_DEFENSE_PER_LEVEL,
@@ -91,6 +92,7 @@ function UnitTable({
                             <Th>{t('handbook.colCost')}</Th>
                             <Th>{t('handbook.colRecruitTime')}</Th>
                             <Th>{t('handbook.colRecruitedAt')}</Th>
+                            <Th>{t('handbook.colResearch')}</Th>
                         </tr>
                     </thead>
                     <tbody className="tabular-nums">
@@ -134,6 +136,18 @@ function UnitTable({
                                         {t(
                                             `buildings.${u.recruitedAt}`,
                                         )}
+                                    </Td>
+                                    <Td>
+                                        {RESEARCH[type]
+                                            ? t(
+                                                  'village.research.smithyLevel',
+                                                  {
+                                                      level: RESEARCH[
+                                                          type
+                                                      ]?.smithy,
+                                                  },
+                                              )
+                                            : '—'}
                                     </Td>
                                 </tr>
                             );

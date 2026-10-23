@@ -15,8 +15,10 @@ export class VillageStore {
     villageId: number | null = null;
     buildError: string | null = null;
     recruitError: string | null = null;
+    researchError: string | null = null;
     isBuilding = false;
     isRecruiting = false;
+    isResearching = false;
 
     constructor() {
         makeAutoObservable(this);
@@ -36,6 +38,7 @@ export class VillageStore {
                 this.village.clear();
                 this.buildError = null;
                 this.recruitError = null;
+                this.researchError = null;
             }
         });
         await this.reload();
@@ -112,6 +115,33 @@ export class VillageStore {
         } finally {
             runInAction(() => {
                 this.isRecruiting = false;
+            });
+        }
+    }
+
+    /** Eine Einheit in der Schmiede erforschen (19-13). */
+    async research(unit: UnitType): Promise<void> {
+        const { worldId, villageId } = this;
+        if (worldId === null || villageId === null) return;
+        runInAction(() => {
+            this.isResearching = true;
+            this.researchError = null;
+        });
+        try {
+            const updated = await api.research(
+                worldId,
+                villageId,
+                unit,
+            );
+            runInAction(() => this.village.set(updated));
+        } catch (cause) {
+            runInAction(() => {
+                this.researchError = apiErrorMessage(cause);
+            });
+            this.onActionFailed?.();
+        } finally {
+            runInAction(() => {
+                this.isResearching = false;
             });
         }
     }

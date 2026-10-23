@@ -37,6 +37,11 @@ export const BuildRequestSchema = z.object({
     building: BuildingTypeSchema,
 });
 
+/** Eine Einheit in der Schmiede erforschen (19-13). */
+export const ResearchRequestSchema = z.object({
+    unit: UnitTypeSchema,
+});
+
 export const RecruitRequestSchema = z.object({
     unit: UnitTypeSchema,
     count: z.number().int().positive().max(100_000),
@@ -188,6 +193,12 @@ export const VillageViewSchema = z.object({
     buildQueue: z.array(BuildQueueItemSchema),
     recruitQueue: z.array(RecruitQueueItemSchema),
     units: UnitsSchema,
+    /** Erforschte Einheiten dieses Dorfes (19-13). */
+    researched: z.array(UnitTypeSchema),
+    /** Laufende Forschung — höchstens eine je Dorf. */
+    research: z
+        .object({ unit: UnitTypeSchema, completesAt: GameTimeSchema })
+        .nullable(),
     popUsed: z.number(),
     popMax: z.number(),
     /** Gesamte Transportkapazität des Marktplatzes. */

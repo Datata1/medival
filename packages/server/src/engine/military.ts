@@ -6,13 +6,16 @@ import {
     catapultDamage,
     DEFAULT_CATAPULT_TARGET,
     distance,
+    distributeLoot,
     entriesOf,
     farmCapacity,
     GameTime,
+    hiddenCapacity,
     isScoutMission,
     isUnitEnabled,
     type MovementKind,
     type Resources,
+    recruitBlock,
     recruitTime,
     resolveBattle,
     resolveSpying,
@@ -44,6 +47,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { GameError } from './errors.js';
+import { getResearched } from './research.js';
 import { EVENT_PRIORITY } from './scheduler.js';
 import { handleTradeArrival } from './trade.js';
 import type { World } from './world.js';
@@ -120,9 +124,13 @@ export function recruitUnits(
 
     world.sqlite.transaction(() => {
         const levels = world.getBuildingLevels(villageId);
-        if (levels[building] < 1) {
-            throw new GameError(`${building}_missing`);
-        }
+        // Gebäude und Forschung an einer Stelle (19-13, `recruitBlock`).
+        const block = recruitBlock(
+            unitType,
+            levels,
+            getResearched(world, villageId),
+        );
+        if (block !== null) throw new GameError(block);
 
         const popAfter =
             world.popInUse(villageId, levels) +
@@ -407,6 +415,9 @@ export function sendUnits(
         if (kind === 'attack' && target.playerId === origin.playerId) {
             throw new GameError('own_village_attack');
         }
+        // Ohne Versammlungsplatz marschiert niemand (19-13).
+        if (world.getBuildingLevels(originId).rally_point < 1)
+            throw new GameError('no_rally_point');
 
         const home = world.getUnits(originId);
         for (const [type, n] of entriesOf(sent)) {
@@ -888,21 +899,15 @@ function resolveAttackArrival(
         }
     }
 
-    // Loot.
+    // Beute (19-13: über `distributeLoot`, abzüglich Versteck).
     let loot = { wood: 0, clay: 0, iron: 0 };
     if (result.attackerWon) {
-        const capacity = carryCapacity(survivors);
-        const total =
-            targetResources.wood +
-            targetResources.clay +
-            targetResources.iron;
-        if (capacity > 0 && total > 0) {
-            const share = Math.min(1, capacity / total);
-            loot = {
-                wood: Math.floor(targetResources.wood * share),
-                clay: Math.floor(targetResources.clay * share),
-                iron: Math.floor(targetResources.iron * share),
-            };
+        loot = distributeLoot(
+            targetResources,
+            hiddenCapacity(targetLevels.hiding_place),
+            carryCapacity(survivors),
+        );
+        if (loot.wood + loot.clay + loot.iron > 0) {
             world.db
                 .update(villages)
                 .set({

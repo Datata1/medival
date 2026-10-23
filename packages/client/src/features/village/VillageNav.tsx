@@ -20,6 +20,7 @@ const NAV_BUILDINGS = [
     'barracks',
     'stable',
     'workshop',
+    'smithy',
     'market',
 ] as const satisfies readonly BuildingType[];
 
@@ -60,13 +61,18 @@ export const VillageNav = observer(function VillageNav() {
                     {t(`buildings.${type}`)}
                 </Link>
             ))}
-            {/* Der Versammlungsplatz ist immer da — er wird nicht gebaut. */}
+            {/*
+             * Der Versammlungsplatz auch auf Stufe 0: Nach einem Beschuss
+             * stehen hier die Bewegungen und der Hinweis, warum nichts mehr
+             * abmarschiert (19-13).
+             */}
             <Link
                 to="/worlds/$worldId/village/$villageId/$building"
                 params={{ ...params, building: RALLY_POINT }}
                 className={TAB_LINK_CLASS}
             >
-                <Icon name="building.rally" /> {t('buildings.rally')}
+                <Icon name={`building.${RALLY_POINT}`} />{' '}
+                {t(`buildings.${RALLY_POINT}`)}
             </Link>
         </nav>
     );

@@ -4,6 +4,7 @@ import {
     GameTime,
     keysOf,
     type Resources,
+    researchCost,
     subtractResources,
     unitCost,
 } from '@medival/shared';
@@ -29,6 +30,7 @@ import {
     decideSupport,
 } from './decide/military.js';
 import { decideRecruit } from './decide/recruit.js';
+import { decideResearch } from './decide/research.js';
 import { decideShipment } from './decide/trade.js';
 import { executeIntents } from './execute.js';
 import type { BotState, Intent } from './intents.js';
@@ -149,6 +151,23 @@ export function planBot(snapshot: BotSnapshot): {
         if (choice.waitFor !== null && choice.waitFor < soonest) {
             soonest = choice.waitFor;
         }
+    }
+
+    // Forschung vor den Truppen (19-13): Ohne sie gibt es nur Speerträger.
+    for (const village of snapshot.villages) {
+        const rest = leftover.get(village.id) ?? village.resources;
+        const unit = decideResearch(
+            village,
+            rest,
+            snapshot.personality,
+            snapshot.enabledUnits,
+        );
+        if (!unit) continue;
+        intents.push({ kind: 'research', villageId: village.id, unit });
+        leftover.set(
+            village.id,
+            subtractResources(rest, researchCost(unit)),
+        );
     }
 
     // Truppen aus dem, was nach dem Bauen übrig ist (Plan 17).
