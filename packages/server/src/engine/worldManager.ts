@@ -31,7 +31,7 @@ import {
     TableColumnSchema,
     WorldMetaRowSchema,
 } from '../db/rowSchemas.js';
-import { EngineHealth } from './health.js';
+import { EngineHealth, totals } from './health.js';
 import { type Founder, generateMap } from './mapgen.js';
 import { type MetaPatch, World, type WorldMeta } from './world.js';
 
@@ -229,6 +229,46 @@ function grantExistingResearch(sqlite: Database.Database): void {
     }
 }
 
+/**
+ * WAL mit `synchronous = NORMAL` (19-15). Mit der Voreinstellung `FULL`
+ * wartete jeder Commit auf die Platte: 2,6 ms p50 und 5,7 ms p99 je
+ * Transaktion auf der NVMe des Messrechners, mit `NORMAL` 0,005 ms. Jeder
+ * Bau, jede Rekrutierung und jeder Bot-Tick mit Befehl zahlte das; die
+ * Lastprobe zeigte es als Bot-Tick-p99 von 6,8 ms.
+ *
+ * Der Preis: Ein Stromausfall oder Absturz des Betriebssystems kann die
+ * letzten Commits kosten. Ein Absturz des Prozesses kostet nichts — das WAL
+ * steht dann schon im Dateisystem.
+ */
+function openPragmas(
+    sqlite: Database.Database,
+    { manualCheckpoint = false } = {},
+): void {
+    sqlite.pragma('journal_mode = WAL');
+    sqlite.pragma('synchronous = NORMAL');
+    /*
+     * Welt-DBs ohne automatischen Checkpoint (19-15): SQLite schreibt das WAL
+     * sonst alle 1 000 Seiten in die Datenbank zurück — synchron im Commit,
+     * der die Grenze überschreitet, samt `fsync`. Mit diesem Schritt fiel das
+     * Maximum der Bot-Ticks in einem Kurzlauf der Lastprobe von 18 auf
+     * 3,3 ms. Der Checkpoint läuft stattdessen alle 15 s im Persist-Takt
+     * (`checkpointWorld`), mit eigener Zeitmessung. Bei sehr hoher
+     * Schreiblast dauert er dort Hunderte ms (Stresslauf, 19-15) — dann
+     * gehört er in einen eigenen Thread.
+     */
+    if (manualCheckpoint) sqlite.pragma('wal_autocheckpoint = 0');
+    // Nach einem Checkpoint das WAL auf höchstens 16 MB kürzen — ohne diese
+    // Grenze behält es für immer die Größe seines größten Schubs.
+    sqlite.pragma(`journal_size_limit = ${16 * 1024 * 1024}`);
+}
+
+/** WAL zurückschreiben, ohne Leser oder Schreiber zu blockieren. */
+function checkpointWorld(world: World): void {
+    const started = performance.now();
+    world.sqlite.pragma('wal_checkpoint(PASSIVE)');
+    totals.checkpoint.record(performance.now() - started);
+}
+
 function loadSecret(dataDir: string): string {
     const file = path.join(dataDir, 'secret');
     if (fs.existsSync(file))
@@ -324,7 +364,7 @@ export class WorldManager {
     constructor(private readonly dataDir: string) {
         fs.mkdirSync(dataDir, { recursive: true });
         this.meta = new Database(path.join(dataDir, 'worlds.sqlite'));
-        this.meta.pragma('journal_mode = WAL');
+        openPragmas(this.meta);
         this.meta.exec(META_DDL);
         this.accounts = new Accounts(
             this.meta,
@@ -345,8 +385,10 @@ export class WorldManager {
                 'ALTER TABLE worlds ADD COLUMN settled_count INTEGER',
             );
         this.persistTimer = setInterval(() => {
-            for (const w of this.worlds.values())
+            for (const w of this.worlds.values()) {
                 if (w.clock.running) w.persist();
+                checkpointWorld(w);
+            }
             this.health.check(this.worlds.values());
         }, 15_000);
         this.persistTimer.unref();
@@ -429,15 +471,22 @@ export class WorldManager {
         const id = Number(info.lastInsertRowid);
 
         const sqlite = new Database(this.worldPath(id));
-        sqlite.pragma('journal_mode = WAL');
+        openPragmas(sqlite, { manualCheckpoint: true });
         sqlite.exec(WORLD_DDL);
         const db = drizzle(sqlite);
-        const settledCount = generateMap(
-            db,
-            settings,
-            createRng(seed),
-            options.founder ?? null,
-        );
+        /*
+         * Eine Transaktion für die ganze Karte (19-15). Einzeln geschrieben
+         * landeten 2 300 Dörfer als 151 MB im WAL — für eine Datenbank von
+         * 2,3 MB.
+         */
+        const settledCount = sqlite.transaction(() =>
+            generateMap(
+                db,
+                settings,
+                createRng(seed),
+                options.founder ?? null,
+            ),
+        )();
 
         const world = new World(
             {
@@ -477,7 +526,7 @@ export class WorldManager {
         const row = parseRow(WorldMetaRowSchema, rawRow, 'worlds row');
 
         const sqlite = new Database(this.worldPath(id));
-        sqlite.pragma('journal_mode = WAL');
+        openPragmas(sqlite, { manualCheckpoint: true });
         migrateWorldDb(sqlite);
         const db = drizzle(sqlite);
         const world = new World(

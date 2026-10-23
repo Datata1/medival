@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { events } from '../db/schema.js';
 import { GameError } from '../engine/errors.js';
-import { botTickTimings } from '../engine/health.js';
+import { botTickTimings, totals } from '../engine/health.js';
 import {
     acceptInvitation,
     foundTribe,
@@ -369,6 +369,21 @@ const BotTickRowSchema = z.object({
     due: z.number(),
 });
 
+/**
+ * Bis zu 15 % später nachdenken als geplant (19-15). Ohne Streuung blieben
+ * die Bots einer Welt im Gleichtakt: Sie starten zusammen und warten gleich
+ * lange. In der Lastprobe kamen so 162 Bot-Ticks in einem einzigen
+ * 10-s-Fenster, davor und danach keiner, und die Events hinter der Welle
+ * warteten bis zu 210 ms. Nur nach hinten, damit ein Bot nie vor dem
+ * Zeitpunkt aufwacht, für den er geplant hat (etwa eine frei werdende
+ * Bauschleife).
+ */
+export const BOT_TICK_SPREAD = 0.15;
+
+function spread(delay: Duration, rng: () => number): Duration {
+    return Duration.scale(delay, 1 + rng() * BOT_TICK_SPREAD);
+}
+
 export function scheduleBotTick(
     world: World,
     playerId: number,
@@ -393,6 +408,8 @@ export function handleBotTick(
     const { intents, nextIn, state } = planBot(snapshot);
     const budget = DIFFICULTY_ACTION_BUDGET[snapshot.difficulty];
     const result = executeIntents(world, intents, budget);
+    totals.botIntents.done += result.done;
+    totals.botIntents.rejected += result.rejected.length;
 
     for (const { intent, code } of result.rejected) {
         console.warn(
@@ -405,8 +422,13 @@ export function handleBotTick(
     if (keysOf(state.savingFor).length > 0) {
         writeBotState(world, payload.playerId, state);
     }
-    scheduleBotTick(world, payload.playerId, nextIn);
+    scheduleBotTick(
+        world,
+        payload.playerId,
+        spread(nextIn, world.rng.next),
+    );
     botTickTimings.record(performance.now() - started);
+    totals.botTick.record(performance.now() - started);
 }
 
 /**

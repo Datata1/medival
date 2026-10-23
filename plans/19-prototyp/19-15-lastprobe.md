@@ -1,6 +1,65 @@
 # Ticket 19-15: Lastprobe & Abnahme des Prototyps
 
-**Status:** 📋 offen · **Voraussetzung:** 19-1 bis 19-14 · **Entscheidet:** Worker-Pfad aus [Plan 03](../03-zeit-stabilitaet-node.md)
+**Status:** ✅ erledigt (2026-10-23) · **Voraussetzung:** 19-1 bis 19-14 · **Entscheidet:** Worker-Pfad aus [Plan 03](../03-zeit-stabilitaet-node.md)
+
+> **Ergebnis: Der Prototyp ist abgenommen.** Im Szenario aus der Tabelle unten (1000×1000,
+> 300 Bots, 2 000 Barbaren, 50 Skriptspieler, Speed 10, 60 min) hält jede Grenze mit
+> großem Abstand:
+>
+> - Event-Loop p99 1,2 ms, Event-Rückstand max 1 ms.
+> - HTTP p99 1,8 ms, `map/tiles` p99 2,9 ms, WebSocket p99 7 ms.
+> - Bot-Tick p99 3,6 ms bei 5 071 Ticks, 0 abgewiesene Bot-Intents, 0 × 5xx.
+> - Alle Invarianten grün. Der Server braucht im Mittel 1 % eines Kerns und 300 MB RSS.
+>
+> **Der Worker-Thread je Welt (Plan 03) wird nicht gebaut.** Den vollständigen Bericht mit
+> Einordnung enthält [lastprobe-ergebnis.md](lastprobe-ergebnis.md).
+>
+> - **Lasttest** `scripts/loadtest/` (`run.ts`, `human.ts`, `report.ts`), gestartet mit
+>   `pnpm loadtest` bzw. `pnpm loadtest:smoke` (5 min, 50 Bots, 300 Barbaren, 10 Menschen).
+>   Er startet den echten Server als eigenen Prozess und wärmt 120 s auf (Kurzlauf 60 s),
+>   dann misst er. Danach prüft er die Invarianten in der Welt-DB und schreibt Markdown und
+>   JSON. Optionen: `--minutes`, `--bots`, `--barbarians`, `--humans`, `--speed`,
+>   `--warmup`, `--out`. Zusätzliche Node-Schalter für den Server gibt
+>   `LOADTEST_SERVER_FLAGS` mit (z. B. `--trace-gc`).
+> - **`/api/health`** liefert zusätzlich Gesamtwerte seit dem Start bzw. seit
+>   `POST /api/health/reset` (nur Admins). Dazu gehören Event-Loop, Bot-Ticks, Dauer je
+>   Event-Typ, Verspätung je Event, WAL-Checkpoints und Bot-Intents (ausgeführt bzw.
+>   abgewiesen). Die Histogramme haben festen Speicher (`createHistogram`).
+>   WebSocket-Nachrichten tragen `sentAt`.
+>
+> **Was die Messung am Server geändert hat:**
+>
+> - **Event-Loop-Werte ohne Auflösung.** `monitorEventLoopDelay` zählt die 10 ms Auflösung
+>   mit: 10,5 ms im Leerlauf, ein Block von 30 ms erschien als 39 ms. Gemeldet wird jetzt
+>   nur die Verzögerung. Damit meint auch die Warnung „p99 > 50 ms" 50 ms Verzögerung.
+> - **SQLite:** `synchronous = NORMAL` (vorher wartete jeder Commit auf die Platte, 2,6 ms
+>   p50). Welt-DBs haben keinen automatischen Checkpoint mehr, er läuft im 15-s-Takt mit
+>   eigener Zeitmessung. `journal_size_limit` liegt bei 16 MB. Die Kartengenerierung läuft in
+>   einer Transaktion: vorher 151 MB WAL für 2,3 MB Daten.
+> - **Bots im Gleichtakt:** Im ersten Stundenlauf kamen 162 Bot-Ticks in einem 10-s-Fenster,
+>   und die Events dahinter warteten bis zu 210 ms. Seitdem wacht jeder Bot bis zu 15 %
+>   später auf als geplant. Die Event-Verspätung fiel von p99 135 ms auf 2,6 ms.
+>
+> **Stresslauf** (nicht Teil der Abnahme): Bei Speed 10 kommt in einer Stunde niemand über
+> die Aufbauphase hinaus, deshalb lief zusätzlich 20 min Speed 1000. Bei ~830 Events/s
+> (gut 100-fach) bleiben Event-Loop p99 5 ms und Bot-Tick p99 3 ms, bei 43 % CPU.
+> 13 232 Ankünfte verliefen ohne Fehler, alle Invarianten grün. Gerissen sind nur die
+> HTTP-Antwortzeiten (p99 0,5–0,8 s), wegen der WAL-Checkpoints im Haupt-Thread (p50
+> 287 ms). **Für den PoC:** den Checkpoint in einen eigenen Thread verlegen oder in kleinen
+> Schritten laufen lassen, und die Rate der Barbaren-Ticks (531 je s) für schnelle Welten
+> deckeln.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Aufwärmphase:** Die ersten 120 s zählen nicht in die Grenzen. In einer frischen Welt
+>   denken alle Bots zugleich, und der JIT ist kalt. Die Werte der Phase stehen getrennt im
+>   Bericht (Bot-Tick p99 3,6 ms, Event-Loop max 53 ms).
+> - **Server als Kindprozess** (`node --import tsx src/index.ts`) statt `buildApp` im selben
+>   Prozess. So stören die Skriptspieler den gemessenen Event-Loop nicht, und RSS und CPU
+>   gehören allein dem Server.
+> - **CPU, RSS und DB-Größe** kommen aus `/proc`. Der Lasttest läuft damit nur unter Linux.
+> - **Kein Histogramm je Kennzahl im Health-Fenster:** Die 15-s-Fenster bleiben, wie sie
+>   waren. Die Lastprobe liest die neuen Gesamtwerte.
 
 ## Kontext
 
