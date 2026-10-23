@@ -64,6 +64,8 @@ const BUILD_WEIGHTS: Record<BuildingType, number> = {
     barracks: 1,
     wall: 1,
     stable: 0,
+    // Barbaren belagern niemanden (19-11).
+    workshop: 0,
     academy: 0,
     // Barbaren handeln nicht — ein Marktplatz wäre nutzloser Ballast.
     market: 0,

@@ -19,6 +19,7 @@ const NAV_BUILDINGS = [
     'headquarters',
     'barracks',
     'stable',
+    'workshop',
     'market',
 ] as const satisfies readonly BuildingType[];
 

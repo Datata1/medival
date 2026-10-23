@@ -7,6 +7,7 @@ export type BuildingType =
     | 'farm'
     | 'barracks'
     | 'stable'
+    | 'workshop'
     | 'wall'
     | 'academy'
     | 'market';
@@ -19,6 +20,7 @@ export type UnitType =
     | 'light_cavalry'
     | 'heavy_cavalry'
     | 'ram'
+    | 'catapult'
     | 'noble';
 
 export interface Resources {
@@ -74,7 +76,7 @@ export interface UnitSpec {
     cost: Resources;
     /** Recruit time in seconds at world speed 1 */
     recruitTimeS: number;
-    recruitedAt: 'barracks' | 'stable' | 'academy';
+    recruitedAt: 'barracks' | 'stable' | 'workshop' | 'academy';
     /**
      * Gegen welche Verteidigung die Einheit angreift (19-10; vorher
      * `isCavalry`). 19-12 ergänzt `archer`.

@@ -150,11 +150,12 @@ export const api = {
         target: number,
         kind: 'attack' | 'support',
         units: Units,
+        catapultTarget?: BuildingType,
     ) =>
         request(
             `/api/worlds/${worldId}/villages/${villageId}/send`,
             SendUnitsResponseSchema,
-            postJson({ target, kind, units }),
+            postJson({ target, kind, units, catapultTarget }),
         ),
     ship: (
         worldId: number,

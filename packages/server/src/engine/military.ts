@@ -1,7 +1,10 @@
 import {
+    type BuildingType,
     CarriedResourcesSchema,
     canAfford,
     carryCapacity,
+    catapultDamage,
+    DEFAULT_CATAPULT_TARGET,
     distance,
     entriesOf,
     farmCapacity,
@@ -114,13 +117,7 @@ export function recruitUnits(
     world.sqlite.transaction(() => {
         const levels = world.getBuildingLevels(villageId);
         if (levels[building] < 1) {
-            throw new GameError(
-                building === 'barracks'
-                    ? 'barracks_missing'
-                    : building === 'stable'
-                      ? 'stable_missing'
-                      : 'academy_missing',
-            );
+            throw new GameError(`${building}_missing`);
         }
 
         const popAfter =
@@ -220,6 +217,28 @@ export function settleRecruits(
                 (r) => UNITS[r.unitType].recruitedAt === building,
             );
             let active = queue.find((r) => r.startedAt !== null);
+            /*
+             * Wartende Aufträge ohne laufenden davor: Das entsteht, wenn eine
+             * Einheit das Gebäude wechselt (19-11: Rammböcke von der Kaserne
+             * in die Werkstatt). Hinter einem Kasernenauftrag eingereiht,
+             * hätte sie in der Werkstatt niemand mehr angestoßen.
+             */
+            const firstWaiting = queue[0];
+            if (!active && firstWaiting) {
+                world.db
+                    .update(recruitQueue)
+                    .set({ startedAt: at })
+                    .where(eq(recruitQueue.id, firstWaiting.id))
+                    .run();
+                scheduleRecruitDone(
+                    world,
+                    firstWaiting.id,
+                    at,
+                    firstWaiting.count,
+                    firstWaiting.perUnitMs,
+                );
+                active = { ...firstWaiting, startedAt: at };
+            }
             while (active && active.startedAt !== null) {
                 const done = Math.min(
                     active.count,
@@ -363,6 +382,8 @@ export function sendUnits(
     targetId: number,
     kind: Exclude<MovementKind, 'return'>,
     unitsInput: Record<string, unknown>,
+    /** Ziel mitgeschickter Katapulte (19-11); Standard: Hauptgebäude. */
+    catapultTarget?: BuildingType,
 ): { arrivalGameTime: number } {
     if (kind !== 'attack' && kind !== 'support')
         throw new GameError('invalid_movement');
@@ -413,6 +434,11 @@ export function sendUnits(
                     unitsJson: JSON.stringify(sent),
                     departureGameTime: now,
                     arrivalGameTime,
+                    catapultTarget:
+                        kind === 'attack' && (sent.catapult ?? 0) > 0
+                            ? (catapultTarget ??
+                              DEFAULT_CATAPULT_TARGET)
+                            : null,
                 })
                 .returning({ id: movements.id })
                 .all(),
@@ -517,15 +543,23 @@ export function handleArrival(
                 // Use the movement's arrival time as battle time so catch-up
                 // processing (after pause/restart) stays consistent.
                 // Nur Späher: Spähmission statt Kampf (19-10).
-                (isScoutMission(units)
-                    ? resolveScoutArrival
-                    : resolveAttackArrival)(
-                    world,
-                    m.originVillageId,
-                    m.targetVillageId,
-                    units,
-                    GameTime.of(m.arrivalGameTime),
-                );
+                if (isScoutMission(units))
+                    resolveScoutArrival(
+                        world,
+                        m.originVillageId,
+                        m.targetVillageId,
+                        units,
+                        GameTime.of(m.arrivalGameTime),
+                    );
+                else
+                    resolveAttackArrival(
+                        world,
+                        m.originVillageId,
+                        m.targetVillageId,
+                        units,
+                        GameTime.of(m.arrivalGameTime),
+                        m.catapultTarget,
+                    );
                 affected.push(m.originVillageId, m.targetVillageId);
                 break;
             }
@@ -534,6 +568,38 @@ export function handleArrival(
     for (const id of affected)
         world.broadcast({ type: 'village_updated', villageId: id });
     for (const playerId of toWake) wakeBot(world, playerId);
+}
+
+/**
+ * Ein Gebäude um `levels` Stufen senken — samt Punkten und laufender
+ * Bauaufträge (19-11). Ein Auftrag für dasselbe Gebäude baut danach auf der
+ * beschossenen Stufe weiter auf: Wer Stufe 12 baute und auf 9 beschossen
+ * wird, bekommt nach Fertigstellung Stufe 10, nicht 12. Bezahlt ist der
+ * Auftrag schon; das ist der Preis eines Beschusses mitten im Ausbau.
+ */
+function lowerBuilding(
+    world: World,
+    villageId: number,
+    building: BuildingType,
+    levels: number,
+): void {
+    world.sqlite
+        .prepare(
+            'UPDATE buildings SET level = MAX(0, level - ?) WHERE village_id = ? AND type = ?',
+        )
+        .run(levels, villageId, building);
+    world.sqlite
+        .prepare(
+            'UPDATE build_queue SET target_level = MAX(1, target_level - ?) WHERE village_id = ? AND building_type = ?',
+        )
+        .run(levels, villageId, building);
+    world.db
+        .update(villages)
+        .set({
+            points: villagePoints(world.getBuildingLevels(villageId)),
+        })
+        .where(eq(villages.id, villageId))
+        .run();
 }
 
 /**
@@ -710,6 +776,7 @@ function resolveAttackArrival(
     targetId: number,
     attackerUnits: Units,
     battleTime: GameTime,
+    catapultTarget: BuildingType | null = null,
 ): void {
     const now = battleTime;
     const origin = world.getVillageRow(originId);
@@ -755,6 +822,31 @@ function resolveAttackArrival(
             })
             .where(eq(villages.id, targetId))
             .run();
+    }
+
+    // Katapulte (19-11): nach dem Wall, auf das beim Abschicken gewählte Ziel.
+    let buildingDamage: {
+        building: BuildingType;
+        from: number;
+        to: number;
+    } | null = null;
+    const catapults = attackerUnits.catapult ?? 0;
+    if (catapults > 0) {
+        const building = catapultTarget ?? DEFAULT_CATAPULT_TARGET;
+        const from =
+            building === 'wall'
+                ? result.wallLevelAfter
+                : targetLevels[building];
+        const to = catapultDamage(
+            catapults,
+            building,
+            from,
+            result.attackerWon,
+        );
+        if (to < from) {
+            buildingDamage = { building, from, to };
+            lowerBuilding(world, targetId, building, from - to);
+        }
     }
 
     // Loyalty & conquest.
@@ -847,6 +939,7 @@ function resolveAttackArrival(
         luck: Math.round(result.luck * 100),
         loot,
         conquered,
+        buildingDamage,
         // Überlebende Späher im gemischten Angriff sehen Lager und Gebäude (19-10).
         scouted:
             (survivors.spy ?? 0) > 0

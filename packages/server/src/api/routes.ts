@@ -632,6 +632,7 @@ export function registerRoutes(
                 body.target,
                 body.kind,
                 body.units,
+                body.catapultTarget,
             );
             return { ...result, gameTime: world.now() };
         },

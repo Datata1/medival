@@ -43,9 +43,11 @@ import buildingMarket from './sprites/buildings/market.png';
 import buildingRally from './sprites/buildings/rally.png';
 import buildingStable from './sprites/buildings/stable.png';
 import buildingTimber_camp from './sprites/buildings/timber_camp.png';
+import buildingWorkshop from './sprites/buildings/workshop.png';
 import buildingWall from './sprites/buildings/wall.png';
 import buildingWarehouse from './sprites/buildings/warehouse.png';
 import unitAxe from './sprites/units/axe.png';
+import unitCatapult from './sprites/units/catapult.png';
 import unitHeavy_cavalry from './sprites/units/heavy_cavalry.png';
 import unitLight_cavalry from './sprites/units/light_cavalry.png';
 import unitNoble from './sprites/units/noble.png';
@@ -71,6 +73,7 @@ import yardStable from './sprites/yard/stable.png';
 import yardTimber_camp from './sprites/yard/timber_camp.png';
 import yardWall from './sprites/yard/wall.png';
 import yardWarehouse from './sprites/yard/warehouse.png';
+import yardWorkshop from './sprites/yard/workshop.png';
 
 export const SPRITES = {
     'icon.attack': iconAttack,
@@ -107,6 +110,7 @@ export const SPRITES = {
     'building.market': buildingMarket,
     'building.rally': buildingRally,
     'building.stable': buildingStable,
+    'building.workshop': buildingWorkshop,
     'building.timber_camp': buildingTimber_camp,
     'building.wall': buildingWall,
     'building.warehouse': buildingWarehouse,
@@ -117,6 +121,7 @@ export const SPRITES = {
     'unit.ram': unitRam,
     'unit.spear': unitSpear,
     'unit.spy': unitSpy,
+    'unit.catapult': unitCatapult,
     'unit.sword': unitSword,
     'map.village.barbarian': mapVillageBarbarian,
     'map.village.bot': mapVillageBot,
@@ -135,6 +140,7 @@ export const SPRITES = {
     'yard.market': yardMarket,
     'yard.rally': yardRally,
     'yard.stable': yardStable,
+    'yard.workshop': yardWorkshop,
     'yard.timber_camp': yardTimber_camp,
     'yard.wall': yardWall,
     'yard.warehouse': yardWarehouse,

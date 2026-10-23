@@ -16,8 +16,21 @@ import type { World } from '../../src/engine/world.js';
  * der hier eine Abkürzung bräuchte, prüft das falsche Programm.
  */
 export const act = {
-    attack(world: World, from: number, to: number, units: Units) {
-        return sendUnits(world, from, to, 'attack', units);
+    attack(
+        world: World,
+        from: number,
+        to: number,
+        units: Units,
+        catapultTarget?: BuildingType,
+    ) {
+        return sendUnits(
+            world,
+            from,
+            to,
+            'attack',
+            units,
+            catapultTarget,
+        );
     },
     support(world: World, from: number, to: number, units: Units) {
         return sendUnits(world, from, to, 'support', units);

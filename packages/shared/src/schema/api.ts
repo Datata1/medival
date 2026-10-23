@@ -46,6 +46,8 @@ export const SendUnitsRequestSchema = z.object({
     target: z.number().int().positive(),
     kind: z.enum(['attack', 'support']),
     units: UnitsSchema.default({}),
+    /** Welches Gebäude die Katapulte beschießen (19-11). */
+    catapultTarget: BuildingTypeSchema.optional(),
 });
 
 /** Rohstofflieferung an ein fremdes Dorf (plans/16-ansehen-und-handel.md). */
@@ -274,6 +276,15 @@ export const BattleReportPayloadSchema = z.object({
         .object({
             resources: ResourcesSchema,
             buildings: BuildingLevelsSchema,
+        })
+        .nullable()
+        .optional(),
+    /** Gebäudeschaden durch Katapulte (19-11). */
+    buildingDamage: z
+        .object({
+            building: BuildingTypeSchema,
+            from: z.number().int(),
+            to: z.number().int(),
         })
         .nullable()
         .optional(),

@@ -85,6 +85,8 @@ function Effect({
             return t('village.building.effect.barracks');
         case 'stable':
             return t('village.building.effect.stable');
+        case 'workshop':
+            return t('village.building.effect.workshop');
         case 'academy':
             return t('village.building.effect.academy');
     }
@@ -164,6 +166,7 @@ export const BuildingView = observer(function BuildingView({
     const recruits =
         building === 'barracks' ||
         building === 'stable' ||
+        building === 'workshop' ||
         building === 'academy';
 
     return (

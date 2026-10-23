@@ -79,6 +79,20 @@ export const BUILDINGS: Record<BuildingType, BuildingSpec> = {
         popFactor: 1.17,
         requires: { headquarters: 10, barracks: 5 },
     },
+    /**
+     * Werkstatt (plans/19-prototyp/19-11): Rammböcke und Katapulte, mit
+     * eigener Schleife neben der Kaserne. Werte nach Tribal Wars.
+     */
+    workshop: {
+        baseCost: { wood: 300, clay: 240, iron: 260 },
+        costFactor: 1.26,
+        baseTimeS: 6000,
+        timeFactor: 1.2,
+        maxLevel: 15,
+        basePop: 8,
+        popFactor: 1.17,
+        requires: { headquarters: 10 },
+    },
     wall: {
         baseCost: { wood: 50, clay: 100, iron: 20 },
         costFactor: 1.26,
@@ -120,6 +134,7 @@ export const BUILDING_ORDER = [
     'farm',
     'barracks',
     'stable',
+    'workshop',
     'wall',
     'market',
     'academy',
@@ -139,6 +154,7 @@ export const EMPTY_BUILDING_LEVELS: BuildingLevels = {
     farm: 0,
     barracks: 0,
     stable: 0,
+    workshop: 0,
     wall: 0,
     market: 0,
     academy: 0,

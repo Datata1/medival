@@ -243,6 +243,7 @@ describe('Bauentscheidung (pure)', () => {
                     farm: 30,
                     barracks: 25,
                     stable: 20,
+                    workshop: 15,
                     wall: 20,
                     market: 25,
                     academy: 1,

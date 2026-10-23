@@ -101,6 +101,8 @@ export const BUILDING_CATEGORY = {
      * Spielwoche kein einziger Stamm (Plan 17).
      */
     market: 'trade',
+    // Belagerungsgerät (19-11): Teil der Kriegsführung wie Kaserne und Stall.
+    workshop: 'military',
     farm: 'economy',
     timber_camp: 'economy',
     clay_pit: 'economy',

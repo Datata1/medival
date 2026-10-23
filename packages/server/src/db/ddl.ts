@@ -76,7 +76,8 @@ CREATE TABLE IF NOT EXISTS movements (
   units_json TEXT NOT NULL,
   departure_game_time INTEGER NOT NULL,
   arrival_game_time INTEGER NOT NULL,
-  carries_json TEXT NOT NULL DEFAULT '{}'
+  carries_json TEXT NOT NULL DEFAULT '{}',
+  catapult_target TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_movements_target ON movements(target_village_id);
 CREATE TABLE IF NOT EXISTS events (

@@ -59,7 +59,14 @@ const TARGET_MIX: Record<
     // und, bei allen außer `turtle`, zum Ausspähen vor dem Angriff.
     turtle: { spear: 0.67, sword: 0.28, spy: 0.05 },
     // Plündert: Äxte, dazu leichte Kavallerie für die Beute.
-    raider: { axe: 0.55, light_cavalry: 0.25, spear: 0.15, spy: 0.05 },
+    // Katapulte (19-11) erst mit Werkstatt; bis dahin übersprungen.
+    raider: {
+        axe: 0.5,
+        light_cavalry: 0.25,
+        spear: 0.15,
+        spy: 0.05,
+        catapult: 0.05,
+    },
     // Wächst, hält aber die Dörfer: halb und halb.
     expander: { spear: 0.48, axe: 0.48, spy: 0.04 },
     balanced: { spear: 0.38, axe: 0.38, sword: 0.2, spy: 0.04 },
