@@ -1,5 +1,10 @@
 import type { UnitSpec, VillageView } from '@medival/shared';
-import { type Resources, UNITS, type UnitType } from '@medival/shared';
+import {
+    isResearched,
+    type Resources,
+    UNITS,
+    type UnitType,
+} from '@medival/shared';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
 import { Table, Th } from '../../components/Table.js';
@@ -57,6 +62,10 @@ export function RecruitTable({
                             <RecruitRow
                                 key={type}
                                 type={type}
+                                researched={isResearched(
+                                    type,
+                                    village.researched,
+                                )}
                                 max={maxRecruitable(
                                     type,
                                     live,

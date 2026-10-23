@@ -3,7 +3,9 @@ import {
     entriesOf,
     type Resources,
     STARTING_BUILDINGS,
+    UNIT_ORDER,
     type Units,
+    type UnitType,
     villagePoints,
     warehouseCapacity,
 } from '@medival/shared';
@@ -13,6 +15,7 @@ import type {
 } from '../../src/ai/personalities.js';
 import { players } from '../../src/db/schema.js';
 import { insertVillage } from '../../src/engine/mapgen.js';
+import { markResearched } from '../../src/engine/research.js';
 import {
     acceptInvitation,
     foundTribe,
@@ -68,6 +71,12 @@ export interface VillageSpec {
     units?: Units;
     /** Feste Menge, oder `'full'` für ein volles Lager. */
     resources?: Resources | 'full';
+    /**
+     * Erforschte Einheiten (19-13). Standard: alle — ein Szenario über
+     * Kampf oder Handel soll nicht erst die Schmiede ausbauen müssen. Wer
+     * Forschung prüft, gibt die Liste ausdrücklich an.
+     */
+    researched?: readonly UnitType[];
 }
 
 /** Ein Dorf für `playerId` (`null` = Barbarendorf). Liefert die Dorf-ID. */
@@ -89,6 +98,7 @@ export function givenVillage(
         levels,
     );
     if (spec.units) world.addUnits(id, spec.units);
+    markResearched(world, id, spec.researched ?? UNIT_ORDER);
 
     const capacity = warehouseCapacity(levels.warehouse);
     const res =

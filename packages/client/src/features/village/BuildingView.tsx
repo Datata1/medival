@@ -1,6 +1,7 @@
 import type { BuildingType } from '@medival/shared';
 import {
     farmCapacity,
+    hiddenCapacity,
     marketCapacity,
     merchantCount,
     resourceRatePerHour,
@@ -18,6 +19,7 @@ import { SendResourcesForm } from '../map/SendResourcesForm.js';
 import { BuildingsTable } from './BuildingsTable.js';
 import { effectiveLevels, liveResources } from './derive.js';
 import { RecruitTable } from './RecruitTable.js';
+import { ResearchTable } from './ResearchTable.js';
 import { TargetPicker } from './TargetPicker.js';
 
 /** Höchstzahl offener Bauaufträge — der Server lehnt den sechsten ab. */
@@ -89,6 +91,14 @@ function Effect({
             return t('village.building.effect.workshop');
         case 'academy':
             return t('village.building.effect.academy');
+        case 'smithy':
+            return t('village.building.effect.smithy');
+        case 'rally_point':
+            return t('village.building.effect.rally_point');
+        case 'hiding_place':
+            return t('village.building.effect.hiding_place', {
+                amount: formatNumber(hiddenCapacity(level)),
+            });
     }
 }
 
@@ -175,7 +185,13 @@ export const BuildingView = observer(function BuildingView({
                 type={building}
                 level={level}
                 speed={speed}
-                numericEffect={!recruits}
+                // Schmiede und Versammlungsplatz wirken wie die Kaserne nicht
+                // in Zahlen; ihre Wirkung steht schon in der Beschreibung.
+                numericEffect={
+                    !recruits &&
+                    building !== 'smithy' &&
+                    building !== 'rally_point'
+                }
             />
 
             {recruits && level > 0 && (
@@ -190,6 +206,18 @@ export const BuildingView = observer(function BuildingView({
                     onRecruit={(unit, count) =>
                         void village.recruit(unit, count)
                     }
+                />
+            )}
+
+            {building === 'smithy' && level > 0 && (
+                <ResearchTable
+                    village={view}
+                    live={live}
+                    speed={speed}
+                    enabledUnits={world.enabledUnits}
+                    busy={village.isResearching}
+                    error={village.researchError}
+                    onResearch={(unit) => void village.research(unit)}
                 />
             )}
 

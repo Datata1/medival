@@ -771,7 +771,46 @@ export const BUILDING_ICONS_16 = {
      * steht auf dem Dorfplatz: ein Banner auf dem Podest, um das sich die
      * Truppen sammeln (plans/18-ux/18-2-dorfuebersicht.md).
      */
-    'building.rally': [
+    // Schmiede (19-13): Amboss unter dem Dach, Glut daneben.
+    'building.smithy': [
+        '................',
+        '................',
+        '....rrrrrrrr....',
+        '...rRRRRRRRRr...',
+        '..WWWWWWWWWWWW..',
+        '..Wwwwwwwwwwww..',
+        '..Ww.........W..',
+        '..Ww.nnnnn.y.W..',
+        '..Ww..nNn..e.W..',
+        '..Ww..nnn.eye...',
+        '..Ww.nnnnn.e.W..',
+        '..WWWWWWWWWWWW..',
+        '................',
+        '................',
+        '................',
+        '................',
+    ],
+    // Versteck (19-13): Falltür im Boden, halb von Gras verdeckt.
+    'building.hiding_place': [
+        '................',
+        '................',
+        '................',
+        '................',
+        '................',
+        '....g..g...g....',
+        '...gWWWWWWWWg...',
+        '...WwwwwwwwwW...',
+        '...WwnwwwwnwW...',
+        '...WwwwwwwwwW...',
+        '...WwwwkkwwwW...',
+        '...WwwwwwwwwW...',
+        '...gWWWWWWWWg...',
+        '....g...g..g....',
+        '................',
+        '................',
+    ],
+    // Seit 19-13 ein Gebäude: `rally_point` statt `rally`.
+    'building.rally_point': [
         '................',
         '......o.........',
         '......oeeeee....',

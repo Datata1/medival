@@ -3,6 +3,7 @@ import {
     entriesOf,
     farmCapacity,
     type Resources,
+    recruitBlock,
     UNITS,
     type UnitType,
     unitCost,
@@ -108,17 +109,28 @@ export function decideRecruit(
     );
 
     /*
-     * Nur Einheiten dieser Welt, die Anteile auf 1 hochgerechnet: Ohne das
-     * summierte sich die Mischung ohne Bogenschützen auf 0,85, und sobald
-     * jede Einheit ihren Anteil erreicht hätte, rekrutierte der Bot nie mehr.
+     * Nur Einheiten, die das Dorf **jetzt** ausbilden kann, die Anteile auf
+     * 1 hochgerechnet. Zwei Fehler liegen hinter dieser Zeile:
+     *
+     * - 19-12: Ohne Bogenschützen summierte sich die Mischung auf 0,85;
+     *   sobald jede Einheit ihren Anteil erreicht hatte, rekrutierte der Bot
+     *   nie mehr.
+     * - 19-13: Derselbe Stillstand mit einer Einheit, die nur noch nicht geht.
+     *   `turtle`-Bots ohne Stall hatten nach drei Spielwochen 168 Speere, 72
+     *   Schwerter und 48 Bogenschützen; der einzige Rückstand war der
+     *   Späher, und den konnten sie nicht ausbilden. In der vierten Woche
+     *   kam keine Einheit dazu (gemessen).
      */
-    const enabledMix = entriesOf(mix).filter(([unit]) =>
-        enabledUnits.includes(unit),
+    const usableMix = entriesOf(mix).filter(
+        ([unit]) =>
+            enabledUnits.includes(unit) &&
+            recruitBlock(unit, village.levels, village.researched) ===
+                null,
     );
-    const shareSum = enabledMix.reduce((s, [, share]) => s + share, 0);
+    const shareSum = usableMix.reduce((s, [, share]) => s + share, 0);
 
     // Die Einheit mit dem größten Rückstand auf ihren Zielanteil zuerst.
-    const ranked = enabledMix
+    const ranked = usableMix
         .map(([unit, share]) => ({
             unit,
             deficit:
@@ -129,8 +141,6 @@ export function decideRecruit(
     for (const { unit, deficit } of ranked) {
         if (deficit <= 0) continue;
         const spec = UNITS[unit];
-        // Das Gebäude muss stehen; Voraussetzungen prüft `recruitUnits` erneut.
-        if (village.levels[spec.recruitedAt] < 1) continue;
 
         const count = Math.min(BATCH, Math.floor(popFree / spec.pop));
         if (count < 1) continue;

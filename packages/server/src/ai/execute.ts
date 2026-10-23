@@ -1,5 +1,6 @@
 import { GameError } from '../engine/errors.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
+import { researchUnit } from '../engine/research.js';
 import { sendResources } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
 import type { Intent } from './intents.js';
@@ -60,6 +61,9 @@ function runIntent(world: World, intent: Intent): void {
                 intent.unit,
                 intent.count,
             );
+            break;
+        case 'research':
+            researchUnit(world, intent.villageId, intent.unit);
             break;
         case 'ship':
             sendResources(

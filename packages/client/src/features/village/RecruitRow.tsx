@@ -9,12 +9,15 @@ import { formatDuration } from '../../lib/format.js';
 
 export function RecruitRow({
     type,
+    researched,
     max,
     speed,
     busy,
     onRecruit,
 }: {
     type: UnitType;
+    /** Nicht erforscht (19-13): ausgegraut, mit Hinweis statt Eingabe. */
+    researched: boolean;
     max: number;
     speed: number;
     busy: boolean;
@@ -23,6 +26,23 @@ export function RecruitRow({
     const { t } = useTranslation();
     const [value, setValue] = useState('');
     const count = Math.max(0, Math.floor(Number(value) || 0));
+
+    if (!researched)
+        return (
+            <tr className="text-ink-light">
+                <Td>
+                    <span className="inline-flex items-center gap-2 opacity-60">
+                        <Icon name={`unit.${type}`} />
+                        {t(`units.${type}`)}
+                    </span>
+                </Td>
+                <Td>
+                    <ResourceCost resources={UNITS[type].cost} />
+                </Td>
+                <Td>{formatDuration(recruitTime(type, speed))}</Td>
+                <Td colSpan={2}>{t('village.notResearched')}</Td>
+            </tr>
+        );
 
     return (
         <tr>

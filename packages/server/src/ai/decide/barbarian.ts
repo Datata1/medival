@@ -66,6 +66,11 @@ const BUILD_WEIGHTS: Record<BuildingType, number> = {
     stable: 0,
     // Barbaren belagern niemanden (19-11).
     workshop: 0,
+    // Barbaren forschen nicht (Schwerter haben sie von Anfang an), ihr
+    // Versteck und ihr Versammlungsplatz bleiben, wie sie entstanden (19-13).
+    smithy: 0,
+    rally_point: 0,
+    hiding_place: 0,
     academy: 0,
     // Barbaren handeln nicht — ein Marktplatz wäre nutzloser Ballast.
     market: 0,

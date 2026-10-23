@@ -1,12 +1,15 @@
 export * from './data/buildings.js';
+export * from './data/research.js';
 export * from './data/siege.js';
 export * from './data/units.js';
 export * from './lib/objects.js';
 export * from './logic/combat.js';
 export * from './logic/continent.js';
 export * from './logic/formulas.js';
+export * from './logic/loot.js';
 export * from './logic/placement.js';
 export * from './logic/relations.js';
+export * from './logic/research.js';
 export * from './logic/rng.js';
 export * from './logic/terrain.js';
 export * from './logic/tiles.js';
@@ -53,7 +56,11 @@ export const STARTING_BUILDINGS = {
     barracks: 0,
     stable: 0,
     workshop: 0,
+    smithy: 0,
+    // Ab Start vorhanden (19-13): sonst könnte kein Dorf Truppen schicken.
+    rally_point: 1,
     wall: 0,
+    hiding_place: 0,
     market: 0,
     academy: 0,
 } as const;

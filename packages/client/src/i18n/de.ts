@@ -123,6 +123,7 @@ const de = {
         colDefense: 'Vert.',
         colDefenseCav: 'Vert. Kav.',
         colDefenseArcher: 'Vert. Bogen',
+        colResearch: 'Forschung',
         colSpeed: 'Tempo',
         colCarry: 'Tragkraft',
         colPop: 'Plätze',
@@ -159,6 +160,10 @@ const de = {
             wall: 'Erhöht die Verteidigung aller Truppen im Dorf.',
             market: 'Stellt Händler für den Rohstoffversand.',
             academy: 'Bildet Adelsgeschlechter zum Erobern aus.',
+            smithy: 'Erforscht Einheiten; ohne Forschung gibt es nur Speerträger.',
+            rally_point:
+                'Ohne ihn kann das Dorf keine Truppen schicken.',
+            hiding_place: 'Schützt Rohstoffe vor Plünderung.',
         },
     },
     sound: {
@@ -214,6 +219,19 @@ const de = {
         recruiting: 'Rekrutierung läuft',
         waiting: 'wartet',
         recruit: 'Rekrutieren',
+        notResearched: 'Erst in der Schmiede erforschen',
+        research: {
+            title: 'Forschung',
+            colUnit: 'Einheit',
+            colNeeds: 'Voraussetzung',
+            colCost: 'Kosten',
+            colTime: 'Dauer',
+            start: 'Erforschen',
+            done: 'Erforscht',
+            running: 'Läuft — noch',
+            smithyLevel: 'Schmiede {{level}}',
+            free: 'Keine Forschung nötig',
+        },
         /** Das Dashboard (plans/18-ux/18-2-dorfuebersicht.md). */
         overview: {
             production: 'Produktion',
@@ -230,6 +248,8 @@ const de = {
         /** Der Versammlungsplatz: alle Bewegungen dieses Dorfes. */
         rally: {
             intro: 'Alles, was dieses Dorf verlässt oder auf es zuhält.',
+            destroyed:
+                'Der Versammlungsplatz ist zerstört. Bis er im Hauptgebäude neu gebaut ist, kann das Dorf keine Truppen schicken.',
             incoming: 'Eingehend',
             outgoing: 'Ausgehend',
             nothing: 'Zurzeit ist nichts unterwegs.',
@@ -267,6 +287,9 @@ const de = {
                 wall: '+{{percent}} % Verteidigung, +{{flat}} Grundverteidigung',
                 market: '{{merchants}} Händler, {{capacity}} Tragkraft',
                 academy: 'Bildet Adelsgeschlechter aus',
+                smithy: 'Erforscht Einheiten',
+                rally_point: 'Truppen können abmarschieren',
+                hiding_place: '{{amount}} je Rohstoff geschützt',
             },
         },
     },
@@ -390,8 +413,9 @@ const de = {
         wall: 'Wall',
         market: 'Marktplatz',
         academy: 'Adelshof',
-        /* Kein Gebäude, aber ein Ort mit Namen (Plan 18-2). */
-        rally: 'Versammlungsplatz',
+        smithy: 'Schmiede',
+        rally_point: 'Versammlungsplatz',
+        hiding_place: 'Versteck',
     },
     units: {
         spear: 'Speerträger',
@@ -432,6 +456,12 @@ const de = {
         not_enough_resources: 'Nicht genug Rohstoffe',
         barracks_missing: 'Kaserne fehlt',
         stable_missing: 'Stall fehlt',
+        not_researched: 'Diese Einheit ist noch nicht erforscht',
+        no_rally_point: 'Ohne Versammlungsplatz marschiert niemand',
+        research_busy: 'In der Schmiede läuft schon eine Forschung',
+        smithy_too_low: 'Die Schmiede ist dafür zu klein',
+        no_research_needed: 'Diese Einheit braucht keine Forschung',
+        already_researched: 'Schon erforscht',
         unit_disabled: 'Diese Einheit gibt es in dieser Welt nicht',
         workshop_missing: 'Werkstatt fehlt',
         academy_missing: 'Adelshof fehlt',

@@ -61,6 +61,11 @@ import {
     handleRecruitTick,
     settleRecruits,
 } from './military.js';
+import {
+    getResearch,
+    getResearched,
+    handleResearchComplete,
+} from './research.js';
 import { type GameEvent, Scheduler } from './scheduler.js';
 import { freeMerchantCapacity } from './trade.js';
 import { tribeOf } from './tribes.js';
@@ -721,6 +726,8 @@ export class World {
                           ),
             })),
             units: unitCounts,
+            researched: getResearched(this, villageId),
+            research: getResearch(this, villageId),
             popUsed: this.popInUse(villageId, levels),
             popMax: farmCapacity(levels.farm),
             merchantCapacity: marketCapacity(levels.market),
@@ -885,6 +892,16 @@ export class World {
                         EVENT_SCHEMAS.recruit_done,
                         ev.payload,
                         'event.recruit_done',
+                    ),
+                );
+                break;
+            case 'research_complete':
+                handleResearchComplete(
+                    this,
+                    parseRow(
+                        EVENT_SCHEMAS.research_complete,
+                        ev.payload,
+                        'event.research_complete',
                     ),
                 );
                 break;

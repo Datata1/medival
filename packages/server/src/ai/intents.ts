@@ -32,6 +32,13 @@ export const RecruitIntentSchema = z.object({
     count: z.number().int().positive(),
 });
 
+/** Eine Einheit in der Schmiede erforschen (19-13). */
+export const ResearchIntentSchema = z.object({
+    kind: z.literal('research'),
+    villageId: z.number().int().positive(),
+    unit: z.enum(UNIT_ORDER),
+});
+
 /** Truppen schicken — Angriff oder Unterstützung (Plan 17). */
 export const SendIntentSchema = z.object({
     kind: z.literal('send'),
@@ -58,12 +65,14 @@ export const ShipIntentSchema = z.object({
 export const IntentSchema = z.discriminatedUnion('kind', [
     BuildIntentSchema,
     RecruitIntentSchema,
+    ResearchIntentSchema,
     SendIntentSchema,
     ShipIntentSchema,
 ]);
 
 export type BuildIntent = z.infer<typeof BuildIntentSchema>;
 export type RecruitIntent = z.infer<typeof RecruitIntentSchema>;
+export type ResearchIntent = z.infer<typeof ResearchIntentSchema>;
 export type SendIntent = z.infer<typeof SendIntentSchema>;
 export type ShipIntent = z.infer<typeof ShipIntentSchema>;
 export type Intent = z.infer<typeof IntentSchema>;

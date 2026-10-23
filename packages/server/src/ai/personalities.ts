@@ -103,6 +103,11 @@ export const BUILDING_CATEGORY = {
     market: 'trade',
     // Belagerungsgerät (19-11): Teil der Kriegsführung wie Kaserne und Stall.
     workshop: 'military',
+    // 19-13: Forschung gehört zur Kriegsführung, das Versteck zur Abwehr. Der
+    // Versammlungsplatz steht ab Start und wird nur nach Beschuss neu gebaut.
+    smithy: 'military',
+    rally_point: 'military',
+    hiding_place: 'defense',
     farm: 'economy',
     timber_camp: 'economy',
     clay_pit: 'economy',

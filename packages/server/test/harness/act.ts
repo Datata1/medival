@@ -5,6 +5,7 @@ import type {
     UnitType,
 } from '@medival/shared';
 import { recruitUnits, sendUnits } from '../../src/engine/military.js';
+import { researchUnit } from '../../src/engine/research.js';
 import { sendResources } from '../../src/engine/trade.js';
 import type { World } from '../../src/engine/world.js';
 
@@ -45,6 +46,9 @@ export const act = {
         count: number,
     ) {
         recruitUnits(world, villageId, unit, count);
+    },
+    research(world: World, villageId: number, unit: UnitType) {
+        researchUnit(world, villageId, unit);
     },
     ship(world: World, from: number, to: number, resources: Resources) {
         return sendResources(world, from, to, { ...resources });

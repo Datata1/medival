@@ -34,6 +34,7 @@ import {
     tribes,
     villages,
 } from '../db/schema.js';
+import { getResearch, getResearched } from '../engine/research.js';
 import { freeMerchantCapacity } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
 import type { VillageSnapshot } from './decide/build.js';
@@ -168,6 +169,8 @@ export function perceiveBot(
                     ? null
                     : Math.min(...queue.map((q) => q.completesAt)),
             merchantsFree: freeMerchantCapacity(world, v.id),
+            researched: getResearched(world, v.id),
+            researching: getResearch(world, v.id) !== null,
             scoutsInFlight: scoutsInFlightFrom(world, v.id),
             recruiting:
                 world.db

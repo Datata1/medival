@@ -1,6 +1,94 @@
 # Ticket 19-13: Schmiede, Versammlungsplatz, Versteck
 
-**Status:** 📋 offen · **Voraussetzung:** [19-11](19-11-werkstatt-katapult.md), [19-12](19-12-bogenschuetzen.md)
+**Status:** ✅ erledigt (2026-10-23) · **Voraussetzung:** [19-11](19-11-werkstatt-katapult.md), [19-12](19-12-bogenschuetzen.md)
+
+> **Ergebnis:**
+>
+> - **Schmiede** (`smithy`, max. 20, Hauptgebäude 5 und Kaserne 1): eine Forschung je
+>   Einheit mit Schmiedenstufe und Nebengebäuden aus der Tabelle unten
+>   (`shared/src/data/research.ts`). Speerträger und Adelsgeschlecht brauchen keine.
+>   Höchstens eine Forschung je Dorf, ein Event `research_complete` am Ende. Neue Route
+>   `POST /villages/:vid/research`, Fehler `research_busy`, `smithy_too_low`,
+>   `requirements_missing`. Die Werkstatt verlangt jetzt Schmiede 10.
+> - **`recruitBlock`/`canRecruit`** (`shared/src/logic/research.ts`) sind die einzige
+>   Stelle für Rekrutierungs-Voraussetzungen (Gebäude, dann Forschung). Server, Bots und
+>   Client fragen dort. Neuer Fehler `not_researched`.
+> - **Versammlungsplatz** (`rally_point`, max. 1) ist jetzt ein Gebäude, ab Start auf
+>   Stufe 1. Ohne ihn meldet `sendUnits` `no_rally_point`. Katapulte dürfen ihn treffen,
+>   neu gebaut wird er im Hauptgebäude. Seine Seite bleibt die Bewegungsübersicht und
+>   zeigt nach einem Beschuss den Hinweis, warum nichts abmarschiert.
+> - **Versteck** (`hiding_place`, max. 10): `hiddenCapacity(level) =
+>   round(150 · 1,3335^(level−1))`, Stufe 10 schützt knapp 2 000. Die Beute rechnet jetzt
+>   `distributeLoot` (`shared/src/logic/loot.ts`): erst das Versteck abziehen, dann bis zur
+>   Tragkraft verteilen.
+> - **Barbaren:** Versteck 0–3 und Versammlungsplatz 1. Ihre Schwertkämpfer gelten als
+>   erforscht.
+> - **Bots:** Intent `research`, `decide/research.ts` (pur) mit einer Reihenfolge je
+>   Persönlichkeit. Geforscht wird aus dem, was nach dem Bauen übrig ist, und vor dem
+>   Rekrutieren. Schmiede und Versammlungsplatz zählen als `military`, das Versteck als
+>   `defense` mit halbem Gewicht.
+> - **Migration:** Tabellen `research` und `research_queue`. In alten Welten gilt jede
+>   Einheit als erforscht, die ein Dorf zu Hause hat, ausbildet oder auf dem Marsch hat.
+>   Jedes Dorf bekommt den Versammlungsplatz auf Stufe 1.
+> - **Client:** Schmiede-Seite mit Forschungsliste (Voraussetzung, Kosten, Dauer, Stand,
+>   Countdown), nicht erforschte Einheiten in der Rekrutierung ausgegraut mit „Erst in der
+>   Schmiede erforschen", Versteck mit geschützter Menge, Schmiede in der
+>   Dorfnavigation, alle drei auf dem Dorfplatz, Handbuch-Spalte „Forschung", Sprites
+>   `building.smithy`, `building.hiding_place`, `building.rally_point` (umbenannt aus
+>   `rally`), Texte.
+>
+> **Ein Fehler, den die Messung fand** (seit 19-10 vorhanden): Die Heeresmischung eines
+> Bots zählte Einheiten mit, die das Dorf noch nicht ausbilden kann. Vier `turtle`-Bots
+> ohne Stall hatten nach drei Spielwochen 168 Speere, 72 Schwerter und 48 Bogenschützen.
+> Ihr einziger Rückstand war der Späher, und in der vierten Woche kam keine Einheit dazu.
+> Seit der Korrektur rechnet `decideRecruit` die Anteile auf die gerade ausbildbaren
+> Einheiten hoch. Danach hatten dieselben Bots in Woche 4 456 statt 288 Einheiten.
+>
+> **Tests:** `shared/test/research.test.ts` vergleicht `distributeLoot` ohne Versteck in 500
+> Zufallsfällen mit der alten Rechnung und prüft Versteck 3 (267 → 733 von 1 000
+> plünderbar), die Forschungstabelle und `recruitBlock`/`researchBlock`.
+> `test/integration/smithy.test.ts`:
+> - Axt ohne Forschung ergibt `not_researched`. Die Forschung ist 1 ms vor `completesAt`
+>   offen und genau dann fertig, danach geht die Rekrutierung. Eine zweite Forschung
+>   ergibt `research_busy`.
+> - Schmiedenstufe und Nebengebäude werden verlangt.
+> - Zwei Katapulte zerstören den Versammlungsplatz. Danach gibt es `no_rally_point`, nach
+>   dem Neubau geht der Abmarsch wieder.
+> - Versteck 5: Bis auf `hiddenCapacity(5)` je Rohstoff wird alles geplündert.
+> - Eine alte Welt mit Äxten hat danach `axe` erforscht und den Versammlungsplatz auf 1.
+> - Sechs Bots in drei Spielwochen: 13 Forschungen, 275 Einheiten außer Speerträgern, kein
+>   einziger abgewiesener Intent.
+>
+> **Im Browser:**
+> - Der Dorfplatz zeigt Schmiede, Versteck und Versammlungsplatz.
+> - Die Kaserne zeigt Schwert, Axt und Bogen ausgegraut mit Hinweis.
+> - In der Schmiede läuft nach dem Klick auf „Erforschen" die Schwertforschung mit
+>   Countdown, und die Liste nennt alle Voraussetzungen.
+> - Das Versteck auf Stufe 3 zeigt „267 je Rohstoff geschützt".
+>
+> Alle vier Ansichten sind per Screenshot bzw. Seitentext geprüft.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Forschungskosten und -dauer sind eigene Werte:** das Achtfache der Einheitenkosten
+>   und das Vierfache der Ausbildungszeit. Die Tabelle oben nennt nur die Stufen.
+> - **Keine `CHECK`-Liste auf `research.unit_type`:** `UnitTypeSchema` prüft beim Lesen,
+>   und eine neue Einheit braucht dann keine Neuanlage der Tabelle.
+> - **Versteck der Barbaren ohne eigenen Zufallswurf:** Es ist `(Speere + Schwerter) mod
+>   4`. Ein zusätzlicher Wurf hätte jeden folgenden Zufallswert verschoben und damit Lage
+>   und Ausstattung aller Dörfer bestehender Seeds verändert.
+> - **Versteck für „kleine Bots neben großen Nachbarn"** ist nicht gebaut. Das Versteck
+>   hat für alle halbes `defense`-Gewicht, damit es den Wall nicht verdrängt. Ohne
+>   den Abschlag baute `turtle` im Persönlichkeitstest gar keinen Wall mehr.
+> - **Beute-Regression ohne aufgezeichnete Fixture:** Der Test vergleicht mit einer Kopie
+>   der alten Rechnung. Das ist ebenso streng und hält die alte Regel lesbar fest.
+> - **Kein `world.command`:** Die Forschung folgt dem Muster der übrigen Kommandos. Der
+>   Besitz wird in der Route geprüft (`ownVillage`, wie seit 19-9).
+> - **Der Versammlungsplatz zählt einen Punkt,** wie jedes Gebäude der Stufe 1. Jedes Dorf
+>   hat dadurch einen Punkt mehr. Seine Seite heißt jetzt `/village/:id/rally_point`
+>   statt `…/rally`.
+> - **Der Bogenschützen-Test aus 19-12** läuft drei statt zwei Spielwochen: Bogenschützen
+>   verlangen jetzt Schmiede 5, und nach zwei Wochen hatte noch kein Bot eine Schmiede.
 
 ## Kontext
 

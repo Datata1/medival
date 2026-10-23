@@ -10,6 +10,7 @@ import {
     requirementsMet,
     timeUntilAffordable,
     type Units,
+    type UnitType,
 } from '@medival/shared';
 import {
     BUILDING_CATEGORY,
@@ -65,6 +66,10 @@ export interface VillageSnapshot {
     merchantsFree: number;
     /** Steht schon etwas in der Rekrutierungsschleife (Plan 17)? */
     recruiting: boolean;
+    /** Erforschte Einheiten (19-13). */
+    researched: readonly UnitType[];
+    /** Läuft eine Forschung? Je Dorf höchstens eine. */
+    researching: boolean;
     /** Ist von hier ein Spähtrupp unterwegs (19-10)? */
     scoutsInFlight?: boolean;
 }
@@ -217,6 +222,16 @@ function scoreOf(weight: number, cost: Resources): number {
     return total > 0 ? weight / Math.sqrt(total) : 0;
 }
 
+/**
+ * Abschlag innerhalb einer Kategorie (19-13). Das Versteck kostet fast so
+ * wenig wie der Wall und hätte ihn deshalb bis Stufe 10 immer geschlagen —
+ * im Persönlichkeitstest (`bot.test.ts`) baute `turtle` keinen Wall mehr. Mit halbem
+ * Gewicht kommt es dran, wenn der Wall etwa sechs Stufen voraus ist.
+ */
+const WEIGHT_FACTOR: Partial<Record<BuildingType, number>> = {
+    hiding_place: 0.5,
+};
+
 /** Das nach Persönlichkeit höchstbewertete erreichbare Gebäude. */
 function personalityChoice(
     village: VillageSnapshot,
@@ -230,7 +245,8 @@ function personalityChoice(
         if (!isBuilding(building)) continue;
         // Wirtschaft läuft über `bestEconomyChoice` — dort zählt der Ertrag.
         if (category === 'economy') continue;
-        const weight = weights[category];
+        const weight =
+            weights[category] * (WEIGHT_FACTOR[building] ?? 1);
         if (weight <= 0) continue;
         const option = choice(village, building, 'personality');
         if (!option) continue;

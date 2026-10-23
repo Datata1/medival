@@ -37,6 +37,7 @@ export const EVENT_PRIORITY = {
     build_complete: 10,
     recruit_done: 10,
     recruit_tick: 10,
+    research_complete: 10,
     arrival: 20,
     arrival_attack: 30,
     bot_tick: 90,

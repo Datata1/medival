@@ -40,7 +40,9 @@ import buildingFarm from './sprites/buildings/farm.png';
 import buildingHeadquarters from './sprites/buildings/headquarters.png';
 import buildingIron_mine from './sprites/buildings/iron_mine.png';
 import buildingMarket from './sprites/buildings/market.png';
-import buildingRally from './sprites/buildings/rally.png';
+import buildingHiding_place from './sprites/buildings/hiding_place.png';
+import buildingRally_point from './sprites/buildings/rally_point.png';
+import buildingSmithy from './sprites/buildings/smithy.png';
 import buildingStable from './sprites/buildings/stable.png';
 import buildingTimber_camp from './sprites/buildings/timber_camp.png';
 import buildingWorkshop from './sprites/buildings/workshop.png';
@@ -70,7 +72,9 @@ import yardFarm from './sprites/yard/farm.png';
 import yardHeadquarters from './sprites/yard/headquarters.png';
 import yardIron_mine from './sprites/yard/iron_mine.png';
 import yardMarket from './sprites/yard/market.png';
-import yardRally from './sprites/yard/rally.png';
+import yardHiding_place from './sprites/yard/hiding_place.png';
+import yardRally_point from './sprites/yard/rally_point.png';
+import yardSmithy from './sprites/yard/smithy.png';
 import yardStable from './sprites/yard/stable.png';
 import yardTimber_camp from './sprites/yard/timber_camp.png';
 import yardWall from './sprites/yard/wall.png';
@@ -110,7 +114,9 @@ export const SPRITES = {
     'building.headquarters': buildingHeadquarters,
     'building.iron_mine': buildingIron_mine,
     'building.market': buildingMarket,
-    'building.rally': buildingRally,
+    'building.rally_point': buildingRally_point,
+    'building.smithy': buildingSmithy,
+    'building.hiding_place': buildingHiding_place,
     'building.stable': buildingStable,
     'building.workshop': buildingWorkshop,
     'building.timber_camp': buildingTimber_camp,
@@ -142,7 +148,9 @@ export const SPRITES = {
     'yard.headquarters': yardHeadquarters,
     'yard.iron_mine': yardIron_mine,
     'yard.market': yardMarket,
-    'yard.rally': yardRally,
+    'yard.rally_point': yardRally_point,
+    'yard.smithy': yardSmithy,
+    'yard.hiding_place': yardHiding_place,
     'yard.stable': yardStable,
     'yard.workshop': yardWorkshop,
     'yard.timber_camp': yardTimber_camp,

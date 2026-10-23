@@ -8,7 +8,10 @@ export type BuildingType =
     | 'barracks'
     | 'stable'
     | 'workshop'
+    | 'smithy'
+    | 'rally_point'
     | 'wall'
+    | 'hiding_place'
     | 'academy'
     | 'market';
 

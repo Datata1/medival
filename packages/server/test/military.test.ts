@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { Duration, type Units } from '@medival/shared';
+import { Duration, UNIT_ORDER, type Units } from '@medival/shared';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { recruitUnits, sendUnits } from '../src/engine/military.js';
+import { markResearched } from '../src/engine/research.js';
 import type { World } from '../src/engine/world.js';
 import { WorldManager } from '../src/engine/worldManager.js';
 
@@ -61,6 +62,8 @@ function cheatPrepare(
             'UPDATE villages SET wood = ?, clay = ?, iron = ?, resources_updated_at = ? WHERE id = 1',
         )
         .run(resources, resources, resources, world.now());
+    // Forschung ist hier nicht Thema (19-13): alles erforscht.
+    markResearched(world, 1, UNIT_ORDER);
 }
 
 function firstBarbarian(): { id: number; units: Units } {

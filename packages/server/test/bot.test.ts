@@ -38,6 +38,8 @@ function village(
         queueLength: 0,
         merchantsFree: 0,
         recruiting: false,
+        researched: [...UNIT_ORDER],
+        researching: false,
         ...patch,
     };
     // Ohne eigene Angabe entspricht die geplante Sicht der gebauten.
@@ -144,6 +146,7 @@ describe('Bauentscheidung (pure)', () => {
             village({
                 levels: {
                     ...EMPTY_BUILDING_LEVELS,
+                    rally_point: 1,
                     headquarters: 25,
                     timber_camp: 25,
                     clay_pit: 25,
@@ -153,6 +156,8 @@ describe('Bauentscheidung (pure)', () => {
                     barracks: 22,
                     stable: 18,
                     wall: 19,
+                    // Das Versteck kostet weniger als 100 (19-13).
+                    hiding_place: 10,
                 },
                 capacity: 100,
                 resources: { wood: 100, clay: 100, iron: 100 },
@@ -245,7 +250,10 @@ describe('Bauentscheidung (pure)', () => {
                     barracks: 25,
                     stable: 20,
                     workshop: 15,
+                    smithy: 20,
+                    rally_point: 1,
                     wall: 20,
+                    hiding_place: 10,
                     market: 25,
                     academy: 1,
                 },
@@ -347,6 +355,7 @@ describe('Persönlichkeiten unterscheiden sich messbar', () => {
                     developed({
                         levels: {
                             ...EMPTY_BUILDING_LEVELS,
+                            rally_point: 1,
                             headquarters: hq,
                             timber_camp: 15,
                             clay_pit: 15,

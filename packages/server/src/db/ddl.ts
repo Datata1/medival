@@ -12,6 +12,27 @@ const sqlList = (values: readonly string[]) =>
  * version, so plain CREATE TABLE (no migration history) is sufficient for now.
  * Keep in sync with schema.ts.
  */
+/**
+ * Forschung (19-13): was ein Dorf erforscht hat, und die laufende Forschung
+ * (höchstens eine je Dorf). Ohne `CHECK`-Liste auf `unit_type`: Die Werte
+ * prüft `UnitTypeSchema` beim Lesen, und eine neue Einheit braucht dann keine
+ * Neuanlage der Tabelle. Eigene Konstante, weil die Migration alter Welten
+ * sie vor `WORLD_DDL` anlegt (`migrateWorldDb`).
+ */
+export const RESEARCH_DDL = `
+CREATE TABLE IF NOT EXISTS research (
+  village_id INTEGER NOT NULL,
+  unit_type TEXT NOT NULL,
+  UNIQUE(village_id, unit_type)
+);
+CREATE TABLE IF NOT EXISTS research_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  village_id INTEGER NOT NULL UNIQUE,
+  unit_type TEXT NOT NULL,
+  completes_at INTEGER NOT NULL
+);
+`;
+
 export const WORLD_DDL = `
 CREATE TABLE IF NOT EXISTS players (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +127,7 @@ CREATE TABLE IF NOT EXISTS recruit_queue (
   per_unit_ms INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_recruit_queue_village ON recruit_queue(village_id);
+${RESEARCH_DDL}
 CREATE TABLE IF NOT EXISTS relations (
   player_id INTEGER NOT NULL,
   other_player_id INTEGER NOT NULL,

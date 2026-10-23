@@ -1,5 +1,5 @@
 import type { BuildingType, VillageView } from '@medival/shared';
-import { BUILDING_ORDER, RALLY_POINT } from '@medival/shared';
+import { BUILDING_ORDER } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import yardBackground from '../../assets/backgrounds/village-yard.png';
@@ -28,14 +28,12 @@ const BUILDING_SLOTS: Record<BuildingType, { x: number; y: number }> = {
     iron_mine: { x: 50, y: 14 },
     // Der Wall sitzt auf der Palisade, nicht im Dorf.
     wall: { x: 84, y: 68 },
+    // 19-13: Der Versammlungsplatz steht weiter mitten im Dorf, unter dem
+    // Hauptgebäude; Schmiede und Versteck links und rechts davon.
+    rally_point: { x: 50, y: 68 },
+    smithy: { x: 33, y: 48 },
+    hiding_place: { x: 67, y: 48 },
 };
-
-/**
- * Der Versammlungsplatz steht in der Mitte des Dorfes, unter dem
- * Hauptgebäude. Er hat einen eigenen Platz und keinen Eintrag in
- * `BUILDING_SLOTS`, weil er kein Gebäude ist: immer da, immer Stufe 1.
- */
-const RALLY_SLOT = { x: 50, y: 68 };
 
 /**
  * Der Dorfplatz mit klickbaren Gebäuden (plans/18-ux/18-2-dorfuebersicht.md).
@@ -45,7 +43,7 @@ const RALLY_SLOT = { x: 50, y: 68 };
  * Hintergrund wird in derselben Form erzeugt, es wird also nichts
  * beschnitten.
  *
- * **Bewusst DOM statt Canvas.** Elf Häuser sind keine Kartendaten: Als
+ * **Bewusst DOM statt Canvas.** Fünfzehn Häuser sind keine Kartendaten: Als
  * `<Link>` gibt es Tastaturbedienung, Fokusring, Titel und
  * Screenreader-Beschriftung geschenkt, die ein Canvas mit Hit-Test-, Fokus-
  * und ARIA-Code von Hand nachbauen müsste. Die Karte (18-3) bleibt Canvas —
@@ -131,40 +129,6 @@ export function VillageYard({
                     </Link>
                 );
             })}
-            <RallyHotspot village={village} worldId={worldId} />
         </div>
-    );
-}
-
-/**
- * Der Versammlungsplatz auf dem Dorfplatz. Er wird nie gebaut und trägt
- * deshalb auch keine Stufenplakette — er steht einfach da.
- */
-function RallyHotspot({
-    village,
-    worldId,
-}: {
-    village: VillageView;
-    worldId: number;
-}) {
-    const { t } = useTranslation();
-    return (
-        <Link
-            to="/worlds/$worldId/village/$villageId/$building"
-            params={{
-                worldId: String(worldId),
-                villageId: String(village.id),
-                building: RALLY_POINT,
-            }}
-            title={t('buildings.rally')}
-            aria-label={t('buildings.rally')}
-            style={{
-                left: `${RALLY_SLOT.x}%`,
-                top: `${RALLY_SLOT.y}%`,
-            }}
-            className="-translate-x-1/2 -translate-y-1/2 absolute flex flex-col items-center rounded-xs p-0.5 hover:bg-parchment/40"
-        >
-            <Icon name="yard.rally" size={64} />
-        </Link>
     );
 }

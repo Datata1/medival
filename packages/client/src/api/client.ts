@@ -133,6 +133,12 @@ export const api = {
             VillageViewSchema,
             postJson({ building }),
         ),
+    research: (worldId: number, villageId: number, unit: UnitType) =>
+        request(
+            `/api/worlds/${worldId}/villages/${villageId}/research`,
+            VillageViewSchema,
+            postJson({ unit }),
+        ),
     recruit: (
         worldId: number,
         villageId: number,
