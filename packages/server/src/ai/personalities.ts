@@ -108,6 +108,8 @@ export const BUILDING_CATEGORY = {
     smithy: 'military',
     rally_point: 'military',
     hiding_place: 'defense',
+    // Der Paladin (19-14) ist eine Einheit, die Statue also Kriegsführung.
+    statue: 'military',
     farm: 'economy',
     timber_camp: 'economy',
     clay_pit: 'economy',

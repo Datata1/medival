@@ -1,4 +1,7 @@
 import {
+    BUILDING_ORDER,
+    type BuildingType,
+    buildingsEnabled,
     Duration,
     GameTime,
     type GameTimeLike,
@@ -72,6 +75,14 @@ export class WorldStore {
     get enabledUnits(): UnitType[] {
         const settings = this.summary?.settings;
         return settings ? unitsEnabled(settings) : [...UNIT_ORDER];
+    }
+
+    /** Die Gebäude dieser Welt (19-14), wie `enabledUnits`. */
+    get enabledBuildings(): BuildingType[] {
+        const settings = this.summary?.settings;
+        return settings
+            ? buildingsEnabled(settings)
+            : [...BUILDING_ORDER];
     }
 
     get devMode(): boolean {

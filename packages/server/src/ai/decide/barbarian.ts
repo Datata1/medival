@@ -71,6 +71,8 @@ const BUILD_WEIGHTS: Record<BuildingType, number> = {
     smithy: 0,
     rally_point: 0,
     hiding_place: 0,
+    // Barbaren haben keinen Paladin (19-14).
+    statue: 0,
     academy: 0,
     // Barbaren handeln nicht — ein Marktplatz wäre nutzloser Ballast.
     market: 0,

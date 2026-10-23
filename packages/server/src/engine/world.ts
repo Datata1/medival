@@ -15,6 +15,7 @@ import {
     entriesOf,
     farmCapacity,
     GameTime,
+    isBuildingEnabled,
     LOYALTY_REGEN_PER_HOUR,
     marketCapacity,
     projectResources,
@@ -61,6 +62,7 @@ import {
     handleRecruitTick,
     settleRecruits,
 } from './military.js';
+import { paladinStatus } from './paladin.js';
 import {
     getResearch,
     getResearched,
@@ -728,6 +730,10 @@ export class World {
             units: unitCounts,
             researched: getResearched(this, villageId),
             research: getResearch(this, villageId),
+            paladin:
+                this.settings.paladin && v.playerId !== null
+                    ? paladinStatus(this, v.playerId)
+                    : null,
             popUsed: this.popInUse(villageId, levels),
             popMax: farmCapacity(levels.farm),
             merchantCapacity: marketCapacity(levels.market),
@@ -765,6 +771,9 @@ export class World {
 
     upgradeBuilding(villageId: number, type: BuildingType): void {
         if (!BUILDINGS[type]) throw new GameError('invalid_building');
+        // Was es in dieser Welt nicht gibt, baut niemand (19-14: Statue).
+        if (!isBuildingEnabled(this.settings, type))
+            throw new GameError('building_disabled');
         const now = this.now();
         this.sqlite.transaction(() => {
             const levels = this.getBuildingLevels(villageId);

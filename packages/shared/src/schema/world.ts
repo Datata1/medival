@@ -63,6 +63,7 @@ const worldSettingsFields = z.object({
     barbariansPerSettler: z.number().int().min(0).max(10).default(2),
     // Welt-Option (19-12); `.default` hält Welten von vorher lesbar.
     archers: z.boolean().default(true),
+    paladin: z.boolean().default(true),
     victoryVillageShare: z.number().finite().gt(0).max(1),
     seed: z.number().int().min(0).max(0xffff_ffff),
 });

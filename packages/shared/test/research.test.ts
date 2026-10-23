@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+    BUILDING_ORDER,
+    buildingsEnabled,
     createRng,
     distributeLoot,
     EMPTY_BUILDING_LEVELS,
     hiddenCapacity,
+    isBuildingEnabled,
     RESEARCH,
     recruitBlock,
     researchBlock,
     UNIT_ORDER,
+    unitsEnabled,
 } from '../src/index.js';
 
 /** Schmiede, Versammlungsplatz, Versteck (plans/19-prototyp/19-13). */
@@ -73,12 +77,17 @@ describe('Forschung', () => {
         smithy: 2,
     };
 
-    it('Speerträger und Adelsgeschlecht brauchen keine', () => {
+    it('Speerträger, Paladin und Adelsgeschlecht brauchen keine', () => {
         expect(RESEARCH.spear).toBeNull();
+        expect(RESEARCH.paladin).toBeNull();
         expect(RESEARCH.noble).toBeNull();
         expect(recruitBlock('spear', levels, [])).toBeNull();
         for (const unit of UNIT_ORDER) {
-            if (unit !== 'spear' && unit !== 'noble')
+            if (
+                unit !== 'spear' &&
+                unit !== 'noble' &&
+                unit !== 'paladin'
+            )
                 expect(RESEARCH[unit]).not.toBeNull();
         }
     });
@@ -110,5 +119,17 @@ describe('Forschung', () => {
         expect(researchBlock('spear', levels, [])).toBe(
             'no_research_needed',
         );
+    });
+});
+
+describe('Welt-Option paladin (19-14)', () => {
+    it('blendet Paladin und Statue nur bei ausgeschalteter Option aus', () => {
+        const off = { archers: true, paladin: false };
+        expect(unitsEnabled(off)).not.toContain('paladin');
+        expect(buildingsEnabled(off)).not.toContain('statue');
+        expect(isBuildingEnabled(off, 'barracks')).toBe(true);
+        expect(
+            buildingsEnabled({ archers: true, paladin: true }),
+        ).toEqual([...BUILDING_ORDER]);
     });
 });

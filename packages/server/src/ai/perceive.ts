@@ -1,4 +1,5 @@
 import {
+    buildingsEnabled,
     Duration,
     distance,
     GameTime,
@@ -34,6 +35,10 @@ import {
     tribes,
     villages,
 } from '../db/schema.js';
+import {
+    type PaladinStatus,
+    paladinStatus,
+} from '../engine/paladin.js';
 import { getResearch, getResearched } from '../engine/research.js';
 import { freeMerchantCapacity } from '../engine/trade.js';
 import type { World } from '../engine/world.js';
@@ -72,6 +77,8 @@ export interface BotSnapshot {
     villages: VillageSnapshot[];
     /** Was es in dieser Welt gibt (19-12, `unitsEnabled`). */
     enabledUnits: readonly UnitType[];
+    /** Wo der Paladin des Bots ist (19-14) — einer für alle Dörfer. */
+    paladin: PaladinStatus['state'];
     /**
      * Mögliche Handelspartner in Reichweite, samt eigener Haltung zu ihnen
      * (plans/16-ansehen-und-handel.md). Ferne Spieler fehlen bewusst: Die
@@ -123,6 +130,7 @@ export function perceiveBot(
     if (owned.length === 0) return null;
 
     const now = world.now();
+    const enabledBuildings = buildingsEnabled(world.settings);
     const snapshots: VillageSnapshot[] = owned.map((v) => {
         const levels = world.getBuildingLevels(v.id);
         const capacity = warehouseCapacity(levels.warehouse);
@@ -172,12 +180,20 @@ export function perceiveBot(
             researched: getResearched(world, v.id),
             researching: getResearch(world, v.id) !== null,
             scoutsInFlight: scoutsInFlightFrom(world, v.id),
+            // Die Ernennung des Paladins (19-14) zählt nicht: Sie dauert
+            // Stunden und läuft in der Statue, nicht in der Kaserne.
             recruiting:
                 world.db
                     .select({ id: recruitQueue.id })
                     .from(recruitQueue)
-                    .where(eq(recruitQueue.villageId, v.id))
+                    .where(
+                        and(
+                            eq(recruitQueue.villageId, v.id),
+                            ne(recruitQueue.unitType, 'paladin'),
+                        ),
+                    )
                     .all().length > 0,
+            enabledBuildings,
         };
     });
 
@@ -189,6 +205,9 @@ export function perceiveBot(
         state: readBotState(player.aiState),
         villages: snapshots,
         enabledUnits: unitsEnabled(world.settings),
+        paladin: world.settings.paladin
+            ? paladinStatus(world, playerId).state
+            : 'none',
         partners: social.partners,
         targets: social.targets,
         distressCalls: perceiveDistress(world, playerId, social, now),

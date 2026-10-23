@@ -20,7 +20,12 @@ import { z } from 'zod';
 import { startBarbarianTicks } from '../ai/barbarian.js';
 import { startBotTicks } from '../ai/bot.js';
 import { Accounts } from '../auth/accounts.js';
-import { META_DDL, RESEARCH_DDL, WORLD_DDL } from '../db/ddl.js';
+import {
+    META_DDL,
+    PALADIN_DDL,
+    RESEARCH_DDL,
+    WORLD_DDL,
+} from '../db/ddl.js';
 import { parseJsonColumn, parseRow } from '../db/parse.js';
 import {
     TableColumnSchema,
@@ -149,6 +154,9 @@ function migrateWorldDb(sqlite: Database.Database): void {
         sqlite.exec(RESEARCH_DDL);
         grantExistingResearch(sqlite);
     }
+
+    // Plan 19-14: Todesfälle des Paladins.
+    sqlite.exec(PALADIN_DDL);
 
     // Zuletzt (19-10): CHECK-Listen auf den Stand von UNIT_ORDER bzw.
     // BUILDING_ORDER bringen — nach allen Spaltenmigrationen oben, damit die

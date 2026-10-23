@@ -145,6 +145,19 @@ export const BUILDINGS: Record<BuildingType, BuildingSpec> = {
         basePop: 2,
         popFactor: 1.17,
     },
+    /**
+     * Statue (plans/19-prototyp/19-14): ernennt den Paladin — einen je
+     * Spieler, nicht je Dorf. Nur in Welten mit `paladin`.
+     */
+    statue: {
+        baseCost: { wood: 220, clay: 220, iron: 220 },
+        costFactor: 1,
+        baseTimeS: 1500,
+        timeFactor: 1,
+        maxLevel: 1,
+        basePop: 10,
+        popFactor: 1,
+    },
     market: {
         baseCost: { wood: 100, clay: 120, iron: 70 },
         costFactor: 1.26,
@@ -181,6 +194,7 @@ export const BUILDING_ORDER = [
     'rally_point',
     'wall',
     'hiding_place',
+    'statue',
     'market',
     'academy',
 ] as const satisfies readonly BuildingType[];
@@ -204,6 +218,7 @@ export const EMPTY_BUILDING_LEVELS: BuildingLevels = {
     rally_point: 0,
     wall: 0,
     hiding_place: 0,
+    statue: 0,
     market: 0,
     academy: 0,
 };

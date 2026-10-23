@@ -39,9 +39,28 @@ export function RecruitTable({
 }) {
     const { t } = useTranslation();
     const popFree = village.popMax - village.popUsed;
+    // Der Paladin (19-14) steht nur zur Wahl, wenn er weder lebt noch schon
+    // ernannt wird; nach seinem Tod ist die Wiederbelebung kostenlos.
+    const paladin = village.paladin?.state;
+    const paladinOpen = paladin === 'none' || paladin === 'dead';
     const available = enabledUnits.filter(
-        (type) => UNITS[type].recruitedAt === building,
+        (type) =>
+            UNITS[type].recruitedAt === building &&
+            (type !== 'paladin' || paladinOpen),
     );
+    const maxOf = (type: UnitType) =>
+        type !== 'paladin'
+            ? maxRecruitable(type, live, popFree)
+            : Math.min(
+                  1,
+                  paladin === 'dead'
+                      ? Math.floor(popFree / UNITS.paladin.pop)
+                      : maxRecruitable(type, live, popFree),
+              );
+
+    // Nichts auszubilden (etwa in der Statue, solange der Paladin lebt):
+    // keine leere Karte.
+    if (available.length === 0 && !error) return null;
 
     return (
         <Card>
@@ -66,11 +85,7 @@ export function RecruitTable({
                                     type,
                                     village.researched,
                                 )}
-                                max={maxRecruitable(
-                                    type,
-                                    live,
-                                    popFree,
-                                )}
+                                max={maxOf(type)}
                                 speed={speed}
                                 busy={busy}
                                 onRecruit={(count) =>

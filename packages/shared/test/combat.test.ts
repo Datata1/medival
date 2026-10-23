@@ -286,15 +286,17 @@ describe('Bogenschützen (19-12)', () => {
     });
 
     it('unitsEnabled blendet Bogenschützen nur bei ausgeschalteter Option aus', () => {
-        expect(unitsEnabled({ archers: true })).toEqual([
+        expect(unitsEnabled({ archers: true, paladin: true })).toEqual([
             ...UNIT_ORDER,
         ]);
-        expect(unitsEnabled({ archers: false })).not.toContain(
-            'archer',
-        );
-        expect(unitsEnabled({ archers: false })).not.toContain(
-            'mounted_archer',
-        );
-        expect(isUnitEnabled({ archers: false }, 'spear')).toBe(true);
+        expect(
+            unitsEnabled({ archers: false, paladin: true }),
+        ).not.toContain('archer');
+        expect(
+            unitsEnabled({ archers: false, paladin: true }),
+        ).not.toContain('mounted_archer');
+        expect(
+            isUnitEnabled({ archers: false, paladin: true }, 'spear'),
+        ).toBe(true);
     });
 });

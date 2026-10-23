@@ -177,6 +177,24 @@ export const RecruitQueueItemSchema = z.object({
     perUnitMs: DurationSchema,
 });
 
+/** Wo der Paladin eines Spielers ist (19-14) — einer für alle Dörfer. */
+export const PaladinStatusSchema = z.discriminatedUnion('state', [
+    z.object({ state: z.literal('none') }),
+    z.object({ state: z.literal('home'), villageId: z.number().int() }),
+    z.object({
+        state: z.literal('away'),
+        movementId: z.number().int(),
+    }),
+    z.object({
+        state: z.literal('appointing'),
+        villageId: z.number().int(),
+        readyAt: GameTimeSchema.nullable(),
+    }),
+    z.object({ state: z.literal('dead'), since: GameTimeSchema }),
+]);
+
+export type PaladinStatus = z.infer<typeof PaladinStatusSchema>;
+
 export const VillageViewSchema = z.object({
     id: z.number().int().positive(),
     playerId: z.number().int().positive().nullable(),
@@ -199,6 +217,8 @@ export const VillageViewSchema = z.object({
     research: z
         .object({ unit: UnitTypeSchema, completesAt: GameTimeSchema })
         .nullable(),
+    /** Paladin des Besitzers; `null` in Welten ohne Paladin (19-14). */
+    paladin: PaladinStatusSchema.nullable(),
     popUsed: z.number(),
     popMax: z.number(),
     /** Gesamte Transportkapazität des Marktplatzes. */

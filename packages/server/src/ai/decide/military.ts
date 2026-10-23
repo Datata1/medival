@@ -152,6 +152,13 @@ export function decideAttack(
 ): AttackPlan | null {
     const force = scale(offensiveUnits(home.units), MAX_ATTACK_SHARE);
     if (countOf(force) === 0) return null;
+    /*
+     * Der Paladin (19-14) zählt als Verteidiger (Verteidigung über Angriff)
+     * und bliebe damit immer zu Hause. `raider` nimmt ihn mit dem Angriff mit;
+     * alle anderen lassen ihn im Dorf.
+     */
+    if (personality === 'raider' && (home.units.paladin ?? 0) > 0)
+        force.paladin = 1;
 
     const needed = requiredMargin(personality);
     let best: { plan: AttackPlan; score: number } | null = null;

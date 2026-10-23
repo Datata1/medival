@@ -1,6 +1,6 @@
 import {
-    BUILDING_ORDER,
     BUILDINGS,
+    type BuildingType,
     Duration,
     entriesOf,
     farmCapacity,
@@ -50,7 +50,10 @@ export const HandbookView = observer(function HandbookView() {
                 unitSpeed={unitSpeed}
                 speed={speed}
             />
-            <BuildingTable speed={speed} />
+            <BuildingTable
+                buildings={world.enabledBuildings}
+                speed={speed}
+            />
             <EffectsCard speed={speed} />
         </div>
     );
@@ -163,7 +166,13 @@ function UnitTable({
     );
 }
 
-function BuildingTable({ speed }: { speed: number }) {
+function BuildingTable({
+    buildings,
+    speed,
+}: {
+    buildings: readonly BuildingType[];
+    speed: number;
+}) {
     const { t } = useTranslation();
     return (
         <Card>
@@ -181,7 +190,7 @@ function BuildingTable({ speed }: { speed: number }) {
                         </tr>
                     </thead>
                     <tbody className="tabular-nums">
-                        {BUILDING_ORDER.map((type) => {
+                        {buildings.map((type) => {
                             const b = BUILDINGS[type];
                             const requires = b.requires
                                 ? entriesOf(b.requires)

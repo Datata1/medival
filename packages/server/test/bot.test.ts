@@ -1,4 +1,5 @@
 import {
+    BUILDING_ORDER,
     Duration,
     EMPTY_BUILDING_LEVELS,
     farmCapacity,
@@ -40,6 +41,7 @@ function village(
         recruiting: false,
         researched: [...UNIT_ORDER],
         researching: false,
+        enabledBuildings: [...BUILDING_ORDER],
         ...patch,
     };
     // Ohne eigene Angabe entspricht die geplante Sicht der gebauten.
@@ -254,6 +256,7 @@ describe('Bauentscheidung (pure)', () => {
                     rally_point: 1,
                     wall: 20,
                     hiding_place: 10,
+                    statue: 1,
                     market: 25,
                     academy: 1,
                 },
@@ -419,6 +422,7 @@ describe('planBot', () => {
         state: { savingFor: {} },
         villages,
         enabledUnits: [...UNIT_ORDER],
+        paladin: 'none' as const,
         partners: [],
         targets: [],
         distressCalls: [],
