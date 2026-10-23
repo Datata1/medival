@@ -155,3 +155,31 @@ export function decideRecruit(
     }
     return null;
 }
+
+/**
+ * Den Paladin ernennen (19-14): sobald eine Statue steht und er weder lebt
+ * noch schon ernannt wird — im ersten Dorf mit Statue und Platz im
+ * Bauernhof. Die Kosten sind gegenüber jedem Heer trivial, eine eigene
+ * Abwägung lohnt nicht. Nach seinem Tod ist die Wiederbelebung kostenlos.
+ */
+export function decidePaladin(
+    villages: readonly VillageSnapshot[],
+    leftover: (villageId: number) => Resources,
+    paladin: 'none' | 'home' | 'away' | 'appointing' | 'dead',
+    enabledUnits: readonly UnitType[],
+): { villageId: number; cost: Resources } | null {
+    if (!enabledUnits.includes('paladin')) return null;
+    if (paladin !== 'none' && paladin !== 'dead') return null;
+    const cost =
+        paladin === 'dead'
+            ? { wood: 0, clay: 0, iron: 0 }
+            : unitCost('paladin', 1);
+    for (const village of villages) {
+        if (village.levels.statue < 1) continue;
+        const popMax = farmCapacity(village.levels.farm);
+        if (village.popInUse + UNITS.paladin.pop > popMax) continue;
+        if (!canAfford(leftover(village.id), cost)) continue;
+        return { villageId: village.id, cost };
+    }
+    return null;
+}

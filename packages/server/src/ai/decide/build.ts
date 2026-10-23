@@ -70,6 +70,8 @@ export interface VillageSnapshot {
     researched: readonly UnitType[];
     /** Läuft eine Forschung? Je Dorf höchstens eine. */
     researching: boolean;
+    /** Gebäude dieser Welt (19-14, `buildingsEnabled`). */
+    enabledBuildings: readonly BuildingType[];
     /** Ist von hier ein Spähtrupp unterwegs (19-10)? */
     scoutsInFlight?: boolean;
 }
@@ -132,6 +134,7 @@ function choice(
      */
     ignoreCapacity = false,
 ): BuildChoice | null {
+    if (!village.enabledBuildings.includes(building)) return null;
     const level = nextLevel(village, building);
     if (level === null) return null;
     const cost = buildCost(building, level);

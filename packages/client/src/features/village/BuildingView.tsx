@@ -1,4 +1,4 @@
-import type { BuildingType } from '@medival/shared';
+import type { BuildingType, PaladinStatus } from '@medival/shared';
 import {
     farmCapacity,
     hiddenCapacity,
@@ -12,6 +12,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
+import { Countdown } from '../../components/Countdown.js';
 import { Icon } from '../../components/Icon.js';
 import { formatNumber } from '../../lib/format.js';
 import { useStores } from '../../stores/StoreContext.js';
@@ -95,6 +96,8 @@ function Effect({
             return t('village.building.effect.smithy');
         case 'rally_point':
             return t('village.building.effect.rally_point');
+        case 'statue':
+            return t('village.building.effect.statue');
         case 'hiding_place':
             return t('village.building.effect.hiding_place', {
                 amount: formatNumber(hiddenCapacity(level)),
@@ -148,6 +151,46 @@ function BuildingHeader({
     );
 }
 
+/** Wo der Paladin ist (19-14) — für alle Dörfer derselbe. */
+const PaladinCard = observer(function PaladinCard({
+    status,
+}: {
+    status: PaladinStatus;
+}) {
+    const { t } = useTranslation();
+    const { world } = useStores();
+    return (
+        <Card>
+            <h2 className="flex items-center gap-2">
+                <Icon name="unit.paladin" />{' '}
+                {t('village.paladin.title')}
+            </h2>
+            <p className="m-0">
+                {status.state === 'none' && t('village.paladin.none')}
+                {status.state === 'home' &&
+                    t('village.paladin.home', {
+                        village:
+                            world.playerVillages.find(
+                                (v) => v.id === status.villageId,
+                            )?.name ??
+                            t('village.paladin.otherVillage'),
+                    })}
+                {status.state === 'away' && t('village.paladin.away')}
+                {status.state === 'appointing' &&
+                    (status.readyAt === null ? (
+                        t('village.paladin.appointingWaiting')
+                    ) : (
+                        <>
+                            {t('village.paladin.appointing')}{' '}
+                            <Countdown until={status.readyAt} />
+                        </>
+                    ))}
+                {status.state === 'dead' && t('village.paladin.dead')}
+            </p>
+        </Card>
+    );
+});
+
 /**
  * Die Seite eines Gebäudes (plans/18-ux/18-2-dorfuebersicht.md).
  *
@@ -177,6 +220,7 @@ export const BuildingView = observer(function BuildingView({
         building === 'barracks' ||
         building === 'stable' ||
         building === 'workshop' ||
+        building === 'statue' ||
         building === 'academy';
 
     return (
@@ -193,6 +237,10 @@ export const BuildingView = observer(function BuildingView({
                     building !== 'rally_point'
                 }
             />
+
+            {building === 'statue' && view.paladin && (
+                <PaladinCard status={view.paladin} />
+            )}
 
             {recruits && level > 0 && (
                 <RecruitTable
@@ -244,6 +292,7 @@ export const BuildingView = observer(function BuildingView({
              */}
             {building === 'headquarters' && (
                 <BuildingsTable
+                    buildings={world.enabledBuildings}
                     village={view}
                     live={live}
                     effLevels={effectiveLevels(view)}

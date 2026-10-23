@@ -1,6 +1,5 @@
 import type { VillageView } from '@medival/shared';
 import {
-    BUILDING_ORDER,
     BUILDINGS,
     type BuildingLevels,
     type BuildingType,
@@ -50,7 +49,10 @@ export function BuildingsTable({
     onBuild,
     busy,
     error,
+    buildings,
 }: {
+    /** Die Gebäude dieser Welt (`world.enabledBuildings`, 19-14). */
+    buildings: readonly BuildingType[];
     village: VillageView;
     live: Resources;
     effLevels: BuildingLevels;
@@ -76,7 +78,7 @@ export function BuildingsTable({
                     </tr>
                 </thead>
                 <tbody>
-                    {BUILDING_ORDER.map((type) => {
+                    {buildings.map((type) => {
                         const target = effLevels[type] + 1;
                         const maxed = target > BUILDINGS[type].maxLevel;
                         const unlocked = requirementsMet(

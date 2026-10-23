@@ -36,7 +36,11 @@ export const VillageOverview = observer(function VillageOverview() {
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div>
                 <div className="mb-4">
-                    <VillageYard village={view} worldId={worldId} />
+                    <VillageYard
+                        village={view}
+                        worldId={worldId}
+                        buildings={world.enabledBuildings}
+                    />
                 </div>
                 {/*
                  * Unter der Grafik: was gerade entsteht. Beide Schleifen

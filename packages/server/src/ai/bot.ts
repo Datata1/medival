@@ -29,7 +29,7 @@ import {
     decideScouting,
     decideSupport,
 } from './decide/military.js';
-import { decideRecruit } from './decide/recruit.js';
+import { decidePaladin, decideRecruit } from './decide/recruit.js';
 import { decideResearch } from './decide/research.js';
 import { decideShipment } from './decide/trade.js';
 import { executeIntents } from './execute.js';
@@ -168,6 +168,37 @@ export function planBot(snapshot: BotSnapshot): {
             village.id,
             subtractResources(rest, researchCost(unit)),
         );
+    }
+
+    // Der Paladin (19-14): einer für alle Dörfer.
+    const paladin = decidePaladin(
+        snapshot.villages,
+        (id) =>
+            leftover.get(id) ??
+            snapshot.villages.find((v) => v.id === id)?.resources ?? {
+                wood: 0,
+                clay: 0,
+                iron: 0,
+            },
+        snapshot.paladin,
+        snapshot.enabledUnits,
+    );
+    if (paladin) {
+        intents.push({
+            kind: 'recruit',
+            villageId: paladin.villageId,
+            unit: 'paladin',
+            count: 1,
+        });
+        const rest =
+            leftover.get(paladin.villageId) ??
+            snapshot.villages.find((v) => v.id === paladin.villageId)
+                ?.resources;
+        if (rest)
+            leftover.set(
+                paladin.villageId,
+                subtractResources(rest, paladin.cost),
+            );
     }
 
     // Truppen aus dem, was nach dem Bauen übrig ist (Plan 17).

@@ -33,6 +33,19 @@ CREATE TABLE IF NOT EXISTS research_queue (
 );
 `;
 
+/**
+ * Gefallene Paladine (19-14). Mehr braucht der Zustand nicht: Wo der Paladin
+ * lebt, steht in `units`, `movements` und `recruit_queue`
+ * (`engine/paladin.ts`).
+ */
+export const PALADIN_DDL = `
+CREATE TABLE IF NOT EXISTS paladin_deaths (
+  player_id INTEGER NOT NULL,
+  died_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_paladin_deaths_player ON paladin_deaths(player_id);
+`;
+
 export const WORLD_DDL = `
 CREATE TABLE IF NOT EXISTS players (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,6 +141,7 @@ CREATE TABLE IF NOT EXISTS recruit_queue (
 );
 CREATE INDEX IF NOT EXISTS idx_recruit_queue_village ON recruit_queue(village_id);
 ${RESEARCH_DDL}
+${PALADIN_DDL}
 CREATE TABLE IF NOT EXISTS relations (
   player_id INTEGER NOT NULL,
   other_player_id INTEGER NOT NULL,

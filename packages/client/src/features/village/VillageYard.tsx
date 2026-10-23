@@ -1,5 +1,4 @@
 import type { BuildingType, VillageView } from '@medival/shared';
-import { BUILDING_ORDER } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import yardBackground from '../../assets/backgrounds/village-yard.png';
@@ -33,6 +32,8 @@ const BUILDING_SLOTS: Record<BuildingType, { x: number; y: number }> = {
     rally_point: { x: 50, y: 68 },
     smithy: { x: 33, y: 48 },
     hiding_place: { x: 67, y: 48 },
+    // Die Statue (19-14) zwischen Eisenmine und Stall.
+    statue: { x: 61, y: 27 },
 };
 
 /**
@@ -52,9 +53,12 @@ const BUILDING_SLOTS: Record<BuildingType, { x: number; y: number }> = {
 export function VillageYard({
     village,
     worldId,
+    buildings,
 }: {
     village: VillageView;
     worldId: number;
+    /** Die Gebäude dieser Welt (`world.enabledBuildings`, 19-14). */
+    buildings: readonly BuildingType[];
 }) {
     const { t } = useTranslation();
     // Zielstufen inklusive Bauschleife — dieselbe Rechnung wie im Server.
@@ -65,7 +69,7 @@ export function VillageYard({
             className="pixelated relative aspect-[5/2] w-full overflow-hidden rounded-xs border-2 border-oak bg-center bg-cover"
             style={{ backgroundImage: `url(${yardBackground})` }}
         >
-            {BUILDING_ORDER.map((type) => {
+            {buildings.map((type) => {
                 const level = village.buildings[type];
                 const target = targets[type];
                 const building = t(`buildings.${type}`);

@@ -145,6 +145,23 @@ export const UNITS: Record<UnitType, UnitSpec> = {
         recruitedAt: 'workshop',
         attackClass: 'infantry',
     },
+    /**
+     * Paladin (plans/19-prototyp/19-14): einer je Spieler, ernannt in der
+     * Statue. Ohne Waffen und Erfahrung — die gehören in den PoC.
+     */
+    paladin: {
+        attack: 150,
+        defense: 250,
+        defenseCavalry: 400,
+        defenseArcher: 150,
+        speedMinPerField: 10,
+        carry: 100,
+        pop: 10,
+        cost: { wood: 20, clay: 20, iron: 40 },
+        recruitTimeS: 21600,
+        recruitedAt: 'statue',
+        attackClass: 'cavalry',
+    },
     noble: {
         attack: 30,
         defense: 100,
@@ -171,6 +188,7 @@ export const UNIT_ORDER = [
     'heavy_cavalry',
     'ram',
     'catapult',
+    'paladin',
     'noble',
 ] as const satisfies readonly UnitType[];
 
@@ -179,6 +197,12 @@ export const ARCHER_UNITS = [
     'archer',
     'mounted_archer',
 ] as const satisfies readonly UnitType[];
+
+/**
+ * Wiederbelebung des Paladins (19-14): kostenlos, aber so lange — in
+ * Sekunden bei Weltgeschwindigkeit 1, wie die Ernennung selbst.
+ */
+export const PALADIN_REVIVE_TIME_S = 21600;
 
 /** Loyalty hit range per surviving noble attack (inclusive). */
 export const NOBLE_LOYALTY_MIN = 20;

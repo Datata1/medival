@@ -27,6 +27,7 @@ export const RESEARCH: Record<UnitType, ResearchSpec | null> = {
     heavy_cavalry: { smithy: 15, requires: { stable: 10 } },
     ram: { smithy: 2, requires: { workshop: 1 } },
     catapult: { smithy: 12, requires: { workshop: 2 } },
+    paladin: null,
     noble: null,
 };
 

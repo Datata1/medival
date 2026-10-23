@@ -47,6 +47,11 @@ import {
     villages,
 } from '../db/schema.js';
 import { GameError } from './errors.js';
+import {
+    paladinReviveTime,
+    paladinStatus,
+    recordPaladinDeath,
+} from './paladin.js';
 import { getResearched } from './research.js';
 import { EVENT_PRIORITY } from './scheduler.js';
 import { handleTradeArrival } from './trade.js';
@@ -121,6 +126,20 @@ export function recruitUnits(
     if (count < 1) throw new GameError('invalid_count');
     const now = world.now();
     const building = UNITS[unitType].recruitedAt;
+    // Paladin (19-14): einer je Spieler; nach seinem Tod kostenlos, aber
+    // so lange wie eine Ernennung.
+    let revive = false;
+    if (unitType === 'paladin') {
+        if (count !== 1) throw new GameError('paladin_single');
+        const owner = world.getVillageRow(villageId).playerId;
+        if (owner === null) throw new GameError('paladin_single');
+        const status = paladinStatus(world, owner);
+        if (status.state === 'home' || status.state === 'away')
+            throw new GameError('paladin_exists');
+        if (status.state === 'appointing')
+            throw new GameError('paladin_reviving');
+        revive = status.state === 'dead';
+    }
 
     world.sqlite.transaction(() => {
         const levels = world.getBuildingLevels(villageId);
@@ -138,7 +157,9 @@ export function recruitUnits(
         if (popAfter > farmCapacity(levels.farm))
             throw new GameError('farm_too_small');
 
-        const cost = unitCost(unitType, count);
+        const cost = revive
+            ? { wood: 0, clay: 0, iron: 0 }
+            : unitCost(unitType, count);
         const have = world.settleResources(villageId, now);
         if (!canAfford(have, cost))
             throw new GameError('not_enough_resources');
@@ -156,7 +177,11 @@ export function recruitUnits(
         // würde sich über tausend Einheiten zu Sekunden aufsummieren.
         const perUnitMs = Math.max(
             1,
-            Math.round(recruitTime(unitType, world.settings.speed)),
+            Math.round(
+                revive
+                    ? paladinReviveTime(world.settings.speed)
+                    : recruitTime(unitType, world.settings.speed),
+            ),
         );
         // Sequential per building: start immediately only if that building's
         // queue is idle (`popInUse` above has already settled it).
@@ -815,6 +840,12 @@ function resolveAttackArrival(
         defenderDelta[type] = -n;
     }
     world.addUnits(targetId, defenderDelta);
+
+    // Gefallene Paladine (19-14) — auf beiden Seiten.
+    if ((result.attackerLosses.paladin ?? 0) > 0)
+        recordPaladinDeath(world, origin.playerId, now);
+    if ((result.defenderLosses.paladin ?? 0) > 0)
+        recordPaladinDeath(world, target.playerId, now);
 
     // Wall damage.
     if (result.wallLevelAfter !== result.wallLevelBefore) {

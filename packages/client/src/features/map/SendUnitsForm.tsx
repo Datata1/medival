@@ -1,5 +1,4 @@
 import {
-    BUILDING_ORDER,
     type BuildingType,
     DEFAULT_CATAPULT_TARGET,
     type MapVillage,
@@ -129,13 +128,13 @@ export const SendUnitsForm = observer(function SendUnitsForm({
                         id="send-catapult-target"
                         value={catapultTarget}
                         onChange={(e) => {
-                            const picked = BUILDING_ORDER.find(
+                            const picked = world.enabledBuildings.find(
                                 (b) => b === e.target.value,
                             );
                             if (picked) setCatapultTarget(picked);
                         }}
                     >
-                        {BUILDING_ORDER.map((b) => (
+                        {world.enabledBuildings.map((b) => (
                             <option key={b} value={b}>
                                 {t(`buildings.${b}`)}
                             </option>

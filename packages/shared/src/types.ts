@@ -12,6 +12,7 @@ export type BuildingType =
     | 'rally_point'
     | 'wall'
     | 'hiding_place'
+    | 'statue'
     | 'academy'
     | 'market';
 
@@ -26,6 +27,7 @@ export type UnitType =
     | 'heavy_cavalry'
     | 'ram'
     | 'catapult'
+    | 'paladin'
     | 'noble';
 
 export interface Resources {
@@ -83,7 +85,12 @@ export interface UnitSpec {
     cost: Resources;
     /** Recruit time in seconds at world speed 1 */
     recruitTimeS: number;
-    recruitedAt: 'barracks' | 'stable' | 'workshop' | 'academy';
+    recruitedAt:
+        | 'barracks'
+        | 'stable'
+        | 'workshop'
+        | 'statue'
+        | 'academy';
     /**
      * Gegen welche Verteidigung die Einheit angreift (19-10; vorher
      * `isCavalry`), seit 19-12 mit eigener Klasse für Bogenschützen.
@@ -137,6 +144,11 @@ export interface WorldSettings {
      * `archer` und `mounted_archer` weder rekrutierbar noch sichtbar.
      */
     archers: boolean;
+    /**
+     * Gibt es den Paladin (19-14)? Ist sie aus, sind Paladin und Statue
+     * weder baubar noch sichtbar.
+     */
+    paladin: boolean;
     seed: number;
 }
 

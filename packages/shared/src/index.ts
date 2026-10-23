@@ -41,6 +41,7 @@ export const DEFAULT_WORLD_SETTINGS: WorldSettings = {
     barbarianMaxPoints: 1500,
     victoryVillageShare: 0.6,
     archers: true,
+    paladin: true,
     seed: 0,
 };
 
@@ -61,6 +62,7 @@ export const STARTING_BUILDINGS = {
     rally_point: 1,
     wall: 0,
     hiding_place: 0,
+    statue: 0,
     market: 0,
     academy: 0,
 } as const;

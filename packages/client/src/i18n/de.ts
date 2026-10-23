@@ -164,6 +164,7 @@ const de = {
             rally_point:
                 'Ohne ihn kann das Dorf keine Truppen schicken.',
             hiding_place: 'Schützt Rohstoffe vor Plünderung.',
+            statue: 'Ernennt den Paladin — einen für alle deine Dörfer.',
         },
     },
     sound: {
@@ -220,6 +221,17 @@ const de = {
         waiting: 'wartet',
         recruit: 'Rekrutieren',
         notResearched: 'Erst in der Schmiede erforschen',
+        paladin: {
+            title: 'Dein Paladin',
+            none: 'Du hast noch keinen Paladin. Ernenne ihn unten — einen für alle deine Dörfer.',
+            home: 'Dein Paladin steht in {{village}}.',
+            away: 'Dein Paladin ist unterwegs.',
+            appointing: 'Dein Paladin wird ernannt — fertig in',
+            appointingWaiting:
+                'Dein Paladin wartet auf seine Ernennung.',
+            dead: 'Dein Paladin ist gefallen. Die Wiederbelebung unten kostet nichts, dauert aber so lange wie eine Ernennung.',
+            otherVillage: 'einem anderen Dorf',
+        },
         research: {
             title: 'Forschung',
             colUnit: 'Einheit',
@@ -290,6 +302,7 @@ const de = {
                 smithy: 'Erforscht Einheiten',
                 rally_point: 'Truppen können abmarschieren',
                 hiding_place: '{{amount}} je Rohstoff geschützt',
+                statue: 'Ernennt den Paladin',
             },
         },
     },
@@ -416,6 +429,7 @@ const de = {
         smithy: 'Schmiede',
         rally_point: 'Versammlungsplatz',
         hiding_place: 'Versteck',
+        statue: 'Statue',
     },
     units: {
         spear: 'Speerträger',
@@ -428,6 +442,7 @@ const de = {
         heavy_cavalry: 'Schwere Kavallerie',
         ram: 'Ramme',
         catapult: 'Katapult',
+        paladin: 'Paladin',
         noble: 'Adelsgeschlecht',
     },
     errors: {
@@ -462,6 +477,11 @@ const de = {
         smithy_too_low: 'Die Schmiede ist dafür zu klein',
         no_research_needed: 'Diese Einheit braucht keine Forschung',
         already_researched: 'Schon erforscht',
+        paladin_exists: 'Du hast schon einen Paladin',
+        paladin_reviving: 'Dein Paladin wird gerade ernannt',
+        paladin_single: 'Es gibt nur einen Paladin',
+        building_disabled:
+            'Dieses Gebäude gibt es in dieser Welt nicht',
         unit_disabled: 'Diese Einheit gibt es in dieser Welt nicht',
         workshop_missing: 'Werkstatt fehlt',
         academy_missing: 'Adelshof fehlt',

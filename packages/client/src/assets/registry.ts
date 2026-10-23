@@ -43,6 +43,7 @@ import buildingMarket from './sprites/buildings/market.png';
 import buildingHiding_place from './sprites/buildings/hiding_place.png';
 import buildingRally_point from './sprites/buildings/rally_point.png';
 import buildingSmithy from './sprites/buildings/smithy.png';
+import buildingStatue from './sprites/buildings/statue.png';
 import buildingStable from './sprites/buildings/stable.png';
 import buildingTimber_camp from './sprites/buildings/timber_camp.png';
 import buildingWorkshop from './sprites/buildings/workshop.png';
@@ -55,6 +56,7 @@ import unitHeavy_cavalry from './sprites/units/heavy_cavalry.png';
 import unitLight_cavalry from './sprites/units/light_cavalry.png';
 import unitMounted_archer from './sprites/units/mounted_archer.png';
 import unitNoble from './sprites/units/noble.png';
+import unitPaladin from './sprites/units/paladin.png';
 import unitRam from './sprites/units/ram.png';
 import unitSpear from './sprites/units/spear.png';
 import unitSpy from './sprites/units/spy.png';
@@ -75,6 +77,7 @@ import yardMarket from './sprites/yard/market.png';
 import yardHiding_place from './sprites/yard/hiding_place.png';
 import yardRally_point from './sprites/yard/rally_point.png';
 import yardSmithy from './sprites/yard/smithy.png';
+import yardStatue from './sprites/yard/statue.png';
 import yardStable from './sprites/yard/stable.png';
 import yardTimber_camp from './sprites/yard/timber_camp.png';
 import yardWall from './sprites/yard/wall.png';
@@ -116,6 +119,7 @@ export const SPRITES = {
     'building.market': buildingMarket,
     'building.rally_point': buildingRally_point,
     'building.smithy': buildingSmithy,
+    'building.statue': buildingStatue,
     'building.hiding_place': buildingHiding_place,
     'building.stable': buildingStable,
     'building.workshop': buildingWorkshop,
@@ -132,6 +136,7 @@ export const SPRITES = {
     'unit.archer': unitArcher,
     'unit.mounted_archer': unitMounted_archer,
     'unit.catapult': unitCatapult,
+    'unit.paladin': unitPaladin,
     'unit.sword': unitSword,
     'map.village.barbarian': mapVillageBarbarian,
     'map.village.bot': mapVillageBot,
@@ -150,6 +155,7 @@ export const SPRITES = {
     'yard.market': yardMarket,
     'yard.rally_point': yardRally_point,
     'yard.smithy': yardSmithy,
+    'yard.statue': yardStatue,
     'yard.hiding_place': yardHiding_place,
     'yard.stable': yardStable,
     'yard.workshop': yardWorkshop,
