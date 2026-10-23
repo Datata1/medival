@@ -1,6 +1,64 @@
 # Ticket 19-14: Paladin & Statue
 
-**Status:** 📋 offen · **Voraussetzung:** [19-12](19-12-bogenschuetzen.md) (`unitsEnabled`), [19-13](19-13-schmiede-versammlungsplatz-versteck.md)
+**Status:** ✅ erledigt (2026-10-23) · **Voraussetzung:** [19-12](19-12-bogenschuetzen.md) (`unitsEnabled`), [19-13](19-13-schmiede-versammlungsplatz-versteck.md)
+
+> **Ergebnis:**
+>
+> - **Statue** (`statue`, max. 1, 220/220/220) und **Paladin** (`paladin`, Werte wie
+>   unten, `recruitedAt: 'statue'`, keine Forschung nötig). Waffen und Erfahrung gibt es
+>   nicht.
+> - **Welt-Option `paladin`** (Standard an, `.default(true)`). `buildingsEnabled`
+>   kommt neben `unitsEnabled` dazu. Ist die Option aus, meldet `upgradeBuilding`
+>   `building_disabled` und `recruitUnits` `unit_disabled`. Client und Bots sehen weder
+>   Statue noch Paladin.
+> - **`paladinStatus(world, playerId)`** (`engine/paladin.ts`) leitet den Zustand ab:
+>   `none`, `home` (Dorf), `away` (Bewegung), `appointing` (Dorf, fertig um) oder `dead`
+>   (seit). Grundlage sind die Truppen der eigenen Dörfer, die Bewegungen von dort, die
+>   Ausbildungsschleife und die neue Tabelle `paladin_deaths`.
+> - **Rekrutierung:** nur einzeln (`paladin_single`). Lebt er, gibt es `paladin_exists`,
+>   wird er gerade ernannt, `paladin_reviving`. Nach seinem Tod ist die Ernennung
+>   kostenlos und dauert `PALADIN_REVIVE_TIME_S` (21 600 s bei Speed 1, wie die erste).
+> - **Tod im Kampf** wird für Angreifer und Verteidiger in `paladin_deaths` vermerkt.
+> - **Bots:** `BotSnapshot.paladin`, `decidePaladin` (pur) ernennt ihn im ersten Dorf
+>   mit Statue und Platz im Bauernhof. `raider` nimmt ihn mit dem Angriff mit. Alle
+>   anderen lassen ihn zu Hause, das ergibt sich von selbst: Mit Verteidigung 250 bei
+>   Angriff 150 zählt er nicht als Angreifer. Seine Ernennung blockiert die übrige
+>   Ausbildung des Dorfes nicht (`recruiting` zählt sie nicht mit). Gesperrte Gebäude
+>   schlägt `decideBuild` nicht vor (`VillageSnapshot.enabledBuildings`).
+> - **Client:** Statue-Seite mit „Dein Paladin" (zu Hause in …, unterwegs, Ernennung mit
+>   Countdown, gefallen) und der Ernennung darunter. Dorfplatz, Hauptgebäude,
+>   Katapultziel und Handbuch zeigen nur die Gebäude der Welt (`world.enabledBuildings`).
+>   Sprites `building.statue`, `unit.paladin` und Texte.
+>
+> **Tests:** `shared/test/research.test.ts` prüft `buildingsEnabled`/`unitsEnabled` ohne
+> Paladin. `test/integration/paladin.test.ts`:
+> - Zwei Dörfer mit Statue: Der zweite Paladin wird abgewiesen, während der erste ernannt
+>   wird (`paladin_reviving`), zu Hause steht und unterwegs ist (`paladin_exists`).
+>   `count: 2` ergibt `paladin_single`.
+> - Der Paladin fällt gegen eine Festung, danach `dead` seit der Ankunft. Die
+>   Wiederbelebung kostet nichts, dauert genau 216 000 ms bei Speed 100, ist 1 ms vorher
+>   noch offen und dann zu Hause.
+> - `paladin: false`: `building_disabled`, `unit_disabled`, in der Dorfansicht
+>   `paladin: null`.
+> - Sechs Bots in drei Spielwochen: alle sechs haben eine Statue und genau einen Paladin,
+>   gezählt über Truppen, Schleife und Bewegungen.
+>
+> **Im Browser:** Die Spielerin sieht in der Statue „Du hast noch keinen Paladin",
+> ernennt ihn über das Formular und sieht danach „wird ernannt — fertig in 0:21"
+> (Screenshot geprüft). In einer Welt ohne Paladin fehlt die Statue auf dem Dorfplatz
+> und im Handbuch, und `POST /build {statue}` ergibt 400 `building_disabled`.
+>
+> **Abweichungen von der Planung:**
+>
+> - **Zustände `home`/`away` statt `alive(villageId|movementId)`.** Das ist dieselbe
+>   Information, aber als Discriminated Union mit festen Feldern.
+> - **Eigene Werte für die Statue:** Bauzeit 1 500 s, Bevölkerung 10, keine Steigerung
+>   (nur eine Stufe).
+> - **`paladin_single`** ist ein zusätzlicher Fehler für `count ≠ 1`.
+> - **Nicht abgedeckt:** Wird das Heimatdorf erobert, während der Paladin unterwegs ist,
+>   zählt die Bewegung zum neuen Besitzer, und der alte Spieler könnte einen neuen
+>   ernennen. Eine Eroberung mit dem Paladin im Dorf ist abgedeckt: Er fällt im Kampf
+>   wie alle Verteidiger.
 
 ## Kontext
 
