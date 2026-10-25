@@ -90,8 +90,10 @@ export const totals = {
     /** Wie spät ein Event nach seiner Fälligkeit dran war (Wanduhr). */
     eventLag: new DurationHistogram(),
     botIntents: { done: 0, rejected: 0 },
-    /** Dauer der WAL-Checkpoints im Persist-Takt (19-15). */
+    /** Dauer der WAL-Checkpoints im eigenen Thread (20-1). */
     checkpoint: new DurationHistogram(),
+    /** Der Rest danach im Haupt-Thread — das, was den Event-Loop kostet. */
+    checkpointTail: new DurationHistogram(),
 };
 
 /** Vom Scheduler je verarbeitetem Event aufgerufen. */
@@ -151,6 +153,7 @@ export class EngineHealth {
         totals.eventLag.reset();
         totals.eventDuration.clear();
         totals.checkpoint.reset();
+        totals.checkpointTail.reset();
         totals.botIntents.done = 0;
         totals.botIntents.rejected = 0;
     }
@@ -193,6 +196,7 @@ export class EngineHealth {
                 ),
                 botIntents: { ...totals.botIntents },
                 checkpoint: totals.checkpoint.snapshot(),
+                checkpointTail: totals.checkpointTail.snapshot(),
             },
         };
     }
