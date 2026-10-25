@@ -1,6 +1,29 @@
 # Ticket 20-3: Truppen unterwegs bei Eroberung
 
-**Status:** 📋 offen · **Voraussetzung:** [19-14](../19-prototyp/19-14-paladin-und-statue.md)
+**Status:** ✅ erledigt (2026-10-25) · **Voraussetzung:** [19-14](../19-prototyp/19-14-paladin-und-statue.md)
+
+> **Ergebnis:** Bei einer Eroberung löscht `abandonMarches` (`engine/military.ts`) alle
+> Bewegungen, die vom eroberten Dorf ausgehen (`attack`, `support`, `return`), samt ihren
+> `arrival`-Events. War der Paladin dabei, wird sein Tod für den alten Besitzer vermerkt.
+> Lieferungen laufen weiter.
+>
+> **Dazu eine zweite Lücke derselben Art:** Unterstützung, die aus einem anderen Dorf des
+> alten Besitzers **zum** eroberten Dorf unterwegs war, wäre dort angekommen und hätte
+> den Eroberer verstärkt. Seitdem kehrt Unterstützung um, wenn das Ziel bei der Ankunft
+> einem anderen Spieler gehört als der Ursprung.
+>
+> **Tests:** `test/integration/conquest.test.ts`:
+> - Truppen samt Paladin sind von X unterwegs, als B X erobert. Danach gibt es keine
+>   Bewegung von X mehr und kein verwaistes Ankunfts-Event. A's Paladin ist `dead`, B hat
+>   keinen.
+> - Unterstützung von Y nach X kommt nach der Eroberung an, bleibt nicht in X und landet
+>   wieder in Y.
+> - Eine Lieferung von X läuft weiter.
+>
+> Ohne die Änderung scheitern die ersten beiden Fälle (gegengeprüft).
+>
+> **Abweichung:** Der Eroberungsbericht nennt die verlorenen Truppen nicht (wie geplant,
+> das gehört in die UX-Arbeit).
 
 ## Kontext
 

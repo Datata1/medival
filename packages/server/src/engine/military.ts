@@ -537,6 +537,29 @@ export function handleArrival(
 
         switch (m.kind) {
             case 'support': {
+                /*
+                 * Das Ziel gehört inzwischen jemand anderem (erobert, 20-3):
+                 * Die Unterstützung kehrt um, statt den Eroberer zu
+                 * verstärken.
+                 */
+                const supportOrigin = world.getVillageRow(
+                    m.originVillageId,
+                );
+                const supportTarget = world.getVillageRow(
+                    m.targetVillageId,
+                );
+                if (supportOrigin.playerId !== supportTarget.playerId) {
+                    sendHome(
+                        world,
+                        supportOrigin,
+                        supportTarget,
+                        units,
+                        { wood: 0, clay: 0, iron: 0 },
+                        GameTime.of(m.arrivalGameTime),
+                    );
+                    affected.push(m.originVillageId);
+                    break;
+                }
                 world.addUnits(m.targetVillageId, units);
                 // Unterstützung wiegt schwerer als eine Lieferung: Wer
                 // Verteidiger schickt, riskiert sie auch.
@@ -640,6 +663,44 @@ function lowerBuilding(
         })
         .where(eq(villages.id, villageId))
         .run();
+}
+
+/**
+ * Truppen eines eroberten Dorfes, die unterwegs sind, gehen verloren
+ * (plans/20-nacharbeiten/20-3) — wie in Tribal Wars.
+ *
+ * Vorher gehörten ihre Bewegungen über `origin_village_id` plötzlich dem
+ * Eroberer, und ein Rückweg landete in seinem Dorf. Für den Paladin hieß das:
+ * Der alte Besitzer durfte einen neuen ernennen, der neue hatte womöglich
+ * zwei. Lieferungen bleiben; sie tragen nur Rohstoffe.
+ */
+function abandonMarches(
+    world: World,
+    villageId: number,
+    oldOwner: number | null,
+    at: GameTime,
+): void {
+    const marches = world.db
+        .select()
+        .from(movements)
+        .where(eq(movements.originVillageId, villageId))
+        .all()
+        .filter((m) => m.kind !== 'trade');
+    for (const m of marches) {
+        const units = parseJsonColumn(
+            UnitsSchema,
+            m.unitsJson,
+            'movement.units',
+        );
+        if ((units.paladin ?? 0) > 0)
+            recordPaladinDeath(world, oldOwner, at);
+        world.db.delete(movements).where(eq(movements.id, m.id)).run();
+        world.sqlite
+            .prepare(
+                "DELETE FROM events WHERE type = 'arrival' AND json_extract(payload_json, '$.movementId') = ?",
+            )
+            .run(m.id);
+    }
 }
 
 /**
@@ -920,6 +981,7 @@ function resolveAttackArrival(
                 .delete(recruitQueue)
                 .where(eq(recruitQueue.villageId, targetId))
                 .run();
+            abandonMarches(world, targetId, target.playerId, now);
         }
         if (!conquered) {
             world.db
