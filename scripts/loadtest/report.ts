@@ -70,6 +70,7 @@ export interface RunResult {
             events: Record<string, Hist>;
             botIntents: { done: number; rejected: number };
             checkpoint: Hist;
+            checkpointTail: Hist;
         };
     };
     /** Gesamtwerte am Ende der Aufwärmphase, vor dem Zurücksetzen. */
@@ -425,7 +426,7 @@ Statuscodes: ${r.statuses.ok} × 2xx, ${r.statuses.client} × 4xx (Spielfehler w
 
 ## Server
 
-Event-Loop-Latenz über den ganzen Lauf: p50 ${ms(t.eventLoop.p50Ms)}, p99 ${ms(t.eventLoop.p99Ms)}, max ${ms(t.eventLoop.maxMs)}. Bot-Ticks: ${t.botTick.count}, p50 ${ms(t.botTick.p50Ms)}, p99 ${ms(t.botTick.p99Ms)}, max ${ms(t.botTick.maxMs)}. Verspätung der Events gegenüber ihrer Fälligkeit: p50 ${ms(t.eventLag.p50Ms)}, p99 ${ms(t.eventLag.p99Ms)}, max ${ms(t.eventLag.maxMs)}. WAL-Checkpoints im 15-s-Takt: ${t.checkpoint.count}, p50 ${ms(t.checkpoint.p50Ms)}, max ${ms(t.checkpoint.maxMs)} (blockieren den Event-Loop so lange).
+Event-Loop-Latenz über den ganzen Lauf: p50 ${ms(t.eventLoop.p50Ms)}, p99 ${ms(t.eventLoop.p99Ms)}, max ${ms(t.eventLoop.maxMs)}. Bot-Ticks: ${t.botTick.count}, p50 ${ms(t.botTick.p50Ms)}, p99 ${ms(t.botTick.p99Ms)}, max ${ms(t.botTick.maxMs)}. Verspätung der Events gegenüber ihrer Fälligkeit: p50 ${ms(t.eventLag.p50Ms)}, p99 ${ms(t.eventLag.p99Ms)}, max ${ms(t.eventLag.maxMs)}. WAL-Checkpoints im eigenen Thread (alle 2 s, plans/20-nacharbeiten/20-1): ${t.checkpoint.count}, p50 ${ms(t.checkpoint.p50Ms)}, max ${ms(t.checkpoint.maxMs)}; sie blockieren den Event-Loop nicht. Den Rest danach schreibt der Haupt-Thread zurück: p50 ${ms(t.checkpointTail.p50Ms)}, p99 ${ms(t.checkpointTail.p99Ms)}, max ${ms(t.checkpointTail.maxMs)}.
 
 | Event-Typ | Anzahl | je s | p50 | p99 | max |
 |---|---|---|---|---|---|

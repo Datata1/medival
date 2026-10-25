@@ -50,6 +50,12 @@ const config = {
      */
     warmupS: Number(args.get('warmup') ?? (smoke ? 60 : 120)),
     mapSize: 1000,
+    /*
+     * Notbremse: Wächst die Welt-DB darüber, bricht der Lauf ab, statt die
+     * Platte zu füllen. Der erste Stresslauf mit dem Checkpoint-Thread (20-1)
+     * hat genau das getan — das WAL wuchs, bis nichts mehr frei war.
+     */
+    maxDbMb: Number(args.get('max-db-mb') ?? 2048),
     out:
         args.get('out') ??
         path.join(
@@ -263,6 +269,15 @@ async function main(): Promise<void> {
         });
         last = stats;
         lastAt = now;
+        const latest = samples.at(-1);
+        if (latest && latest.dbMb > config.maxDbMb) {
+            console.error(
+                `Abbruch: Welt-DB ${latest.dbMb.toFixed(0)} MB > ${config.maxDbMb} MB`,
+            );
+            child.kill('SIGKILL');
+            fs.rmSync(dataDir, { recursive: true, force: true });
+            process.exit(2);
+        }
         const s = samples.at(-1);
         if (s)
             console.log(

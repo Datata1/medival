@@ -31,6 +31,7 @@ import {
     TableColumnSchema,
     WorldMetaRowSchema,
 } from '../db/rowSchemas.js';
+import { CheckpointThread } from './checkpointThread.js';
 import { EngineHealth, totals } from './health.js';
 import { type Founder, generateMap } from './mapgen.js';
 import { type MetaPatch, World, type WorldMeta } from './world.js';
@@ -251,10 +252,9 @@ function openPragmas(
      * sonst alle 1 000 Seiten in die Datenbank zurück — synchron im Commit,
      * der die Grenze überschreitet, samt `fsync`. Mit diesem Schritt fiel das
      * Maximum der Bot-Ticks in einem Kurzlauf der Lastprobe von 18 auf
-     * 3,3 ms. Der Checkpoint läuft stattdessen alle 15 s im Persist-Takt
-     * (`checkpointWorld`), mit eigener Zeitmessung. Bei sehr hoher
-     * Schreiblast dauert er dort Hunderte ms (Stresslauf, 19-15) — dann
-     * gehört er in einen eigenen Thread.
+     * 3,3 ms. Der Checkpoint läuft stattdessen alle 2 s in einem eigenen
+     * Thread (`CheckpointThread`, 20-1); im Haupt-Thread dauerte er im
+     * Stresslauf aus 19-15 Hunderte ms.
      */
     if (manualCheckpoint) sqlite.pragma('wal_autocheckpoint = 0');
     // Nach einem Checkpoint das WAL auf höchstens 16 MB kürzen — ohne diese
@@ -262,7 +262,32 @@ function openPragmas(
     sqlite.pragma(`journal_size_limit = ${16 * 1024 * 1024}`);
 }
 
-/** WAL zurückschreiben, ohne Leser oder Schreiber zu blockieren. */
+/**
+ * Takt der Checkpoints im eigenen Thread (20-1). Kurz, damit das WAL klein
+ * bleibt — den Haupt-Thread kostet ein Checkpoint nur noch eine Nachricht.
+ */
+const CHECKPOINT_INTERVAL_MS = 2_000;
+
+/**
+ * Den Rest nach dem Worker im Haupt-Thread zurückschreiben (20-1).
+ *
+ * SQLite beginnt das WAL erst dann von vorn (und kürzt es auf
+ * `journal_size_limit`), wenn **alles** zurückgeschrieben ist. Unter
+ * Dauerlast schreibt der Haupt-Thread aber weiter, während der Worker
+ * arbeitet — der Worker holt nie ganz auf. Im ersten Stresslauf mit dem
+ * Worker wuchs das WAL deshalb, bis die Platte voll war. Was hier noch zu
+ * tun bleibt, ist nur das, was während des Worker-Laufs dazukam.
+ */
+function checkpointTail(world: World): void {
+    const started = performance.now();
+    world.sqlite.pragma('wal_checkpoint(PASSIVE)');
+    totals.checkpointTail.record(performance.now() - started);
+}
+
+/**
+ * WAL im Haupt-Thread zurückschreiben — nur noch der Rückfall, wenn der
+ * Checkpoint-Thread ausgefallen ist (20-1).
+ */
 function checkpointWorld(world: World): void {
     const started = performance.now();
     world.sqlite.pragma('wal_checkpoint(PASSIVE)');
@@ -359,6 +384,8 @@ export class WorldManager {
     readonly secret: string;
     private readonly worlds = new Map<number, World>();
     private readonly persistTimer: NodeJS.Timeout;
+    private readonly checkpointTimer: NodeJS.Timeout;
+    private readonly checkpoints = new CheckpointThread();
     readonly health = new EngineHealth();
 
     constructor(private readonly dataDir: string) {
@@ -387,11 +414,24 @@ export class WorldManager {
         this.persistTimer = setInterval(() => {
             for (const w of this.worlds.values()) {
                 if (w.clock.running) w.persist();
-                checkpointWorld(w);
+                if (!this.checkpoints.available) checkpointWorld(w);
             }
             this.health.check(this.worlds.values());
         }, 15_000);
         this.persistTimer.unref();
+        this.checkpointTimer = setInterval(() => {
+            for (const w of this.worlds.values()) {
+                if (!this.checkpoints.available) return;
+                void this.checkpoints
+                    .checkpoint(w.sqlite.name)
+                    ?.then((reply) => {
+                        if (!reply.ok || !this.worlds.has(w.id)) return;
+                        totals.checkpoint.record(reply.ms);
+                        checkpointTail(w);
+                    });
+            }
+        }, CHECKPOINT_INTERVAL_MS);
+        this.checkpointTimer.unref();
     }
 
     loadedWorlds(): Iterable<World> {
@@ -606,6 +646,9 @@ export class WorldManager {
         this.meta
             .prepare('DELETE FROM memberships WHERE world_id = ?')
             .run(id);
+        // Der Checkpoint-Thread lässt die Datei los (Nachrichten laufen in
+        // Reihenfolge, ein laufender Checkpoint endet vorher).
+        void this.checkpoints.close(this.worldPath(id));
         for (const suffix of ['', '-wal', '-shm']) {
             fs.rmSync(this.worldPath(id) + suffix, { force: true });
         }
@@ -614,6 +657,8 @@ export class WorldManager {
 
     shutdown(): void {
         clearInterval(this.persistTimer);
+        clearInterval(this.checkpointTimer);
+        this.checkpoints.dispose();
         for (const w of this.worlds.values()) w.close();
         this.worlds.clear();
         this.meta.close();
