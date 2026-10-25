@@ -14,6 +14,19 @@ import type { WorldSettings } from '../types.js';
  * zusätzlich die Kartengenerierung, die für zu viele Dörfer auf zu kleiner
  * Fläche keinen Platz mehr findet.
  */
+/**
+ * Grenzen der Einstellungen, die man beim Anlegen einer Welt wählen kann
+ * (plans/20-nacharbeiten/20-4). Eine Quelle für Schema und Formular: Der
+ * Client liest dieselben Zahlen, statt sie abzuschreiben.
+ */
+export const WORLD_LIMITS = {
+    mapSize: { min: 20, max: 1000 },
+    botCount: { min: 0, max: 500 },
+    barbarianCount: { min: 0, max: 5_000 },
+    settlementDensity: { min: 0.02, max: MAX_SETTLEMENT_DENSITY },
+    barbariansPerSettler: { min: 0, max: 10 },
+} as const;
+
 const worldSettingsFields = z.object({
     speed: z.number().finite().min(1).max(10_000),
     unitSpeed: z.number().finite().min(1).max(10_000),
@@ -22,9 +35,21 @@ const worldSettingsFields = z.object({
      * ohnehin in Hunderterblöcke; die Mitte (500|500) liegt an der Ecke von
      * K44, K45, K54 und K55.
      */
-    mapSize: z.number().int().min(20).max(1000),
-    botCount: z.number().int().min(0).max(500),
-    barbarianCount: z.number().int().min(0).max(5_000),
+    mapSize: z
+        .number()
+        .int()
+        .min(WORLD_LIMITS.mapSize.min)
+        .max(WORLD_LIMITS.mapSize.max),
+    botCount: z
+        .number()
+        .int()
+        .min(WORLD_LIMITS.botCount.min)
+        .max(WORLD_LIMITS.botCount.max),
+    barbarianCount: z
+        .number()
+        .int()
+        .min(WORLD_LIMITS.barbarianCount.min)
+        .max(WORLD_LIMITS.barbarianCount.max),
     /*
      * Basisrate bei Weltgeschwindigkeit 1; die Engine multipliziert sie mit
      * `speed`. Obergrenze 60: Zusammen mit Speed 500 und 80 Dörfern wären das
@@ -57,10 +82,15 @@ const worldSettingsFields = z.object({
     settlementDensity: z
         .number()
         .finite()
-        .min(0.02)
-        .max(MAX_SETTLEMENT_DENSITY)
+        .min(WORLD_LIMITS.settlementDensity.min)
+        .max(WORLD_LIMITS.settlementDensity.max)
         .default(0.15),
-    barbariansPerSettler: z.number().int().min(0).max(10).default(2),
+    barbariansPerSettler: z
+        .number()
+        .int()
+        .min(WORLD_LIMITS.barbariansPerSettler.min)
+        .max(WORLD_LIMITS.barbariansPerSettler.max)
+        .default(2),
     // Welt-Option (19-12); `.default` hält Welten von vorher lesbar.
     archers: z.boolean().default(true),
     paladin: z.boolean().default(true),

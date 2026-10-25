@@ -157,7 +157,7 @@ describe('world creation', () => {
                 },
                 { founder: { name: 'Spieler' } },
             ),
-        ).toThrow(/Zu viele Dörfer/);
+        ).toThrow(/world_too_dense/);
     });
 });
 

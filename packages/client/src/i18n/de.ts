@@ -12,6 +12,17 @@ const de = {
     },
     lobby: {
         archers: 'Bogenschützen',
+        paladin: 'Paladin',
+        advanced: 'Erweitert',
+        field: {
+            mapSize: 'Kartengröße ({{min}}–{{max}} Felder je Seite)',
+            botCount: 'Bots ({{min}}–{{max}})',
+            barbarianCount: 'Barbarendörfer ({{min}}–{{max}})',
+            settlementDensity:
+                'Besiedlungsdichte (Dörfer je Feld, {{min}}–{{max}})',
+            barbariansPerSettler:
+                'Barbarendörfer je neuem Spieler ({{min}}–{{max}})',
+        },
         title: 'Medival',
         subtitle: 'Eine Die-Stämme-Welt im Browser',
         signedInAs: 'Angemeldet als {{name}}',
@@ -480,6 +491,10 @@ const de = {
         paladin_exists: 'Du hast schon einen Paladin',
         paladin_reviving: 'Dein Paladin wird gerade ernannt',
         paladin_single: 'Es gibt nur einen Paladin',
+        world_too_dense:
+            'Zu viele Dörfer für diese Karte — größere Karte, höhere Dichte oder weniger Bots und Barbaren',
+        invalid_settings: 'Ungültige Welt-Einstellungen',
+        invalid_input: 'Ungültige Eingabe',
         building_disabled:
             'Dieses Gebäude gibt es in dieser Welt nicht',
         unit_disabled: 'Diese Einheit gibt es in dieser Welt nicht',
