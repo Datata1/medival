@@ -708,3 +708,52 @@ describe('MapStore: Spähwissen zum ausgewählten Dorf (20-5)', () => {
         expect(mocked.getIntel).toHaveBeenCalledTimes(2);
     });
 });
+
+describe('Audit: Beitreten nach dem Anlegen einer Welt', () => {
+    function serveWorld() {
+        mocked.getVillage.mockResolvedValue(villageView());
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
+        mocked.getMovements.mockResolvedValue({
+            gameTime: 0,
+            incoming: [],
+            outgoing: [],
+        } as never);
+        mocked.getReports.mockResolvedValue([]);
+    }
+
+    it('nach dem Beitreten verschwindet die Beitreten-Karte (reopenWorld lädt neu)', async () => {
+        serveWorld();
+        // Erst geöffnet ohne Spieler — so landet man nach „Welt erschaffen".
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: null }),
+        );
+        const root = new RootStore(new FakeSocket());
+        await root.openWorld(1);
+        expect(root.world.playerId).toBeNull();
+
+        mocked.joinWorld.mockResolvedValue(
+            worldSummary({ playerId: 5 }),
+        );
+        mocked.listWorlds.mockResolvedValue([]);
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: 5 }),
+        );
+        expect(await root.lobby.join(1)).toBe(true);
+        await root.reopenWorld(1);
+        expect(root.world.playerId).toBe(5);
+    });
+
+    it('auch über die Weltenliste: openWorld lädt einen Stand ohne Spieler neu', async () => {
+        serveWorld();
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: null }),
+        );
+        const root = new RootStore(new FakeSocket());
+        await root.openWorld(1);
+        mocked.getWorld.mockResolvedValue(
+            worldSummary({ playerId: 5 }),
+        );
+        await root.openWorld(1);
+        expect(root.world.playerId).toBe(5);
+    });
+});
