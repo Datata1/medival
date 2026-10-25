@@ -1,6 +1,6 @@
 # Plan 19: Vom Singleplayer zum Mehrspieler-Prototyp
 
-**Status:** 📋 offen · **Voraussetzung:** [Plan 17](../17-staemme-und-krieg.md), Abschluss von
+**Status:** ✅ erledigt (2026-10-23, [Lastprobe](lastprobe-ergebnis.md)) · **Voraussetzung:** [Plan 17](../17-staemme-und-krieg.md), Abschluss von
 [18-3](../18-ux/18-3-karte.md) (die Kartenänderungen liegen uncommittet in `master`)
 
 Die Pläne 01–17 haben ein vollständiges, aber **beschleunigtes Singleplayer-Spiel** gebaut:
@@ -29,7 +29,7 @@ zusammen. Die Reihenfolge unten ist keine Empfehlung, sondern weitgehend erzwung
 | 19-12 | [Bogenschützen](19-12-bogenschuetzen.md) | shared + server + client | ✅ erledigt |
 | 19-13 | [Schmiede, Versammlungsplatz, Versteck](19-13-schmiede-versammlungsplatz-versteck.md) | shared + server + client | ✅ erledigt |
 | 19-14 | [Paladin & Statue](19-14-paladin-und-statue.md) | shared + server + client | ✅ erledigt |
-| 19-15 | [Lastprobe & Abnahme](19-15-lastprobe.md) | server + scripts | 📋 offen |
+| 19-15 | [Lastprobe & Abnahme](19-15-lastprobe.md) | server + scripts | ✅ erledigt |
 
 ## Warum diese Reihenfolge?
 

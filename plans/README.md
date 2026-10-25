@@ -25,7 +25,7 @@ empfohlene Reihenfolge:
 | 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ✅ erledigt |
 | 17 | [Stämme & Krieg](17-staemme-und-krieg.md) | server + shared + client | ✅ erledigt |
 | 18 | [UX-Überarbeitung (6 Tickets)](18-ux/README.md) | client (+shared, +server) | 📋 offen |
-| 19 | [Vom Singleplayer zum Mehrspieler-Prototyp (15 Tickets)](19-prototyp/README.md) | server + shared + client | 📋 offen |
+| 19 | [Vom Singleplayer zum Mehrspieler-Prototyp (15 Tickets)](19-prototyp/README.md) | server + shared + client | ✅ erledigt |
 
 **Warum diese Reihenfolge?**
 

@@ -194,6 +194,13 @@ export function registerRoutes(
         manager.health.snapshot(manager.loadedWorlds()),
     );
 
+    // Gesamtwerte auf null — nach dem Aufbau einer Lastprobe (19-15).
+    app.post('/api/health/reset', (req) => {
+        requireAdmin(req);
+        manager.health.resetTotals();
+        return { ok: true };
+    });
+
     app.post('/api/worlds', (req) => {
         // Welten anlegen ist Verwaltung, nicht Spiel (19-8).
         requireAdmin(req);
@@ -806,8 +813,15 @@ export function registerRoutes(
             const unsubscribe = world.subscribe(
                 playerIdOf(world, req),
                 (msg) => {
+                    // `sentAt` (Wanduhr, ms): Die Lastprobe misst damit die
+                    // Verzögerung bis zum Client (19-15).
                     if (socket.readyState === socket.OPEN)
-                        socket.send(JSON.stringify(msg));
+                        socket.send(
+                            JSON.stringify({
+                                ...msg,
+                                sentAt: Date.now(),
+                            }),
+                        );
                 },
             );
             socket.on('close', unsubscribe);
