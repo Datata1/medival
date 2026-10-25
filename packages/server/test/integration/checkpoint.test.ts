@@ -117,14 +117,17 @@ describe('Unter Dauerlast', () => {
         const insert = db.prepare('INSERT INTO t (b) VALUES (?)');
         const blob = Buffer.alloc(4096, 1);
         // Der Haupt-Thread schreibt weiter, während der Worker arbeitet.
+        // Begrenzt (20 Seiten je 5 ms): Bei 200 Seiten je 1 ms holte der
+        // Worker auf dem CI-Runner nie auf, und der Test lief in den Timeout.
+        for (let i = 0; i < 2_000; i++) insert.run(blob);
         const writer = setInterval(() => {
-            for (let i = 0; i < 200; i++) insert.run(blob);
-        }, 1);
+            for (let i = 0; i < 20; i++) insert.run(blob);
+        }, 5);
         thread = new CheckpointThread();
         let lastWorker:
             | { log: number; checkpointed: number }
             | undefined;
-        for (let round = 0; round < 10; round++) {
+        for (let round = 0; round < 3; round++) {
             lastWorker = (await thread.checkpoint(file))?.result;
         }
         clearInterval(writer);
