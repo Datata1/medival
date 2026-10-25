@@ -1,6 +1,30 @@
 # Ticket 20-5: „Zuletzt erkundet" im Kartenpanel
 
-**Status:** 📋 offen · **Voraussetzung:** [19-10](../19-prototyp/19-10-spaeher.md)
+**Status:** ✅ erledigt (2026-10-25) · **Voraussetzung:** [19-10](../19-prototyp/19-10-spaeher.md)
+
+> **Ergebnis:** `GET /api/worlds/:id/villages/:vid/intel` liefert das Spähwissen **des
+> anfragenden Spielers** über ein Dorf (`ScoutIntelSchema`: Zeitpunkt, Truppen, Wall,
+> Punkte), sonst `null`. Ohne Spieler in der Welt gibt es 403 `not_joined`. Der
+> `MapStore` lädt es bei der Auswahl eines Dorfes (`map.intel`). Das Kartenpanel zeigt
+> bei fremden Dörfern und Barbaren:
+> - „Zuletzt erkundet vor …: Wall …, Speerträger … · …" mit einem Link zu den Berichten
+>   oder
+> - „Noch nicht erkundet."
+>
+> **Tests:** `test/integration/intel.test.ts`:
+> - A sieht nach dem Spähen B's Speere und Wall.
+> - C, der nicht gespäht hat, bekommt `null`.
+> - Ein Zuschauer bekommt 403.
+>
+> `client/test/stores.test.ts` prüft, dass die Auswahl das Wissen lädt und eine neue
+> Auswahl es leert.
+>
+> **Im Browser:** Nach einem Spähangriff zeigt das Panel für das erkundete Barbarendorf
+> „Zuletzt erkundet vor 0:06: Wall 0, Speerträger 5 · Schwertkämpfer 8", für ein anderes
+> „Noch nicht erkundet." (Screenshot geprüft).
+>
+> **Abweichung:** Der Link führt zur Berichtsliste, nicht zu einem einzelnen Bericht.
+> Eine Route je Bericht gibt es noch nicht; das gehört zur UX-Arbeit.
 
 ## Kontext
 

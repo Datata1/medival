@@ -3,6 +3,7 @@ import {
     MAX_TILES_PER_SIDE,
     type MapVillage,
     type Resources,
+    type ScoutIntel,
     type TileRange,
     tileKey,
     tileOf,
@@ -12,6 +13,7 @@ import {
 import { makeAutoObservable, runInAction } from 'mobx';
 import { api } from '../api/client.js';
 import { apiErrorMessage } from '../lib/errors.js';
+import { AsyncValue } from './AsyncValue.js';
 
 export interface FrameSize {
     width: number;
@@ -43,6 +45,11 @@ export class MapStore {
     readonly tiles = new Map<string, MapVillage[]>();
     worldId: number | null = null;
     selectedVillageId: number | null = null;
+    /**
+     * Was ich zuletzt über das ausgewählte Dorf erkundet habe (20-5);
+     * `null`, wenn nichts. Geladen bei der Auswahl.
+     */
+    readonly intel = new AsyncValue<ScoutIntel | null>();
     sendError: string | null = null;
     loadError: string | null = null;
     isSending = false;
@@ -301,6 +308,12 @@ export class MapStore {
     select(village: MapVillage | null): void {
         this.selectedVillageId = village?.id ?? null;
         this.sendError = null;
+        this.intel.clear();
+        const worldId = this.worldId;
+        if (village && worldId !== null)
+            void this.intel.load(() =>
+                api.getIntel(worldId, village.id),
+            );
     }
 
     /**

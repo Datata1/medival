@@ -325,6 +325,21 @@ export const BattleReportPayloadSchema = z.object({
  * Spähbericht (plans/19-prototyp/19-10). Was fehlt, ist `null`: Die Stufe
  * (`tier`) bestimmt, wie viel die Überlebenden gesehen haben.
  */
+/**
+ * Was der anfragende Spieler zuletzt über ein Dorf erkundet hat
+ * (plans/20-nacharbeiten/20-5) — aus `scout_intel`, nie fremdes Wissen.
+ */
+export const ScoutIntelSchema = z.object({
+    gameTime: GameTimeSchema,
+    units: UnitsSchema,
+    wall: z.number().int().nonnegative(),
+    points: z.number().int().nonnegative(),
+});
+
+export type ScoutIntel = z.infer<typeof ScoutIntelSchema>;
+
+export const ScoutIntelResponseSchema = ScoutIntelSchema.nullable();
+
 export const ScoutReportPayloadSchema = z.object({
     attackerVillage: villageRef,
     defenderVillage: villageRef,

@@ -1,8 +1,10 @@
-import type { MapVillage } from '@medival/shared';
+import { Duration, entriesOf, type MapVillage } from '@medival/shared';
 import { Link } from '@tanstack/react-router';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/Card.js';
+import { formatDuration, formatNumber } from '../../lib/format.js';
+import { useStores } from '../../stores/StoreContext.js';
 import { SendResourcesForm } from './SendResourcesForm.js';
 import { SendUnitsForm } from './SendUnitsForm.js';
 
@@ -40,6 +42,7 @@ export const TargetPanel = observer(function TargetPanel({
             <p className="text-ink-light">
                 {kind} · {t('map.points', { points: target.points })}
             </p>
+            {!isOwn && <IntelNote worldId={worldId} />}
             {target.playerId !== null && !isOwn && (
                 <p>
                     <Link
@@ -100,5 +103,47 @@ export const TargetPanel = observer(function TargetPanel({
                 </>
             )}
         </Card>
+    );
+});
+
+/**
+ * Was ich über dieses Dorf weiß (plans/20-nacharbeiten/20-5): das letzte
+ * eigene Spähwissen aus `scout_intel`, mit Alter, Wall und Truppen.
+ */
+const IntelNote = observer(function IntelNote({
+    worldId,
+}: {
+    worldId: number;
+}) {
+    const { t } = useTranslation();
+    const { map, world } = useStores();
+    if (map.intel.isLoading && !map.intel.hasValue) return null;
+    const intel = map.intel.value;
+    if (!intel)
+        return <p className="text-ink-light">{t('map.intel.none')}</p>;
+    const troops = entriesOf(intel.units)
+        .filter(([, n]) => n > 0)
+        .map(([type, n]) => `${t(`units.${type}`)} ${formatNumber(n)}`);
+    return (
+        <p>
+            {t('map.intel.seen', {
+                ago: formatDuration(
+                    Duration.ms(
+                        Math.max(0, world.gameTime - intel.gameTime),
+                    ),
+                ),
+                wall: intel.wall,
+            })}{' '}
+            {troops.length > 0
+                ? troops.join(' · ')
+                : t('map.intel.noTroops')}{' '}
+            <Link
+                to="/worlds/$worldId/reports"
+                params={{ worldId: String(worldId) }}
+                className="text-seal underline"
+            >
+                {t('map.intel.reports')}
+            </Link>
+        </p>
     );
 });

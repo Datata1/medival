@@ -319,6 +319,12 @@ const de = {
     },
     map: {
         title: 'Karte',
+        intel: {
+            none: 'Noch nicht erkundet.',
+            seen: 'Zuletzt erkundet vor {{ago}}: Wall {{wall}},',
+            noTroops: 'keine Truppen zu Hause.',
+            reports: 'Zu den Berichten',
+        },
         hint: 'Dorf anklicken für Details & Angriff. Ziehen, Pfeilknöpfe oder Pfeiltasten zum Verschieben; an der Ecke ziehen für einen größeren Ausschnitt.',
         nearView: 'Karte, Nahansicht',
         overview: 'Übersichtskarte — klicken, um dorthin zu springen',

@@ -11,6 +11,7 @@ import {
     PlayerProfileSchema,
     ReportListSchema,
     type Resources,
+    ScoutIntelResponseSchema,
     SendUnitsResponseSchema,
     type TileRange,
     type Units,
@@ -118,6 +119,12 @@ export const api = {
         request(`/api/worlds/${id}`, DeletedResponseSchema, {
             method: 'DELETE',
         }),
+    /** Eigenes Spähwissen über ein Dorf, sonst `null` (20-5). */
+    getIntel: (worldId: number, villageId: number) =>
+        request(
+            `/api/worlds/${worldId}/villages/${villageId}/intel`,
+            ScoutIntelResponseSchema,
+        ),
     getVillage: (worldId: number, villageId: number) =>
         request(
             `/api/worlds/${worldId}/villages/${villageId}`,

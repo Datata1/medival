@@ -9,12 +9,14 @@ import {
     Duration,
     distance,
     FoundTribeRequestSchema,
+    GameTime,
     InvitePlayerRequestSchema,
     MapPointQuerySchema,
     MapTilesQuerySchema,
     NumericIdSchema,
     RecruitRequestSchema,
     ResearchRequestSchema,
+    type ScoutIntel,
     ScoutReportPayloadSchema,
     SendResourcesRequestSchema,
     SendUnitsRequestSchema,
@@ -25,11 +27,13 @@ import {
 } from '@medival/shared';
 import { and, asc, between, desc, eq, inArray, or } from 'drizzle-orm';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { z } from 'zod';
 import { requireAccount, requireAdmin } from '../auth/plugin.js';
 import {
     firstOrThrow,
     parseInput,
     parseJsonColumn,
+    parseRow,
 } from '../db/parse.js';
 import {
     movements,
@@ -86,6 +90,18 @@ export interface RouteOptions {
     /** Entwicklermodus: Pause und Vorspulen (19-3). */
     devMode: boolean;
 }
+
+/** Eine Zeile aus `scout_intel` (20-5). */
+const IntelRowSchema = z.object({
+    game_time: z.number().int(),
+    payload_json: z.string(),
+});
+/** So legt `recordIntel` das Gesehene ab (19-10). */
+const StoredIntelSchema = z.object({
+    units: UnitsSchema,
+    wall: z.number().int().nonnegative(),
+    points: z.number().int().nonnegative(),
+});
 
 export function registerRoutes(
     app: FastifyInstance,
@@ -732,6 +748,33 @@ export function registerRoutes(
                     )
                     .map((m) => describe(m, true)), // enemy army composition stays hidden
             };
+        },
+    );
+
+    // Das eigene Spähwissen über ein Dorf (20-5) — auch über fremde Dörfer,
+    // aber nur das, was dieser Spieler selbst erkundet hat.
+    app.get<{ Params: { id: string; vid: string } }>(
+        '/api/worlds/:id/villages/:vid/intel',
+        (req): ScoutIntel | null => {
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            const villageId = parseInput(
+                NumericIdSchema,
+                req.params.vid,
+            );
+            const row = world.sqlite
+                .prepare(
+                    'SELECT game_time, payload_json FROM scout_intel WHERE player_id = ? AND village_id = ?',
+                )
+                .get(me, villageId);
+            if (row === undefined) return null;
+            const r = parseRow(IntelRowSchema, row, 'scout_intel');
+            const seen = parseJsonColumn(
+                StoredIntelSchema,
+                r.payload_json,
+                'scout_intel.payload',
+            );
+            return { gameTime: GameTime.of(r.game_time), ...seen };
         },
     );
 
