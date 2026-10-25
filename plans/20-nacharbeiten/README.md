@@ -11,7 +11,7 @@ Offenes aus Plan 19.
 | # | Ticket | Bereich | Herkunft | Status |
 |---|---|---|---|---|
 | 20-1 | [WAL-Checkpoint im eigenen Thread](20-1-checkpoint-thread.md) | server | 19-15, Stresslauf | ✅ erledigt |
-| 20-2 | [Barbaren-Rate bei hohem Speed](20-2-barbaren-rate.md) | server | 19-15, Stresslauf | 📋 offen |
+| 20-2 | [Barbaren-Rate bei hohem Speed](20-2-barbaren-rate.md) | server | 19-15, Stresslauf | ✅ erledigt |
 | 20-3 | [Truppen unterwegs bei Eroberung](20-3-truppen-bei-eroberung.md) | server | 19-14, Lücke Paladin | 📋 offen |
 | 20-4 | [Weltanlage: Besiedlung & Optionen](20-4-weltanlage-optionen.md) | client | 19-6, 19-12, 19-14 | 📋 offen |
 | 20-5 | [„Zuletzt erkundet" im Kartenpanel](20-5-spaehwissen-karte.md) | server + client | 19-10 | 📋 offen |
