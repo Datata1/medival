@@ -30,6 +30,7 @@ vi.mock('../src/api/client.js', () => ({
         pauseWorld: vi.fn(),
         resumeWorld: vi.fn(),
         getVillage: vi.fn(),
+        getIntel: vi.fn(),
         build: vi.fn(),
         recruit: vi.fn(),
         getMapTiles: vi.fn(),
@@ -669,5 +670,41 @@ describe('Beitreten (19-9)', () => {
         await world.open(1);
         expect(world.playerId).toBe(7);
         world.close();
+    });
+});
+
+describe('MapStore: Spähwissen zum ausgewählten Dorf (20-5)', () => {
+    it('lädt bei der Auswahl und leert bei einer neuen', async () => {
+        mocked.getIntel.mockResolvedValue({
+            gameTime: 1000,
+            units: { spear: 12 },
+            wall: 3,
+            points: 80,
+        });
+        const map = new MapStore();
+        await map.load(1);
+        map.select({
+            id: 7,
+            playerId: 2,
+            x: 1,
+            y: 1,
+            name: 'B',
+            points: 80,
+        });
+        await vi.waitFor(() => expect(map.intel.value?.wall).toBe(3));
+        expect(mocked.getIntel).toHaveBeenLastCalledWith(1, 7);
+
+        mocked.getIntel.mockResolvedValue(null);
+        map.select({
+            id: 8,
+            playerId: null,
+            x: 2,
+            y: 2,
+            name: 'C',
+            points: 5,
+        });
+        expect(map.intel.value).toBeNull();
+        map.select(null);
+        expect(mocked.getIntel).toHaveBeenCalledTimes(2);
     });
 });
