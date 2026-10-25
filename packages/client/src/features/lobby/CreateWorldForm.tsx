@@ -1,10 +1,16 @@
-import { keysOf } from '@medival/shared';
+import { keysOf, WORLD_LIMITS } from '@medival/shared';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/Button.js';
 import { Card } from '../../components/Card.js';
 import { useStores } from '../../stores/StoreContext.js';
+import {
+    type AdvancedWorldForm,
+    advancedSettings,
+    defaultAdvancedForm,
+    NUMERIC_FIELDS,
+} from './worldForm.js';
 
 const SPEED_PRESETS = {
     relaxed: {
@@ -50,7 +56,9 @@ export const CreateWorldForm = observer(function CreateWorldForm({
     const [name, setName] = useState('');
     const [preset, setPreset] = useState<PresetKey>('fast');
     const [barbarians, setBarbarians] = useState<BarbarianKey>('calm');
-    const [archers, setArchers] = useState(true);
+    const [advanced, setAdvanced] = useState<AdvancedWorldForm>(
+        defaultAdvancedForm,
+    );
 
     const submit = async () => {
         const chosen = SPEED_PRESETS[preset];
@@ -61,7 +69,7 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                 unitSpeed: chosen.unitSpeed,
                 barbarianAttemptsPerHour:
                     BARBARIAN_PRESETS[barbarians].rate,
-                archers,
+                ...advancedSettings(advanced),
             },
         );
         if (id !== null) onCreated(id);
@@ -102,14 +110,6 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                         </option>
                     ))}
                 </select>
-                <label className="flex items-center gap-1">
-                    <input
-                        type="checkbox"
-                        checked={archers}
-                        onChange={(e) => setArchers(e.target.checked)}
-                    />
-                    {t('lobby.archers')}
-                </label>
                 <Button
                     onClick={() => void submit()}
                     disabled={lobby.isSubmitting}
@@ -117,6 +117,61 @@ export const CreateWorldForm = observer(function CreateWorldForm({
                     {t('lobby.create')}
                 </Button>
             </div>
+            <details className="mt-2">
+                <summary className="cursor-pointer">
+                    {t('lobby.advanced')}
+                </summary>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {NUMERIC_FIELDS.map((field) => (
+                        <label
+                            key={field}
+                            className="flex flex-col gap-0.5"
+                        >
+                            <span className="text-ink-light text-sm">
+                                {t(`lobby.field.${field}`, {
+                                    min: WORLD_LIMITS[field].min,
+                                    max: WORLD_LIMITS[field].max,
+                                })}
+                            </span>
+                            <input
+                                type="number"
+                                min={WORLD_LIMITS[field].min}
+                                max={WORLD_LIMITS[field].max}
+                                step={
+                                    field === 'settlementDensity'
+                                        ? 0.01
+                                        : 1
+                                }
+                                value={advanced[field]}
+                                onChange={(e) =>
+                                    setAdvanced((a) => ({
+                                        ...a,
+                                        [field]: e.target.value,
+                                    }))
+                                }
+                            />
+                        </label>
+                    ))}
+                    {(['archers', 'paladin'] as const).map((option) => (
+                        <label
+                            key={option}
+                            className="flex items-center gap-1"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={advanced[option]}
+                                onChange={(e) =>
+                                    setAdvanced((a) => ({
+                                        ...a,
+                                        [option]: e.target.checked,
+                                    }))
+                                }
+                            />
+                            {t(`lobby.${option}`)}
+                        </label>
+                    ))}
+                </div>
+            </details>
             {lobby.submitError && (
                 <p className="text-seal">{lobby.submitError}</p>
             )}

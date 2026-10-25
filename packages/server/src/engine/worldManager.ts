@@ -32,6 +32,7 @@ import {
     WorldMetaRowSchema,
 } from '../db/rowSchemas.js';
 import { CheckpointThread } from './checkpointThread.js';
+import { GameError } from './errors.js';
 import { EngineHealth, totals } from './health.js';
 import { type Founder, generateMap } from './mapgen.js';
 import { type MetaPatch, World, type WorldMeta } from './world.js';
@@ -483,18 +484,28 @@ export class WorldManager {
         // die öffentliche Schnittstelle zum Anlegen einer Welt und prüft die
         // gemergten Einstellungen als Ganzes — Feldgrenzen und Invarianten
         // (plans/08-no-typecasting.md).
-        const patch = WorldSettingsPatchSchema.parse(
+        const parsedPatch = WorldSettingsPatchSchema.safeParse(
             settingsPartial ?? {},
         );
+        if (!parsedPatch.success)
+            throw new GameError('invalid_settings');
+        const patch = parsedPatch.data;
         const seed =
             patch.seed && patch.seed !== 0
                 ? patch.seed
                 : (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
-        const settings = WorldSettingsSchema.parse({
+        /*
+         * Feldgrenzen hat der Patch schon bestanden; was hier scheitert, ist
+         * die Gesamtprüfung „passen alle Dörfer in den Siedlungskreis?".
+         * Vorher eine ungefangene `ZodError` und damit HTTP 500 (20-4).
+         */
+        const merged = WorldSettingsSchema.safeParse({
             ...DEFAULT_WORLD_SETTINGS,
             ...patch,
             seed,
         });
+        if (!merged.success) throw new GameError('world_too_dense');
+        const settings = merged.data;
 
         const info = this.meta
             .prepare(
