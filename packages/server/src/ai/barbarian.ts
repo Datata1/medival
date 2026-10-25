@@ -76,6 +76,43 @@ function perceive(
  * `null` aus `exponentialWait` ist deshalb kein Fehler, sondern die Antwort
  * „nie" — und die darf nicht als `Infinity` in der Event-Tabelle landen.
  */
+/**
+ * Höchstens so viele Ticks je Dorf und Stunde (plans/20-nacharbeiten/20-2).
+ * Bei Speed 1000 wären es sonst 1 000 je Dorf; im Stresslauf aus 19-15 waren
+ * Barbaren-Ticks mit 531 je s fast zwei Drittel aller Events.
+ *
+ * Warum nicht weniger: Bei hohem Speed läuft das Lager eines Barbarendorfs
+ * zwischen zwei Ticks über, und mehrere Handlungen je Tick holen verlorene
+ * Produktion nicht zurück. Gemessen bei Speed 1000 (40 Dörfer, 6
+ * Spielminuten, drei Seeds): Deckel 120 → 450 Events, 25 % des Wachstums;
+ * 360 → 1 375 Events, 77 %; 720 → 2 070 Events, 96 %; ohne Deckel 4 050.
+ */
+export const BARBARIAN_MAX_TICKS_PER_HOUR = 720;
+/** Obergrenze der Handlungen in einem Tick. */
+export const BARBARIAN_MAX_ACTIONS_PER_TICK = 20;
+
+/**
+ * Wie oft ein Barbarendorf tickt und wie viel es je Tick tut. Liegt die
+ * gewünschte Rate über dem Deckel, handelt ein Tick mehrfach; das Mittel der
+ * Handlungen je Stunde bleibt gleich, nur die Zahl der Events sinkt. Unter
+ * dem Deckel (Speed 10: 10 je Stunde) ändert sich nichts.
+ */
+export function barbarianTickPlan(
+    attemptsPerHour: number,
+    speed: number,
+    atCap: boolean,
+): { rate: number; actions: number } {
+    const wanted =
+        attemptsPerHour * speed * (atCap ? CAPPED_RATE_FACTOR : 1);
+    if (wanted <= BARBARIAN_MAX_TICKS_PER_HOUR)
+        return { rate: wanted, actions: 1 };
+    const actions = Math.min(
+        BARBARIAN_MAX_ACTIONS_PER_TICK,
+        Math.ceil(wanted / BARBARIAN_MAX_TICKS_PER_HOUR),
+    );
+    return { rate: wanted / actions, actions };
+}
+
 export function scheduleBarbarianTick(
     world: World,
     villageId: number,
@@ -88,10 +125,11 @@ export function scheduleBarbarianTick(
      * nicht die Uhr, sondern alles, was in ihr geschieht. Ohne diese Skalierung
      * würden Barbaren in einer 500x-Welt relativ zu allem anderen stillstehen.
      */
-    const rate =
-        world.settings.barbarianAttemptsPerHour *
-        world.settings.speed *
-        (atCap ? CAPPED_RATE_FACTOR : 1);
+    const { rate } = barbarianTickPlan(
+        world.settings.barbarianAttemptsPerHour,
+        world.settings.speed,
+        atCap,
+    );
     const wait = exponentialWait(rng, rate);
     if (wait === null) return;
     world.scheduler.insert(
@@ -114,20 +152,33 @@ export function handleBarbarianTick(
     payload: { villageId: number },
 ): void {
     const { villageId } = payload;
-    const snapshot = perceive(world, villageId);
+    let snapshot = perceive(world, villageId);
     // Erobertes oder gelöschtes Dorf: Kette endet hier, ohne Fehler.
     if (!snapshot) return;
 
-    const action = decideBarbarianAction(snapshot, world.rng.next);
-    switch (action.kind) {
-        case 'build':
+    /*
+     * Mehrere Handlungen je Tick, wenn die Rate gedeckelt ist (20-2). Jede
+     * würfelt für sich, wie es N einzelne Ticks getan hätten, und sieht den
+     * Stand nach der vorigen. Kein Abbruch bei `idle`: Im ersten Entwurf
+     * endete der Tick beim ersten Leerlauf, und die Barbaren wuchsen in sechs
+     * Spielminuten bei Speed 1000 um rund 1 000 statt 9 600 Punkte.
+     */
+    const { actions } = barbarianTickPlan(
+        world.settings.barbarianAttemptsPerHour,
+        world.settings.speed,
+        snapshot.points >= snapshot.maxPoints,
+    );
+    for (let i = 0; i < actions; i++) {
+        if (i > 0) {
+            const next = perceive(world, villageId);
+            if (!next) return;
+            snapshot = next;
+        }
+        const action = decideBarbarianAction(snapshot, world.rng.next);
+        if (action.kind === 'idle') continue;
+        if (action.kind === 'build')
             world.upgradeBuilding(villageId, action.building);
-            break;
-        case 'recruit':
-            recruitUnits(world, villageId, action.unit, action.count);
-            break;
-        case 'idle':
-            break;
+        else recruitUnits(world, villageId, action.unit, action.count);
     }
 
     scheduleBarbarianTick(
