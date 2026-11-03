@@ -69,7 +69,14 @@ export class RootStore {
             return this.opening.promise;
         // „Schon offen" heißt: ID gesetzt *und* Daten da. Die ID allein reicht
         // nicht — sie steht schon, während der erste Ladevorgang noch läuft.
-        if (this.world.worldId === worldId && this.world.summary)
+        // Und nur, wenn man dort mitspielt: Ein Stand ohne Spieler ist nach
+        // dem Beitreten veraltet (Audit: Die Beitreten-Karte blieb stehen,
+        // der zweite Klick meldete „Bereits auf dieser Welt").
+        if (
+            this.world.worldId === worldId &&
+            this.world.summary &&
+            this.world.summary.playerId !== null
+        )
             return;
 
         const promise = this.doOpenWorld(worldId);
@@ -116,7 +123,10 @@ export class RootStore {
      * Spieler und ein Dorf, das gewählt werden kann.
      */
     async reopenWorld(worldId: number): Promise<void> {
+        // Wirklich neu: Ohne das Schließen sah `openWorld` die Welt als
+        // offen und lud den Stand von vor dem Beitreten nicht neu.
         this.opening = null;
+        this.closeWorld();
         await this.openWorld(worldId);
     }
 
