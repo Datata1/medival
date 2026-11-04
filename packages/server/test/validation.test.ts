@@ -119,7 +119,7 @@ describe('Korrupte Savegame-Daten degradieren sauber', () => {
         world.upgradeBuilding(1, 'timber_camp');
 
         world.clock.skip(Duration.hours(1));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
 
         // Das Bauvorhaben wurde trotz des Fremdkörpers abgearbeitet.
         expect(world.villageView(1).buildings.timber_camp).toBe(2);
@@ -138,7 +138,7 @@ describe('Korrupte Savegame-Daten degradieren sauber', () => {
         world.upgradeBuilding(1, 'clay_pit');
 
         world.clock.skip(Duration.hours(1));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
 
         expect(world.villageView(1).buildings.clay_pit).toBe(2);
         expect(world.scheduler.nextDue()).toBeNull();

@@ -1,10 +1,21 @@
 import { Duration, GameTime } from '@medival/shared';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from 'vitest';
 import { WORLD_DDL } from '../src/db/ddl.js';
 import { GameClock } from '../src/engine/clock.js';
-import { type GameEvent, Scheduler } from '../src/engine/scheduler.js';
+import {
+    type GameEvent,
+    Scheduler,
+    SLICE_BUDGET_MS,
+} from '../src/engine/scheduler.js';
 
 let sqlite: Database.Database;
 let clock: GameClock;
@@ -158,5 +169,70 @@ describe('GameClock.setTo', () => {
         expect(clock.now()).toBe(5_000);
         expect(() => clock.setTo(4_999)).toThrow(RangeError);
         expect(clock.now()).toBe(5_000);
+    });
+});
+
+describe('Zeitbudget je Abschnitt (Audit A2)', () => {
+    it('gibt den Event-Loop nach SLICE_BUDGET_MS frei und arbeitet danach weiter', async () => {
+        let handled = 0;
+        const { scheduler } = makeScheduler(() => {
+            handled++;
+            // Ein langsamer Handler, etwa ein Bot-Tick: 5 ms.
+            const until = performance.now() + 5;
+            while (performance.now() < until) {
+                // warten
+            }
+        });
+        for (let i = 0; i < 40; i++)
+            scheduler.insert('slow', GameTime.of(0), {});
+
+        const started = performance.now();
+        scheduler.processDue();
+        const slice = performance.now() - started;
+        // Ein Abschnitt endet kurz nach dem Budget, nicht nach allen 40 × 5 ms.
+        expect(slice).toBeLessThan(SLICE_BUDGET_MS + 15);
+        expect(handled).toBeLessThan(40);
+
+        await vi.waitFor(() => expect(handled).toBe(40));
+        scheduler.dispose();
+    });
+});
+
+describe('Höchstens eine Fortsetzung (Audit A2)', () => {
+    it('arm() und processDue() während eines Rückstands starten keine zweite Kette', async () => {
+        clock.resume();
+        let handled = 0;
+        const { scheduler } = makeScheduler(() => {
+            handled++;
+            const until = performance.now() + 2;
+            while (performance.now() < until) {
+                // warten
+            }
+        });
+        for (let i = 0; i < 300; i++)
+            scheduler.insert('slow', GameTime.of(0), {});
+
+        // Die längste Lücke zwischen zwei Durchläufen des Event-Loops.
+        let maxGap = 0;
+        let last = performance.now();
+        const probe = setInterval(() => {
+            const now = performance.now();
+            maxGap = Math.max(maxGap, now - last);
+            last = now;
+        }, 0);
+
+        scheduler.processDue();
+        // So taten es zehn Anfragen mit catchUp: Vorher je eine neue Kette,
+        // die Lücke wuchs auf rund 10 × SLICE_BUDGET_MS.
+        for (let i = 0; i < 10; i++) {
+            scheduler.arm();
+            scheduler.processDue();
+        }
+        await vi.waitFor(() => expect(handled).toBe(300), {
+            timeout: 10_000,
+        });
+        clearInterval(probe);
+        scheduler.dispose();
+        expect(maxGap).toBeLessThan(3 * SLICE_BUDGET_MS);
     });
 });

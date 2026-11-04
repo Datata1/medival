@@ -222,3 +222,88 @@ describe('Pause und Vorspulen nur im Entwicklermodus', () => {
         expect(epochZeroMs + gameTime).toBe(wallClock.now());
     });
 });
+
+describe('Entwicklermodus: Server aus heißt Pause (Audit A2)', () => {
+    it('läuft nach dem Neustart dort weiter, wo die Welt stand', () => {
+        const wall = fakeWallClock();
+        dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-clock-'));
+        let manager = new WorldManager(dir, {
+            pauseWhileOffline: true,
+        });
+        const world = manager.createWorld('Laptop', QUIET_SETTINGS);
+        const a = givenPlayer(world, { name: 'A' });
+        const home = givenVillage(world, a, {
+            x: 10,
+            y: 10,
+            units: { axe: 100 },
+        });
+        const barb = givenVillage(world, null, { x: 13, y: 10 });
+        const { arrivalGameTime } = act.attack(world, home, barb, {
+            axe: 100,
+        });
+        wall.advance(Duration.seconds(30));
+        const id = world.id;
+        manager.shutdown();
+
+        // Zehn Tage aus — wie in der Audit-Welt.
+        wall.advance(Duration.hours(240));
+        manager = new WorldManager(dir, { pauseWhileOffline: true });
+        const reloaded = manager.getWorld(id);
+        if (!reloaded) throw new Error('Welt fehlt');
+        try {
+            expect(reloaded.now()).toBe(Duration.seconds(30));
+            // Der Angriff kommt zu seiner Zeit an, nur zehn Tage später.
+            expect(reloaded.scheduler.nextDue()).toBe(arrivalGameTime);
+        } finally {
+            manager.shutdown();
+        }
+    });
+
+    it('setzt bei einer zurückliegenden Welt beim ältesten offenen Event an', () => {
+        const wall = fakeWallClock();
+        dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-clock-'));
+        let manager = new WorldManager(dir, {
+            pauseWhileOffline: true,
+        });
+        const world = manager.createWorld('Rückstand', QUIET_SETTINGS);
+        // Ein offenes Event bei 1 h; die Uhr läuft auf 5 h, ohne dass es
+        // verarbeitet wird (Welt hing beim Beenden zurück).
+        world.scheduler.stop();
+        world.sqlite
+            .prepare(
+                "INSERT INTO events (due_game_time, type, payload_json) VALUES (?, 'noop', '{}')",
+            )
+            .run(Duration.hours(1));
+        wall.advance(Duration.hours(5));
+        world.persist();
+        const id = world.id;
+        manager.shutdown();
+
+        wall.advance(Duration.hours(240));
+        manager = new WorldManager(dir, { pauseWhileOffline: true });
+        const reloaded = manager.getWorld(id);
+        if (!reloaded) throw new Error('Welt fehlt');
+        try {
+            expect(reloaded.now()).toBe(Duration.hours(1));
+        } finally {
+            manager.shutdown();
+        }
+    });
+
+    it('ohne Entwicklermodus bleibt es bei der Wanduhr (19-3)', () => {
+        const wall = fakeWallClock();
+        dir = fs.mkdtempSync(path.join(os.tmpdir(), 'medival-clock-'));
+        let manager = new WorldManager(dir, {
+            pauseWhileOffline: false,
+        });
+        const id = manager.createWorld('Server', QUIET_SETTINGS).id;
+        manager.shutdown();
+        wall.advance(Duration.hours(2));
+        manager = new WorldManager(dir, { pauseWhileOffline: false });
+        try {
+            expect(manager.getWorld(id)?.now()).toBe(Duration.hours(2));
+        } finally {
+            manager.shutdown();
+        }
+    });
+});

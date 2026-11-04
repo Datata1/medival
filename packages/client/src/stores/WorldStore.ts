@@ -19,6 +19,12 @@ import { AsyncValue } from './AsyncValue.js';
 const TICK_INTERVAL = Duration.ms(500);
 
 /**
+ * Abstand der neuen Versuche, solange die Welt aufholt (Audit A2). Der Server
+ * schickt `Retry-After: 1`; etwas mehr schont ihn beim Nachholen.
+ */
+export const CATCH_UP_RETRY_MS = 1_500;
+
+/**
  * Die geöffnete Welt: Zustand, Pause-Steuerung (nur Entwicklermodus) und die
  * laufende Spielzeit.
  *
@@ -31,6 +37,12 @@ export class WorldStore {
     readonly world = new AsyncValue<WorldSummary>();
     worldId: number | null = null;
     actionError: string | null = null;
+    /**
+     * Die Welt holt nach und kann noch nicht geöffnet werden (Audit A2).
+     * Vorher stand dann „Welt konnte nicht geladen werden." — ohne neuen
+     * Versuch, obwohl der Server nur um Geduld bat.
+     */
+    catchingUp = false;
 
     /** Anker: Server-Spielzeit und die Wandzeit ihres Eintreffens. */
     private anchorGameTime = GameTime.zero;
@@ -117,6 +129,37 @@ export class WorldStore {
         this.startTicking();
     }
 
+    /**
+     * Fragt die Welt an und wiederholt, solange der Server `catching_up`
+     * meldet. Hört auf, sobald eine andere Welt geöffnet wird.
+     */
+    private async fetchWhenCaughtUp(id: number): Promise<WorldSummary> {
+        try {
+            for (;;) {
+                try {
+                    return await api.getWorld(id);
+                } catch (cause) {
+                    if (
+                        !(cause instanceof Error) ||
+                        cause.message !== 'catching_up' ||
+                        this.worldId !== id
+                    )
+                        throw cause;
+                    runInAction(() => {
+                        this.catchingUp = true;
+                    });
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, CATCH_UP_RETRY_MS),
+                    );
+                }
+            }
+        } finally {
+            runInAction(() => {
+                this.catchingUp = false;
+            });
+        }
+    }
+
     close(): void {
         this.stopTicking();
         runInAction(() => {
@@ -130,7 +173,7 @@ export class WorldStore {
     async reload(): Promise<void> {
         const id = this.worldId;
         if (id === null) return;
-        await this.world.load(() => api.getWorld(id));
+        await this.world.load(() => this.fetchWhenCaughtUp(id));
         const summary = this.world.value;
         if (summary) this.anchor(summary.gameTime);
     }
