@@ -14,11 +14,15 @@ export interface GameEvent {
 }
 
 /**
- * Batch size per synchronous slice. better-sqlite3 is synchronous, so an
- * unbounded catch-up (long pause, hundreds of bots) would block HTTP/WS for
- * its whole duration; after each slice we yield via setImmediate and continue.
+ * Zeitbudget je synchronem Abschnitt beim Abarbeiten fälliger Events.
+ * better-sqlite3 ist synchron; ohne Grenze blockiert ein großer Rückstand
+ * HTTP und WebSocket für seine ganze Dauer. Nach jedem Abschnitt gibt
+ * `setImmediate` den Event-Loop frei.
+ *
+ * Vorher eine feste Zahl (200 Events). Mit ~1 ms je Bot-Tick waren das beim
+ * Nachholen ~240 ms je Abschnitt, und jede Anfrage wartete so lange (Audit A2).
  */
-const BATCH_SIZE = 200;
+export const SLICE_BUDGET_MS = 20;
 
 /**
  * Reihenfolge bei gleicher Fälligkeit (plans/19-prototyp/19-2).
@@ -66,6 +70,14 @@ function priorityOf(type: string): number {
 export class Scheduler {
     private timer: NodeJS.Timeout | null = null;
     private processing = false;
+    /**
+     * Die angehängte Fortsetzung eines Rückstands. Es gibt höchstens eine
+     * (Audit A2): Vorher startete jeder `arm()` während des Nachholens — etwa
+     * aus `catchUp` vor einer Anfrage — eine weitere Kette. Nach zehn
+     * Anfragen liefen zehn Ketten, und jeder Durchlauf des Event-Loops war
+     * zehnmal so lang blockiert.
+     */
+    private continuation: NodeJS.Immediate | null = null;
     /** Nach `dispose()`: keine Verarbeitung mehr, auch keine angehängte. */
     private disposed = false;
 
@@ -173,24 +185,37 @@ export class Scheduler {
     }
 
     /**
-     * Process due events in order, at most BATCH_SIZE per synchronous slice;
-     * a larger backlog continues on the next event-loop turn. Always re-arms.
+     * Arbeitet fällige Events der Reihe nach ab, höchstens `SLICE_BUDGET_MS`
+     * am Stück; ein größerer Rückstand geht im nächsten Durchlauf des
+     * Event-Loops weiter. Bewaffnet den Timer immer neu.
      */
     processDue(): void {
+        // Eine Fortsetzung läuft schon; sie arbeitet auch dies ab.
+        if (this.continuation !== null) return;
+        this.runSlice();
+    }
+
+    private runSlice(): void {
         if (this.processing || this.disposed) return;
         this.processing = true;
         let moreDue = false;
         try {
             const until = Math.floor(this.clock.now());
-            for (let i = 0; i < BATCH_SIZE; i++) {
-                if (!this.runNext(until)) break;
-                if (i === BATCH_SIZE - 1) moreDue = true;
+            const deadline = performance.now() + SLICE_BUDGET_MS;
+            while (this.runNext(until)) {
+                if (performance.now() >= deadline) {
+                    moreDue = true;
+                    break;
+                }
             }
         } finally {
             this.processing = false;
             if (moreDue) {
                 // Yield so HTTP/WS get a turn, then continue the backlog.
-                setImmediate(() => this.processDue());
+                this.continuation = setImmediate(() => {
+                    this.continuation = null;
+                    this.runSlice();
+                });
             } else {
                 this.arm();
             }
@@ -215,12 +240,19 @@ export class Scheduler {
     drainUntil(
         until: GameTime,
         max = Number.POSITIVE_INFINITY,
+        budgetMs = Number.POSITIVE_INFINITY,
     ): number {
         if (this.processing || this.disposed) return 0;
         this.processing = true;
         let count = 0;
+        const deadline = performance.now() + budgetMs;
         try {
-            while (count < max && this.runNext(until)) count++;
+            while (
+                count < max &&
+                performance.now() < deadline &&
+                this.runNext(until)
+            )
+                count++;
         } finally {
             this.processing = false;
             this.arm();
@@ -263,6 +295,8 @@ export class Scheduler {
             this.timer = null;
         }
         if (!this.clock.running) return;
+        // Die laufende Fortsetzung bewaffnet am Ende selbst neu.
+        if (this.continuation !== null) return;
         const next = this.nextDue();
         if (next === null) return;
         const delay = Math.max(0, next - this.clock.now());
@@ -281,6 +315,10 @@ export class Scheduler {
     dispose(): void {
         this.disposed = true;
         this.stop();
+        if (this.continuation !== null) {
+            clearImmediate(this.continuation);
+            this.continuation = null;
+        }
     }
 
     stop(): void {

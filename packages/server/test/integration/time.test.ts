@@ -84,21 +84,28 @@ describe('Nachholen vor jedem Zugriff', () => {
             QUIET_SETTINGS,
         );
         world.pause();
-        // 1 500 fällige Events (unbekannter Typ, wird verworfen).
+        // 200 000 fällige Events (unbekannter Typ, wird verworfen) — weit
+        // mehr, als in das Zeitbudget einer Anfrage passt.
         const insert = world.sqlite.prepare(
             "INSERT INTO events (due_game_time, type, payload_json) VALUES (?, 'noop', '{}')",
         );
         world.sqlite.transaction(() => {
-            for (let i = 0; i < 1_500; i++) insert.run(world.now());
+            for (let i = 0; i < 200_000; i++) insert.run(world.now());
         })();
 
+        const started = performance.now();
         const first = await api.app.inject({
             url: `/api/worlds/${world.id}`,
             headers: { cookie },
         });
         expect(first.statusCode).toBe(503);
         expect(first.headers['retry-after']).toBe('1');
-        // Die erste Anfrage hat 1 000 abgearbeitet, die zweite schafft den Rest.
+        // Schnell abgewiesen, nicht erst nach einer Sekunde Nachholen (Audit
+        // A2). Großzügig für langsame CI-Runner; das Budget liegt bei 50 ms.
+        expect(performance.now() - started).toBeLessThan(500);
+
+        // Den Rückstand baut sonst der Scheduler im Hintergrund ab.
+        world.scheduler.drainUntil(world.now());
         const second = await api.app.inject({
             url: `/api/worlds/${world.id}`,
             headers: { cookie },

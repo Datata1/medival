@@ -104,7 +104,7 @@ describe('Rohstofflieferungen', () => {
         world.clock.skip(
             Duration.ms(arrivalGameTime - world.now() + 1000),
         );
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         expect(world.villageView(2).resources.wood).toBeGreaterThan(
             before,
         );
@@ -122,7 +122,7 @@ describe('Rohstofflieferungen', () => {
         world.clock.skip(
             Duration.ms(arrivalGameTime - world.now() + 1000),
         );
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
 
         expect(world.settleStanding(2, 1)).toBeGreaterThan(0);
         // Asymmetrisch: Der Absender denkt deswegen nicht besser über sich.
@@ -138,7 +138,7 @@ describe('Rohstofflieferungen', () => {
             iron: 0,
         }).arrivalGameTime;
         world.clock.skip(Duration.ms(arrival - world.now() + 1000));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         const near = world.settleStanding(2, 1);
 
         // Zurücksetzen und weit weg verschieben.
@@ -150,7 +150,7 @@ describe('Rohstofflieferungen', () => {
             iron: 0,
         }).arrivalGameTime;
         world.clock.skip(Duration.ms(arrival - world.now() + 1000));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         const far = world.settleStanding(2, 1);
 
         expect(far).toBeLessThan(near / 4);
@@ -174,7 +174,7 @@ describe('Rohstofflieferungen', () => {
         world.clock.skip(
             Duration.ms(arrivalGameTime - world.now() + 1000),
         );
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         expect(world.villageView(2).resources.wood).toBeLessThanOrEqual(
             cap,
         );
@@ -196,10 +196,10 @@ describe('Rohstofflieferungen', () => {
         world.clock.skip(
             Duration.ms(arrivalGameTime - world.now() + 1000),
         );
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         // … und die Rückreise der Händler.
         world.clock.skip(Duration.hours(6));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         expect(freeMerchantCapacity(world, 1)).toBe(capacity);
     });
 
@@ -263,7 +263,7 @@ describe('Ansehen durch Kampf', () => {
         world.clock.skip(
             Duration.ms(arrivalGameTime - world.now() + 1000),
         );
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
 
         // Der Verteidiger denkt schlechter über den Angreifer.
         expect(world.settleStanding(2, 1)).toBeLessThan(0);
@@ -280,7 +280,7 @@ describe('Ansehen durch Kampf', () => {
             iron: 0,
         }).arrivalGameTime;
         world.clock.skip(Duration.ms(arrival - world.now() + 1000));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         const afterGift = world.settleStanding(2, 1);
         expect(afterGift).toBeGreaterThan(0);
 
@@ -291,7 +291,7 @@ describe('Ansehen durch Kampf', () => {
             axe: 300,
         }).arrivalGameTime;
         world.clock.skip(Duration.ms(arrival - world.now() + 1000));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
 
         expect(world.settleStanding(2, 1)).toBeLessThan(0);
     });

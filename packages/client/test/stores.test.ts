@@ -45,7 +45,9 @@ vi.mock('../src/api/client.js', () => ({
 const { api } = await import('../src/api/client.js');
 const { LobbyStore } = await import('../src/stores/LobbyStore.js');
 const { VillageStore } = await import('../src/stores/VillageStore.js');
-const { WorldStore } = await import('../src/stores/WorldStore.js');
+const { CATCH_UP_RETRY_MS, WorldStore } = await import(
+    '../src/stores/WorldStore.js'
+);
 const { MovementsStore } = await import(
     '../src/stores/MovementsStore.js'
 );
@@ -755,5 +757,39 @@ describe('Audit: Beitreten nach dem Anlegen einer Welt', () => {
         );
         await root.openWorld(1);
         expect(root.world.playerId).toBe(5);
+    });
+});
+
+describe('Audit A2: Welt holt nach', () => {
+    it('WorldStore versucht es bei catching_up erneut, statt aufzugeben', async () => {
+        vi.useFakeTimers();
+        try {
+            mocked.getWorld
+                .mockRejectedValueOnce(new Error('catching_up'))
+                .mockRejectedValueOnce(new Error('catching_up'))
+                .mockResolvedValue(worldSummary({ playerId: 5 }));
+            const store = new WorldStore();
+            const opening = store.open(1);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(store.catchingUp).toBe(true);
+            expect(store.world.error).toBeNull();
+            await vi.advanceTimersByTimeAsync(2 * CATCH_UP_RETRY_MS);
+            await opening;
+            expect(store.catchingUp).toBe(false);
+            expect(store.summary?.playerId).toBe(5);
+            expect(mocked.getWorld).toHaveBeenCalledTimes(3);
+            store.close();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('andere Fehler zeigt er weiterhin an', async () => {
+        mocked.getWorld.mockRejectedValue(new Error('world_not_found'));
+        const store = new WorldStore();
+        await store.open(1);
+        expect(store.world.error).not.toBeNull();
+        expect(store.catchingUp).toBe(false);
+        store.close();
     });
 });
