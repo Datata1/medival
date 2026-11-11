@@ -307,11 +307,16 @@ Durchgeführt am 2026-08-02, alles bestanden bis auf Punkt 6 (siehe unten).
       falschen Gebäudenamen, die genau den erwarteten `ZodError` protokolliert.
 - Bildschirmfoto: `ideas/assets/Dorfuebersicht-umsetzung.png`.
 
-## Offener Befund (unverändert aus 18-1)
+## Befund aus 18-1: Marktplatz in Welt 2 (erledigt)
 
-`POST /api/worlds/2/villages/1/build` mit `{"building":"market"}` antwortet in
-der gewachsenen Welt 2 weiterhin mit `{"error":"internal"}` — auf der neuen
-Marktplatz-Seite also ein Knopf, der nicht baut. Neuer Datenpunkt: In derselben
-Welt geht `{"building":"wall"}` einwandfrei durch, und in einer frisch
-angelegten Welt geht auch der Marktplatz. Es liegt also an den Daten dieser
-Welt, nicht am Gebäudetyp und nicht an der Oberfläche.
+`POST /api/worlds/2/villages/1/build` mit `{"building":"market"}` antwortete in
+der gewachsenen Welt 2 mit `{"error":"internal"}`, während `wall` durchging und
+frische Welten auch den Marktplatz bauten. Es lag also an den Daten dieser Welt.
+
+**Nachgeprüft am 2026-11-11** mit einer Kopie von `data/world_2.sqlite` auf dem
+Stand nach Plan 20: `upgradeBuilding(1, 'market')` geht durch, ebenso `wall`.
+Vermutete Ursache des alten Fehlers: Der Welt fehlten Gebäudezeilen bzw. ihre
+`CHECK`-Liste kannte den Typ nicht. Seit Plan 19 legt `migrateWorldDb`
+(`engine/worldManager.ts`) fehlende Zeilen für alle `BUILDING_ORDER`-Typen an und
+erneuert die `CHECK`-Listen. Die Ursache ist nicht am alten Stand belegt, nur
+das heutige Verhalten.
