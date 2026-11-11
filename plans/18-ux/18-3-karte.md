@@ -1,7 +1,47 @@
 # Ticket 18-3: Karte — Nahansicht, Übersichtskarte & Gelände
 
-**Status:** 📋 offen · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md) ·
-**Vorlage:** `ideas/assets/Karte_beispiel.png`
+**Status:** ✅ erledigt (Abnahme 2026-11-11) · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md) ·
+**Vorlage:** `ideas/assets/Karte_beispiel.png` ·
+**Ergebnis:** `ideas/assets/Karte-umsetzung.png`
+
+> **Ergebnis:** Gebaut wurde das Ticket schon vor Plan 19 („Zwischenstand", Commit
+> `0afb97a`), die Abnahme fehlte. Sie ist am 2026-11-11 im Browser nachgeholt worden
+> (Chrome 146, Fenster 1400×813, Testwelt mit 30 Bots, Startwert 4242).
+>
+> **Gegenüber dem Ticket geändert durch Plan 19:**
+> - Die Karte lädt in Kacheln ([19-7](../19-prototyp/19-7-karten-api-ausschnitt.md))
+>   statt als eine Liste. Nachgeladen wird auf `map_changed` sowie gedrosselt auf
+>   eigene `village_updated`/`movement`.
+> - Die Übersichtskarte zeigt 100×100 Felder um die Kamera, nicht die ganze Welt.
+>   Auf 1000×1000 wäre ein Dorf sonst kleiner als ein Pixel.
+>
+> **Bei der Abnahme gefunden und behoben:**
+> - **Die Seite scrollte doch.** Die Bewegungsliste wuchs unbegrenzt. In der Testwelt
+>   schickten alle 30 Bots gleichzeitig eine Lieferung, die Seite war damit 2414 px
+>   hoch. Die rechte Spalte ist jetzt so hoch wie das Fenster und scrollt unter der
+>   Übersichtskarte in sich (`MapView.tsx`).
+> - **Ein breit gezogener Rahmen schob die Seitenleiste unter die Karte** oder die
+>   Seite seitlich aus dem Fenster. Ab 1280 px Fensterbreite bricht die Spalte nicht
+>   mehr um, der Rahmen endet an der Spalte (`minmax(0,1fr)` im Raster).
+> - **Ein ganz aufgezogener Rahmen ragte 35 px über das Fenster.** Der Deckel ist
+>   jetzt `100vh − 14.5rem` statt `− 12rem` (`ResizableCanvas.tsx`).
+>
+> **Browser-Punkte aus „Verifikation":**
+>
+> | # | Punkt | Ergebnis |
+> |---|---|---|
+> | 1 | Lesbar auf einen Blick | ✅ siehe Bildschirmfoto |
+> | 2 | Rahmen ziehbar, Inhalt scharf | ✅ Canvas = CSS-Größe × `devicePixelRatio` (auch bei 2), Rasterlinie 1 px breit |
+> | 3 | Keine senkrechte Bildlaufleiste | ✅ nach den Korrekturen: 813/813 px bei Rahmen 500×300, 820×560 und 2000×1500. Unter 1280 px Breite bricht die Spalte um, dann scrollt die Seite |
+> | 4 | Rechteck folgt, Klick springt | ✅ |
+> | 5 | Symbol wandert über die Strecke | ✅ nach dem Abschicken am Ursprung, nach Vorspulen um 45 % der Laufzeit bei 47 % der Strecke. Das Eintreffen zum Ablauf des Countdowns wurde nicht abgewartet |
+> | 6 | „Zu diesem Dorf wechseln" | ⚠️ nicht im Browser geprüft: Die Testwelt hat nur ein eigenes Dorf, dort steht richtig „Das ist dein aktives Dorf". Der Link steht in `TargetPanel.tsx` |
+> | 7 | Gleicher Seed, gleiches Gelände | ✅ über `shared/test/terrain.test.ts`, nicht im Browser |
+> | 8 | Kein Dorf sichtbar im Wasser | ✅ über den Code (`MapCanvas.tsx` überspringt belegte Felder), nicht mit einer alten Welt im Browser |
+>
+> **Beobachtung für das Audit (nicht geändert):** Direkt nach dem Beitritt schicken alle
+> 30 Bots dem einzigen Menschen eine Lieferung. Das stammt aus Plan 16 und war für
+> einen Menschen gedacht; mit vielen Menschen und Bots gehört das angesehen.
 
 ## Kontext
 
