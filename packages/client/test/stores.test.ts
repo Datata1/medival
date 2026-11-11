@@ -1,4 +1,6 @@
 import type {
+    Report,
+    ReportList,
     VillageView,
     WorldMessage,
     WorldSummary,
@@ -37,7 +39,12 @@ vi.mock('../src/api/client.js', () => ({
         getMapVillageAt: vi.fn(),
         getMovements: vi.fn(),
         getReports: vi.fn(),
+        getReport: vi.fn(),
+        markReportRead: vi.fn(),
         markReportsRead: vi.fn(),
+        deleteReport: vi.fn(),
+        deleteReports: vi.fn(),
+        getRanking: vi.fn(),
         send: vi.fn(),
     },
 }));
@@ -55,6 +62,7 @@ const { ReportsStore } = await import('../src/stores/ReportsStore.js');
 const { MapStore } = await import('../src/stores/MapStore.js');
 const { AuthStore } = await import('../src/stores/AuthStore.js');
 const { RootStore } = await import('../src/stores/RootStore.js');
+const { RankingStore } = await import('../src/stores/RankingStore.js');
 type WorldSocket =
     import('../src/stores/SocketConnection.js').WorldSocket;
 
@@ -143,6 +151,25 @@ function villageView(
         popMax: 240,
         ...overrides,
     } as VillageView;
+}
+
+/** Ein Kampfbericht, so knapp wie die Stores ihn brauchen. */
+function report(id: number, read = false): Report {
+    return { id, read, type: 'attack' } as Report;
+}
+
+function reportList(
+    reports: Report[] = [],
+    overrides: Partial<ReportList> = {},
+): ReportList {
+    const unread = reports.filter((r) => !r.read).length;
+    return {
+        reports,
+        total: reports.length,
+        unread,
+        newestId: reports[0]?.id ?? null,
+        ...overrides,
+    };
 }
 
 beforeEach(() => {
@@ -300,22 +327,119 @@ describe('MovementsStore: Polling am Welt-Lebenszyklus', () => {
 });
 
 describe('ReportsStore', () => {
-    it('zählt ungelesene Berichte', async () => {
-        mocked.getReports.mockResolvedValue([
-            { id: 1, read: false },
-            { id: 2, read: true },
-        ] as never);
+    it('übernimmt den Ungelesen-Zähler vom Server', async () => {
+        // Die Seite zeigt zwei Berichte, ungelesen sind über alle Seiten
+        // sieben: Selbst zählen kann der Client seit dem Blättern nicht mehr.
+        mocked.getReports.mockResolvedValue(
+            reportList([report(2), report(1, true)], {
+                total: 120,
+                unread: 7,
+            }),
+        );
         const reports = new ReportsStore();
         reports.worldId = 1;
         await reports.reload();
 
-        expect(reports.unreadCount).toBe(1);
+        expect(reports.unreadCount).toBe(7);
+        expect(reports.pageCount).toBe(3);
     });
 
-    it('markiert nur dann als gelesen, wenn es Ungelesene gibt', async () => {
-        mocked.getReports.mockResolvedValue([
-            { id: 1, read: true },
-        ] as never);
+    it('lädt Filter und Seite aus der Adresse und verwirft die Auswahl', async () => {
+        mocked.getReports.mockResolvedValue(reportList([report(5)]));
+        const reports = new ReportsStore();
+        reports.toggleSelected(99);
+
+        await reports.show(1, 'scout', 3);
+
+        expect(mocked.getReports).toHaveBeenLastCalledWith(1, {
+            offset: 100,
+            filter: 'scout',
+        });
+        expect(reports.selected.size).toBe(0);
+    });
+
+    it('markiert beim Öffnen genau den einen Bericht als gelesen', async () => {
+        mocked.getReport.mockResolvedValue({
+            report: report(4),
+            newerId: 5,
+            olderId: null,
+        });
+        mocked.markReportRead.mockResolvedValue({ ok: true });
+        mocked.getReports.mockResolvedValue(reportList());
+        const reports = new ReportsStore();
+
+        await reports.open(1, 4);
+
+        expect(mocked.markReportRead).toHaveBeenCalledWith(1, 4);
+        expect(mocked.markReportsRead).not.toHaveBeenCalled();
+        expect(reports.detail.value?.report.read).toBe(true);
+        expect(reports.detail.value?.newerId).toBe(5);
+    });
+
+    it('markiert einen schon gelesenen Bericht nicht noch einmal', async () => {
+        mocked.getReport.mockResolvedValue({
+            report: report(4, true),
+            newerId: null,
+            olderId: null,
+        });
+        const reports = new ReportsStore();
+
+        await reports.open(1, 4);
+
+        expect(mocked.markReportRead).not.toHaveBeenCalled();
+    });
+
+    it('zeigt einen Fehler, wenn es den Bericht nicht gibt', async () => {
+        mocked.getReport.mockRejectedValue(
+            new Error('report_not_found'),
+        );
+        const reports = new ReportsStore();
+
+        await reports.open(1, 4);
+
+        expect(reports.detail.error).not.toBeNull();
+        expect(mocked.markReportRead).not.toHaveBeenCalled();
+    });
+
+    it('löscht einen einzelnen und mehrere Berichte', async () => {
+        mocked.getReports.mockResolvedValue(
+            reportList([report(3), report(2), report(1)]),
+        );
+        mocked.deleteReport.mockResolvedValue({ deleted: true });
+        mocked.deleteReports.mockResolvedValue({ deleted: 2 });
+        const reports = new ReportsStore();
+        await reports.show(1, 'all', 1);
+
+        expect(await reports.remove([3])).toBe(true);
+        expect(mocked.deleteReport).toHaveBeenCalledWith(1, 3);
+
+        reports.toggleAll();
+        reports.toggleSelected(3);
+        expect([...reports.selected].sort()).toEqual([1, 2]);
+        expect(await reports.removeSelected()).toBe(true);
+        expect(mocked.deleteReports).toHaveBeenCalledWith(1, [2, 1]);
+        expect(reports.selected.size).toBe(0);
+    });
+
+    it('geht eine Seite zurück, wenn die letzte leer geworden ist', async () => {
+        mocked.getReports.mockResolvedValue(reportList([report(1)]));
+        mocked.deleteReport.mockResolvedValue({ deleted: true });
+        const reports = new ReportsStore();
+        await reports.show(1, 'all', 2);
+        mocked.getReports.mockResolvedValue(reportList());
+
+        await reports.remove([1]);
+
+        expect(mocked.getReports).toHaveBeenLastCalledWith(1, {
+            offset: 0,
+            filter: 'all',
+        });
+    });
+
+    it('markiert nur dann alle als gelesen, wenn es Ungelesene gibt', async () => {
+        mocked.getReports.mockResolvedValue(
+            reportList([report(1, true)]),
+        );
         mocked.markReportsRead.mockResolvedValue({ ok: true });
         const reports = new ReportsStore();
         reports.worldId = 1;
@@ -337,7 +461,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
 
         const socket = new FakeSocket();
         const root = new RootStore(socket);
@@ -366,7 +490,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
 
         const played: string[] = [];
         const audio = {
@@ -399,7 +523,7 @@ describe('RootStore: Socket-Nachrichten lösen gezielte Reloads aus', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
 
         const socket = new FakeSocket();
         const root = new RootStore(socket);
@@ -449,7 +573,7 @@ describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
 
         const root = new RootStore(new FakeSocket());
         // Der Loader der Dorfroute läuft parallel — hier: währenddessen.
@@ -470,7 +594,7 @@ describe('RootStore: die Adresszeile bestimmt das Dorf', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
 
         const root = new RootStore(new FakeSocket());
         await root.openWorld(1);
@@ -720,7 +844,7 @@ describe('Audit: Beitreten nach dem Anlegen einer Welt', () => {
             incoming: [],
             outgoing: [],
         } as never);
-        mocked.getReports.mockResolvedValue([]);
+        mocked.getReports.mockResolvedValue(reportList());
     }
 
     it('nach dem Beitreten verschwindet die Beitreten-Karte (reopenWorld lädt neu)', async () => {
@@ -791,5 +915,137 @@ describe('Audit A2: Welt holt nach', () => {
         expect(store.world.error).not.toBeNull();
         expect(store.catchingUp).toBe(false);
         store.close();
+    });
+});
+
+describe('RankingStore', () => {
+    const row = (id: number, rank: number) => ({
+        rank,
+        id,
+        name: `Spieler ${id}`,
+        isBot: false,
+        tribeTag: null,
+        points: 100 - rank,
+        villageCount: 1,
+    });
+
+    it('lädt die Seite aus der Adresse als Ausschnitt', async () => {
+        mocked.getRanking.mockResolvedValue({
+            players: [row(7, 201)],
+            totalPlayers: 250,
+            tribes: [],
+            own: row(3, 12),
+        });
+        const ranking = new RankingStore();
+
+        await ranking.load(4, 3);
+
+        // Seite 3 beginnt bei Zeile 200, gezählt ab null.
+        expect(mocked.getRanking).toHaveBeenCalledWith(4, 200);
+        expect(ranking.pageCount).toBe(3);
+        // Die eigene Zeile liegt nicht im Ausschnitt und ist trotzdem da.
+        expect(ranking.own?.rank).toBe(12);
+        expect(ranking.players.map((p) => p.id)).toEqual([7]);
+    });
+
+    it('lädt denselben Ausschnitt neu', async () => {
+        mocked.getRanking.mockResolvedValue({
+            players: [],
+            totalPlayers: 0,
+            tribes: [],
+            own: null,
+        });
+        const ranking = new RankingStore();
+        await ranking.load(4, 2);
+
+        await ranking.reload();
+
+        expect(mocked.getRanking).toHaveBeenLastCalledWith(4, 100);
+        expect(ranking.pageCount).toBe(1);
+    });
+
+    it('lädt nach dem Schließen nichts mehr', async () => {
+        const ranking = new RankingStore();
+        ranking.clear();
+
+        await ranking.reload();
+
+        expect(mocked.getRanking).not.toHaveBeenCalled();
+        expect(ranking.own).toBeNull();
+    });
+});
+
+describe('RootStore: neue Berichte melden (18-4)', () => {
+    async function openWithReports(first: ReportList) {
+        mocked.getWorld.mockResolvedValue(worldSummary());
+        mocked.getVillage.mockResolvedValue(villageView());
+        mocked.getMapTiles.mockResolvedValue({ tiles: [] });
+        mocked.getMovements.mockResolvedValue({
+            gameTime: 0,
+            incoming: [],
+            outgoing: [],
+        } as never);
+        mocked.getReports.mockResolvedValue(first);
+
+        const played: string[] = [];
+        const audio = {
+            isReady: true,
+            unlock: () => {},
+            play: (sound: string) => played.push(sound),
+        };
+        const root = new RootStore(new FakeSocket(), audio as never);
+        root.sound.unlock();
+        await root.openWorld(1);
+        return { root, played };
+    }
+
+    it('tönt bei einem neuen Bericht, nicht bei dem, was schon da war', async () => {
+        const { root, played } = await openWithReports(
+            reportList([report(5)]),
+        );
+        root.announceReports();
+        expect(played).toEqual([]);
+
+        mocked.getReports.mockResolvedValue(
+            reportList([report(6), report(5)]),
+        );
+        await root.reports.reload();
+        root.announceReports();
+        root.announceReports();
+
+        expect(played).toEqual(['report.arrived']);
+        root.closeWorld();
+    });
+
+    it('tönt beim ersten Bericht einer leeren Liste', async () => {
+        const { root, played } = await openWithReports(reportList());
+
+        mocked.getReports.mockResolvedValue(reportList([report(1)]));
+        await root.reports.reload();
+        root.announceReports();
+
+        expect(played).toEqual(['report.arrived']);
+        root.closeWorld();
+    });
+
+    it('bleibt beim Umblättern und nach dem Löschen still', async () => {
+        const { root, played } = await openWithReports(
+            reportList([report(9), report(8)]),
+        );
+
+        // Seite 2: andere Berichte in der Liste, der neueste bleibt Nr. 9.
+        mocked.getReports.mockResolvedValue(
+            reportList([report(3), report(2)], { newestId: 9 }),
+        );
+        await root.reports.show(1, 'all', 2);
+        root.announceReports();
+
+        // Der neueste wird gelöscht: Die ID sinkt, eingetroffen ist nichts.
+        mocked.getReports.mockResolvedValue(reportList([report(8)]));
+        await root.reports.reload();
+        root.announceReports();
+
+        expect(played).toEqual([]);
+        root.closeWorld();
     });
 });

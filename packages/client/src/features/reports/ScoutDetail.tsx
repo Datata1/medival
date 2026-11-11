@@ -41,7 +41,7 @@ export function ScoutDetail({ report }: { report: ScoutReport }) {
     };
     if (report.type === 'scout_defense')
         return (
-            <div className="mt-1.5 mb-3 rounded-md border border-oak bg-parchment-dark/40 p-2.5">
+            <div>
                 <p className="m-0">
                     {t('reports.scoutDefenseHeadline', {
                         ...place,
@@ -58,7 +58,7 @@ export function ScoutDetail({ report }: { report: ScoutReport }) {
         </span>
     );
     return (
-        <div className="mt-1.5 mb-3 rounded-md border border-oak bg-parchment-dark/40 p-2.5">
+        <div>
             <p>
                 {t('reports.scoutHeadline', {
                     ...place,
@@ -86,10 +86,7 @@ export function ScoutDetail({ report }: { report: ScoutReport }) {
                 <div>
                     <h3>{t('reports.scoutUnitsAway')}</h3>
                     {p.unitsAway ? (
-                        <UnitLossTable
-                            units={p.unitsAway}
-                            losses={{}}
-                        />
+                        <UnitLossTable units={p.unitsAway} />
                     ) : (
                         missing
                     )}

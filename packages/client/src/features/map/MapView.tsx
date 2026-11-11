@@ -106,8 +106,12 @@ export const MapView = observer(function MapView() {
         centerOn,
         reset,
         keyStep,
-    } = useMapCamera(home, map.list, mapSize, (target) =>
-        map.select(target),
+    } = useMapCamera(
+        home,
+        map.list,
+        mapSize,
+        (target) => map.select(target),
+        map.focus,
     );
 
     /*
@@ -162,9 +166,14 @@ export const MapView = observer(function MapView() {
     };
 
     return (
-        <div className="flex flex-wrap items-start gap-4">
-            <div>
-                <div className="grid grid-cols-[auto_1fr_auto] items-center justify-items-center">
+        <div className="flex flex-wrap items-start gap-4 xl:flex-nowrap">
+            {/*
+             * `min-w-0`: Auf breiten Fenstern bricht die Spalte rechts nicht
+             * mehr um. Der Rahmen stößt dann an seine `max-width: 100%`,
+             * statt die Seitenleiste unter die Karte zu schieben.
+             */}
+            <div className="min-w-0">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center justify-items-center">
                     <span />
                     <PanButton
                         onClick={() => pan(0, -keyStep)}
@@ -242,35 +251,46 @@ export const MapView = observer(function MapView() {
                     </span>
                 </p>
             </div>
-            <div className="min-w-70 flex-1">
-                <MiniMap
-                    villages={map.list}
-                    playerId={world.playerId}
-                    mapSize={mapSize}
-                    camera={camera}
-                    nearView={map.frameSize}
-                    size={map.miniSize}
-                    onResized={(size) => map.setMiniSize(size)}
-                    onPick={centerOn}
-                    label={t('map.overview')}
-                />
-                {map.selected && activeVillageId !== null ? (
-                    <TargetPanel
-                        target={map.selected}
-                        home={home}
-                        activeVillageId={activeVillageId}
-                        ownPlayerId={world.playerId}
-                        worldId={world.summary?.id ?? 0}
+            {/*
+             * Die Spalte ist so hoch wie das Fenster und scrollt unter der
+             * Übersichtskarte in sich. Vorher wuchs sie mit jeder Bewegung:
+             * dreißig eingehende Lieferungen machten aus der Kartenseite
+             * 2400 px, obwohl die Seite nicht scrollen soll (18-3).
+             */}
+            <div className="flex max-h-[calc(100vh-10rem)] min-w-70 flex-1 flex-col">
+                {/* Schrumpft nicht: sonst drückt die Liste sie auf Höhe 0. */}
+                <div className="shrink-0">
+                    <MiniMap
+                        villages={map.list}
+                        playerId={world.playerId}
+                        mapSize={mapSize}
+                        camera={camera}
+                        nearView={map.frameSize}
+                        size={map.miniSize}
+                        onResized={(size) => map.setMiniSize(size)}
+                        onPick={centerOn}
+                        label={t('map.overview')}
                     />
-                ) : (
-                    <Card>
-                        <h2>{t('map.title')}</h2>
-                        <p className="text-ink-light">
-                            {t('map.hint')}
-                        </p>
-                    </Card>
-                )}
-                <MovementsPanel />
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                    {map.selected && activeVillageId !== null ? (
+                        <TargetPanel
+                            target={map.selected}
+                            home={home}
+                            activeVillageId={activeVillageId}
+                            ownPlayerId={world.playerId}
+                            worldId={world.summary?.id ?? 0}
+                        />
+                    ) : (
+                        <Card>
+                            <h2>{t('map.title')}</h2>
+                            <p className="text-ink-light">
+                                {t('map.hint')}
+                            </p>
+                        </Card>
+                    )}
+                    <MovementsPanel />
+                </div>
             </div>
         </div>
     );

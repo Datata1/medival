@@ -1,7 +1,60 @@
 # Ticket 18-4: Berichte als eigene Seiten
 
-**Status:** 📋 offen · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md) ·
-**Vorlage:** `ideas/assets/bericht_beispiel.png`
+**Status:** ✅ erledigt (2026-11-11) · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md) ·
+**Vorlage:** `ideas/assets/bericht_beispiel.png` ·
+**Ergebnis:** `ideas/assets/Bericht-umsetzung.png`, `ideas/assets/Berichtsliste-umsetzung.png`
+
+> **Ergebnis:** Die Berichte sind eine geblätterte Tabelle mit Filterreitern, jeder
+> Bericht hat eine eigene Adresse, und gelesen ist ein Bericht erst, wenn seine Seite
+> geöffnet wurde.
+>
+> **Abweichungen vom Ticket** (es stammt aus der Zeit vor Plan 19):
+> - **Fünfter Filter „Späher".** Seit 19-10 gibt es Spähberichte und abgewehrte
+>   Spähversuche; ohne eigenen Reiter stünden sie nur unter „Alle".
+> - **Der Ungelesen-Zähler kommt vom Server** (`unread` in der Antwort). Seit
+>   geblättert wird, kennt der Client nicht mehr alle Berichte.
+> - **Neue Berichte erkennt der Client an `newestId`**, nicht mehr an der Menge der
+>   IDs in der Liste. Die wechselt beim Umblättern, ohne dass etwas eingetroffen ist;
+>   der Klang hätte bei jedem Seitenwechsel gespielt.
+> - **`GET /reports/:id` liefert die Nachbarn mit** (`newerId`, `olderId`) für das
+>   Blättern am Kopf der Seite.
+> - **Zusätzlich `POST /reports/delete`** mit einer ID-Liste für „Ausgewählte
+>   löschen", neben dem `DELETE` für einen einzelnen Bericht.
+> - **Ein fremder Bericht ist 404**, nicht 403. So verrät die Antwort nicht, welche
+>   IDs es gibt.
+> - **Glücksbalken von −15 % bis +15 %** statt ±25 %: Das ist `LUCK_RANGE`.
+> - **Die Aktionslinks führen über die Adresse der Karte:** `?x=…&y=…` wählt das Dorf
+>   und öffnet die Karte dort, `troops=spear:10,…` belegt das Versandformular vor.
+>   Die Vorbelegung ist auf die Truppen gedeckelt, die zu Hause stehen.
+>   `SendUnitsForm` liest sie aus dem `MapStore`, nicht aus einer Prop.
+> - **Im Verteidigungsbericht** zeigt „Dieses Dorf angreifen" auf den Angreifer. Die
+>   beiden „erneut angreifen"-Links gibt es nur im eigenen Angriffsbericht.
+> - **Routen:** `reports.tsx` wurde zu `reports.index.tsx`, dazu
+>   `reports.$reportId.tsx`.
+> - `UnitLossTable` ist umgebaut statt ersetzt (Einheiten nebeneinander) und dient
+>   auch dem Spähbericht.
+>
+> **Tests:** `server/test/integration/reports.test.ts` (8 Tests: Blättern über 120
+> Berichte ohne Überlappung, Filter, fremder Bericht abgewiesen, `read` trifft nur
+> einen, Löschen idempotent, Sammel-Löschen nur eigene). `client/test/stores.test.ts`:
+> 8 Tests für den `ReportsStore`, 3 für die Meldung neuer Berichte.
+>
+> **Im Browser geprüft** (Testwelt mit 59 gesetzten Berichten):
+>
+> | # | Punkt | Ergebnis |
+> |---|---|---|
+> | 1 | Eigene Adresse, neu ladbar | ✅ `/worlds/1/reports/58`. Im zweiten Tab nicht eigens geprüft |
+> | 2 | Filterreiter wirken und stehen in der Adresse | ✅ `?filter=scout&page=1` |
+> | 3 | Ungelesen erkennbar, Zähler sinkt um genau eins | ✅ 59 → 58, nach Neuladen weiter 58 |
+> | 4 | Der Reiter allein markiert nichts | ✅ |
+> | 5 | Löschen entfernt, bleibt nach Reload fort | ✅ einzeln, ausgewählt und von der Detailseite |
+> | 6 | Erneut angreifen belegt das Formular vor | ✅ „gleiche Truppen": 94 Speere im Bericht, 3 zu Hause, Feld zeigt 3. „Überlebende" nur über `survivors()` im Code, nicht eigens geklickt |
+> | 7 | Glücksbalken mit Vorzeichen | ✅ +12 % im Bild. Ein negativer Wert wurde nicht eigens angesehen |
+> | 8 | Der 51. Bericht über die Blätterleiste | ✅ Seite 2 mit 9 Zeilen |
+>
+> Die Berichte der Testwelt wurden in die Datenbank gesetzt, nicht erkämpft. Wall-
+> und Zustimmungszeile sowie die Eroberungsmarke sind deshalb nur über den Code
+> belegt.
 
 ## Kontext
 

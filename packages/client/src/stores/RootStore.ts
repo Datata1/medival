@@ -8,6 +8,7 @@ import { LobbyStore } from './LobbyStore.js';
 import { MapStore } from './MapStore.js';
 import { MovementsStore } from './MovementsStore.js';
 import { PlayerStore } from './PlayerStore.js';
+import { RankingStore } from './RankingStore.js';
 import { ReportsStore } from './ReportsStore.js';
 import {
     SocketConnection,
@@ -34,12 +35,19 @@ export class RootStore {
     readonly movements = new MovementsStore();
     readonly reports = new ReportsStore();
     readonly player = new PlayerStore();
+    readonly ranking = new RankingStore();
     readonly tribe = new TribeStore();
     readonly sound: SoundStore;
 
     /** Merkt sich, was beim Öffnen schon da war — sonst tönt es beim Betreten. */
     private readonly incomingWatcher = new ArrivalWatcher();
-    private readonly reportWatcher = new ArrivalWatcher();
+    /**
+     * Der neueste Bericht, der schon gemeldet ist. Eine ID statt einer Menge:
+     * Die Liste ist geblättert und gefiltert (18-4), ihre Einträge wechseln
+     * beim Umblättern, ohne dass etwas Neues eingetroffen wäre.
+     * `undefined` heißt: Der Ausgangsstand steht noch nicht fest.
+     */
+    private lastReportId: number | null | undefined = undefined;
 
     /** Injizierbar, damit die Stores ohne Browser-APIs testbar bleiben. */
     constructor(
@@ -99,11 +107,14 @@ export class RootStore {
             this.movements.start(worldId),
             this.reports.start(worldId),
         ]);
+        // Für den Rang in der Kopfzeile (18-5). Nicht abgewartet: Die Welt
+        // soll auch dann aufgehen, wenn die Rangliste gerade nicht lädt.
+        void this.ranking.load(worldId);
         // Ausgangsstand festhalten: Was jetzt schon da ist, ist nicht „neu".
         this.incomingWatcher.countNew(
             this.movements.incoming.map((m) => m.id),
         );
-        this.reportWatcher.countNew(this.reports.list.map((r) => r.id));
+        this.lastReportId = this.reports.newestId;
 
         /*
          * Ohne ausdrückliche Wahl das erste eigene Dorf zeigen — aber nur
@@ -132,11 +143,12 @@ export class RootStore {
 
     closeWorld(): void {
         this.incomingWatcher.reset();
-        this.reportWatcher.reset();
+        this.lastReportId = undefined;
         this.socket.disconnect();
         this.movements.stop();
         this.reports.stop();
         this.player.clear();
+        this.ranking.clear();
         this.tribe.clear();
         this.map.clear();
         this.village.clear();
@@ -161,13 +173,14 @@ export class RootStore {
 
     /** Ein Rascheln nur für Berichte, die gerade erst eingetroffen sind. */
     announceReports(): void {
-        if (
-            this.reportWatcher.countNew(
-                this.reports.list.map((r) => r.id),
-            ) > 0
-        ) {
-            this.sound.play('report.arrived');
-        }
+        const newest = this.reports.newestId;
+        const known = this.lastReportId;
+        // Vor dem Ausgangsstand ist nichts „neu", und nach dem Löschen des
+        // neuesten Berichts sinkt die ID, ohne dass etwas eingetroffen wäre.
+        if (known === undefined || newest === null) return;
+        if (known !== null && newest <= known) return;
+        this.lastReportId = newest;
+        this.sound.play('report.arrived');
     }
 
     /** Eine Nachricht, ein gezielter Reload. */
@@ -210,6 +223,8 @@ export class RootStore {
             case 'map_changed':
                 // Öffentlich (19-9): neues Dorf oder Besitzerwechsel irgendwo.
                 this.map.reload();
+                // Beides verschiebt Ränge (18-5).
+                void this.ranking.reload();
                 break;
             case 'world_status':
                 void this.world.reload();

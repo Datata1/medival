@@ -45,6 +45,10 @@ export class MapStore {
     readonly tiles = new Map<string, MapVillage[]>();
     worldId: number | null = null;
     selectedVillageId: number | null = null;
+    /** Wo die Karte öffnet, wenn die Adresse ein Ziel nennt (18-4). */
+    focus: { x: number; y: number } | null = null;
+    /** Truppen aus „erneut angreifen", für das Versandformular (18-4). */
+    presetUnits: Units | null = null;
     /**
      * Was ich zuletzt über das ausgewählte Dorf erkundet habe (20-5);
      * `null`, wenn nichts. Geladen bei der Auswahl.
@@ -294,6 +298,8 @@ export class MapStore {
         runInAction(() => {
             this.worldId = null;
             this.selectedVillageId = null;
+            this.focus = null;
+            this.presetUnits = null;
             this.sendError = null;
             this.loadError = null;
             this.tiles.clear();
@@ -305,8 +311,35 @@ export class MapStore {
         this.reloadTimer = null;
     }
 
+    /**
+     * Ein Ziel aus der Adresse (18-4): Die Karte öffnet dort statt am eigenen
+     * Dorf, das Dorf ist gewählt, und `presetUnits` belegt das
+     * Versandformular vor.
+     */
+    async focusOn(
+        x: number,
+        y: number,
+        units: Units | null,
+    ): Promise<void> {
+        this.focus = { x, y };
+        await this.ensurePoint(x, y);
+        const village = this.villageAt(x, y);
+        runInAction(() => {
+            this.select(village);
+            // Nach `select`, das eine alte Vorbelegung verwirft.
+            this.presetUnits = village ? units : null;
+        });
+    }
+
+    clearFocus(): void {
+        this.focus = null;
+        this.presetUnits = null;
+    }
+
     select(village: MapVillage | null): void {
         this.selectedVillageId = village?.id ?? null;
+        // Die Vorbelegung galt dem Ziel aus der Adresse, nicht dem nächsten.
+        this.presetUnits = null;
         this.sendError = null;
         this.intel.clear();
         const worldId = this.worldId;

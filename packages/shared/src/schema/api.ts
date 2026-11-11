@@ -389,7 +389,19 @@ export const PlayerProfileSchema = z.object({
     totalPoints: z.number().int().nonnegative(),
     /** Platz in der Punkterangliste, 1 = führend. */
     rank: z.number().int().positive(),
-    villages: z.array(villageRef.extend({ points: z.number().int() })),
+    villages: z.array(
+        villageRef.extend({
+            points: z.number().int(),
+            /*
+             * Nur im eigenen Profil gefüllt (18-5). Truppen und
+             * Bauernhofplätze eines Fremden verriete sonst jedes Profil,
+             * wofür es Späher gibt.
+             */
+            popUsed: z.number().int().nullable(),
+            popMax: z.number().int().nullable(),
+            troops: z.number().int().nullable(),
+        }),
+    ),
     /**
      * Wie dieser Spieler zum menschlichen Spieler steht — asymmetrisch, also
      * seine Sicht auf uns, nicht unsere auf ihn. `null` beim eigenen Profil.
@@ -398,6 +410,53 @@ export const PlayerProfileSchema = z.object({
     attitude: z.enum(ATTITUDES).nullable(),
     /** Stammeskürzel, falls Mitglied. */
     tribeTag: z.string().nullable(),
+});
+
+/** Rangliste (plans/18-ux/18-5-rangliste-profil-einstellungen.md). */
+export const RANKING_PAGE_SIZE = 100;
+
+export const RankingQuerySchema = z.object({
+    offset: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(500)
+        .default(RANKING_PAGE_SIZE),
+});
+
+export const RankedPlayerSchema = z.object({
+    /** 1 = führend; Gleichstand teilt sich den Rang. */
+    rank: z.number().int().positive(),
+    id: z.number().int().positive(),
+    name: z.string(),
+    isBot: z.boolean(),
+    tribeTag: z.string().nullable(),
+    points: z.number().int().nonnegative(),
+    villageCount: z.number().int().nonnegative(),
+});
+
+export const RankedTribeSchema = z.object({
+    rank: z.number().int().positive(),
+    id: z.number().int().positive(),
+    tag: z.string(),
+    name: z.string(),
+    members: z.number().int().positive(),
+    points: z.number().int().nonnegative(),
+    pointsPerMember: z.number().int().nonnegative(),
+});
+
+export const RankingResponseSchema = z.object({
+    /** Ein Ausschnitt: Eine Welt hat hunderte Spieler und mehr Bots. */
+    players: z.array(RankedPlayerSchema),
+    /** Spieler mit mindestens einem Dorf, über alle Seiten. */
+    totalPlayers: z.number().int().nonnegative(),
+    tribes: z.array(RankedTribeSchema),
+    /**
+     * Die eigene Zeile, auch wenn sie nicht im Ausschnitt liegt. Daraus liest
+     * die Kopfzeile den Rang. `null`, wer nicht mitspielt.
+     */
+    own: RankedPlayerSchema.nullable(),
 });
 
 export const SendUnitsResponseSchema = z.object({
@@ -423,7 +482,60 @@ export const MapTilesResponseSchema = z.object({
 export const MapVillageAtResponseSchema = z.object({
     village: MapVillageSchema.nullable(),
 });
-export const ReportListSchema = z.array(ReportSchema);
+/** Berichte je Seite (plans/18-ux/18-4-berichte.md). */
+export const REPORTS_PAGE_SIZE = 50;
+
+/**
+ * Filterreiter der Berichtsliste. `scout` fasst eigene Spähberichte und
+ * abgewehrte Spähversuche zusammen (19-10).
+ */
+export const REPORT_FILTERS = [
+    'all',
+    'attack',
+    'defense',
+    'scout',
+    'unread',
+] as const;
+export const ReportFilterSchema = z.enum(REPORT_FILTERS);
+
+export const ReportListQuerySchema = z.object({
+    offset: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(200)
+        .default(REPORTS_PAGE_SIZE),
+    filter: ReportFilterSchema.default('all'),
+});
+
+export const ReportListSchema = z.object({
+    /** Ein Ausschnitt, neueste zuerst. */
+    reports: z.array(ReportSchema),
+    /** Treffer des Filters über alle Seiten. */
+    total: z.number().int().nonnegative(),
+    /**
+     * Ungelesene über **alle** Berichte, unabhängig von Filter und Seite.
+     * Die Kopfzeile zählt damit, ohne die ganze Liste zu kennen.
+     */
+    unread: z.number().int().nonnegative(),
+    /** Neuester Bericht überhaupt; daran erkennt der Client Neuzugänge. */
+    newestId: z.number().int().positive().nullable(),
+});
+
+/** Ein Bericht mit seinen Nachbarn zum Blättern. */
+export const ReportDetailSchema = z.object({
+    report: ReportSchema,
+    newerId: z.number().int().positive().nullable(),
+    olderId: z.number().int().positive().nullable(),
+});
+
+export const DeleteReportsRequestSchema = z.object({
+    ids: z.array(z.number().int().positive()).min(1).max(500),
+});
+export const DeletedCountResponseSchema = z.object({
+    deleted: z.number().int().nonnegative(),
+});
 
 /** Nachrichten, die der Server über die WebSocket-Verbindung pusht. */
 export const WorldMessageSchema = z.discriminatedUnion('type', [
@@ -465,6 +577,9 @@ export type BattleReportPayload = z.infer<
     typeof BattleReportPayloadSchema
 >;
 export type Report = z.infer<typeof ReportSchema>;
+export type ReportFilter = z.infer<typeof ReportFilterSchema>;
+export type ReportList = z.infer<typeof ReportListSchema>;
+export type ReportDetail = z.infer<typeof ReportDetailSchema>;
 export type BattleReport = z.infer<typeof BattleReportSchema>;
 export type ScoutReport = z.infer<typeof ScoutReportSchema>;
 export type ScoutReportPayload = z.infer<
@@ -479,6 +594,9 @@ export type WorldMessage = z.infer<typeof WorldMessageSchema>;
 export type Tribe = z.infer<typeof TribeSchema>;
 export type DiplomacyView = z.infer<typeof DiplomacyViewSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
+export type RankedPlayer = z.infer<typeof RankedPlayerSchema>;
+export type RankedTribe = z.infer<typeof RankedTribeSchema>;
+export type RankingResponse = z.infer<typeof RankingResponseSchema>;
 
 /** Vorspulen im Entwicklermodus (19-3): höchstens eine Woche je Aufruf. */
 export const DevSkipRequestSchema = z.object({

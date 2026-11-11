@@ -209,12 +209,16 @@ describe('Berichte und Bewegungen je Spieler', () => {
             url: `/api/worlds/${world.id}/reports`,
             headers: { cookie: c.cookie },
         });
-        expect(cReports.json()).toEqual([]);
+        expect(
+            (cReports.json() as { reports: unknown[] }).reports,
+        ).toEqual([]);
         const aReports = await api!.app.inject({
             url: `/api/worlds/${world.id}/reports`,
             headers: { cookie: a.cookie },
         });
-        expect(aReports.json()).toHaveLength(1);
+        expect(
+            (aReports.json() as { reports: unknown[] }).reports,
+        ).toHaveLength(1);
     });
 });
 
