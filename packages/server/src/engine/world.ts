@@ -121,11 +121,14 @@ function mergeRecipients(a: Recipients, b: Recipients): Recipients {
 const BUILD_QUEUE_LIMIT = 5;
 
 /**
- * So viele Events holt `catchUp` vor einem Befehl höchstens synchron nach.
- * Bei ~1 ms je Event sind das rund eine Sekunde — mehr darf eine einzelne
- * Anfrage nicht blockieren.
+ * So lange holt `catchUp` vor einem Befehl höchstens synchron nach.
+ *
+ * Vorher 1 000 Events, bei ~1 ms je Bot-Tick also rund eine Sekunde — bei
+ * großem Rückstand für **jede** Anfrage, bevor sie mit `catching_up` scheiterte
+ * (Audit A2: Anfragen brauchten 1–3 s). Den Rückstand baut der Scheduler
+ * ohnehin im Hintergrund ab; die Anfrage soll nur den kleinen Rest erledigen.
  */
-const CATCH_UP_LIMIT = 1_000;
+const CATCH_UP_BUDGET_MS = 50;
 
 export class World {
     readonly id: number;
@@ -257,8 +260,11 @@ export class World {
     catchUp(): void {
         if (this.scheduler.isProcessing) return;
         const now = this.now();
-        const done = this.scheduler.drainUntil(now, CATCH_UP_LIMIT);
-        if (done < CATCH_UP_LIMIT) return;
+        this.scheduler.drainUntil(
+            now,
+            Number.POSITIVE_INFINITY,
+            CATCH_UP_BUDGET_MS,
+        );
         const next = this.scheduler.nextDue();
         if (next !== null && next <= now)
             throw new GameError('catching_up');

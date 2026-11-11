@@ -183,7 +183,7 @@ describe('economy & build queue', () => {
 
         // Jump past completion and force event processing.
         world.clock.skip(Duration.hours(1));
-        world.scheduler.processDue();
+        world.scheduler.drainUntil(world.now());
         view = world.villageView(1);
         expect(view.buildQueue).toHaveLength(0);
         expect(view.buildings.timber_camp).toBe(2);

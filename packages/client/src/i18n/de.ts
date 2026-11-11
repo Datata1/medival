@@ -71,6 +71,8 @@ const de = {
         resume: 'Weiter',
         loading: 'Lade Welt…',
         loadError: 'Welt konnte nicht geladen werden.',
+        catchingUp:
+            'Die Welt holt nach, was seit dem letzten Start passiert ist. Sie öffnet sich gleich von selbst …',
         noVillageLeft: 'Kein Dorf mehr — die Welt ist verloren.',
     },
     /** Die Hauptkopfzeile (plans/18-ux/18-1-rahmen-und-kopfzeile.md). */

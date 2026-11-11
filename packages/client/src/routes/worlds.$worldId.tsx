@@ -18,6 +18,23 @@ function WorldError() {
     );
 }
 
+/**
+ * Während der Loader läuft — er wartet auf `openWorld`, und das wartet,
+ * solange die Welt aufholt (Audit A2). Ohne diese Anzeige blieb die Seite
+ * so lange leer.
+ */
+const WorldPending = observer(function WorldPending() {
+    const { t } = useTranslation();
+    const { world } = useStores();
+    return (
+        <p className="page text-ink-light">
+            {world.catchingUp
+                ? t('world.catchingUp')
+                : t('world.loading')}
+        </p>
+    );
+});
+
 const WorldLayout = observer(function WorldLayout() {
     const { t } = useTranslation();
     const { world } = useStores();
@@ -56,5 +73,6 @@ export const Route = createFileRoute('/worlds/$worldId')({
     loader: ({ context, params }) =>
         context.stores.openWorld(Number(params.worldId)),
     component: WorldLayout,
+    pendingComponent: WorldPending,
     errorComponent: WorldError,
 });

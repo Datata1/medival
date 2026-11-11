@@ -373,6 +373,42 @@ function columnsOf(sqlite: Database.Database, table: string): string[] {
         );
 }
 
+/**
+ * Wo eine Welt nach dem Laden im Entwicklermodus weiterläuft (Audit A2).
+ *
+ * Nicht bei der gespeicherten Spielzeit, sondern beim ältesten noch offenen
+ * Event, falls das früher liegt: Die gespeicherte Zeit ist die Uhr, nicht der
+ * verarbeitete Stand. Lag die Welt beim Beenden zurück, wäre der Rückstand
+ * sonst wieder da. Gefunden an einer Welt mit Speed 200, deren Uhr bei 241 h
+ * stand, deren ältestes offenes Event aber bei 27 h lag — beim Öffnen hätte
+ * sie rund 50 min lang `catching_up` gemeldet.
+ *
+ * Unbedenklich, weil Handler mit der Event-Zeit rechnen (`World.now()`): Der
+ * Spielstand ist nirgends weiter als das älteste offene Event. Ein Zeitstempel
+ * aus einem Befehl kurz davor schadet nicht, `GameTime.between` begrenzt auf 0.
+ */
+function resumeWhereLeft(
+    sqlite: Database.Database,
+    savedGameTimeMs: number,
+): { gameTimeMs: number; epochZeroMs: null } {
+    const row = sqlite
+        .prepare('SELECT MIN(due_game_time) AS due FROM events')
+        .get();
+    const oldest = parseRow(
+        z.object({ due: z.number().nullable() }),
+        row,
+        'events.min',
+    ).due;
+    return {
+        gameTimeMs:
+            oldest === null
+                ? savedGameTimeMs
+                : Math.min(savedGameTimeMs, Math.floor(oldest)),
+        // Kein Nullpunkt: Die Uhr läuft ab `gameTimeMs` weiter (GameClock).
+        epochZeroMs: null,
+    };
+}
+
 export class WorldManager {
     private readonly meta: Database.Database;
     /** Accounts und Sessions, weltübergreifend in der Meta-DB (19-8). */
@@ -389,7 +425,20 @@ export class WorldManager {
     private readonly checkpoints = new CheckpointThread();
     readonly health = new EngineHealth();
 
-    constructor(private readonly dataDir: string) {
+    /**
+     * Im Entwicklermodus gilt die Zeit, in der der Server aus war, als Pause
+     * (Audit A2). Auf einem Mehrspieler-Server bleibt es bei 19-3: Die Welt
+     * läuft an der Wanduhr weiter, Verpasstes wird nachgeholt.
+     */
+    private readonly pauseWhileOffline: boolean;
+
+    constructor(
+        private readonly dataDir: string,
+        options: { pauseWhileOffline?: boolean } = {},
+    ) {
+        this.pauseWhileOffline =
+            options.pauseWhileOffline ??
+            process.env.MEDIVAL_DEV === '1';
         fs.mkdirSync(dataDir, { recursive: true });
         this.meta = new Database(path.join(dataDir, 'worlds.sqlite'));
         openPragmas(this.meta);
@@ -580,6 +629,12 @@ export class WorldManager {
         openPragmas(sqlite, { manualCheckpoint: true });
         migrateWorldDb(sqlite);
         const db = drizzle(sqlite);
+        const clock = this.pauseWhileOffline
+            ? resumeWhereLeft(sqlite, row.game_time_ms)
+            : {
+                  gameTimeMs: row.game_time_ms,
+                  epochZeroMs: row.epoch_zero_ms ?? null,
+              };
         const world = new World(
             {
                 id: row.id,
@@ -591,9 +646,8 @@ export class WorldManager {
                     'world.settings',
                 ),
                 status: row.status,
-                gameTimeMs: row.game_time_ms,
+                ...clock,
                 rngState: row.rng_state,
-                epochZeroMs: row.epoch_zero_ms ?? null,
                 // Vor 19-6 gab es keinen Zähler: Die Dorfzahl ist dann die
                 // beste Schätzung, wie weit der Kreis schon reicht.
                 settledCount: row.settled_count ?? villageCount(sqlite),

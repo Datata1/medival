@@ -42,7 +42,7 @@ afterEach(() => {
 /** Advance game time and process everything due. */
 function forward(ms: number) {
     world.clock.skip(ms);
-    world.scheduler.processDue();
+    world.scheduler.drainUntil(world.now());
 }
 
 /** Give village 1 a barracks + resources instantly (test shortcut via direct DB). */
