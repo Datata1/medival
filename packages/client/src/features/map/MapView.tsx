@@ -106,8 +106,12 @@ export const MapView = observer(function MapView() {
         centerOn,
         reset,
         keyStep,
-    } = useMapCamera(home, map.list, mapSize, (target) =>
-        map.select(target),
+    } = useMapCamera(
+        home,
+        map.list,
+        mapSize,
+        (target) => map.select(target),
+        map.focus,
     );
 
     /*

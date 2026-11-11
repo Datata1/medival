@@ -41,7 +41,13 @@ export class RootStore {
 
     /** Merkt sich, was beim Öffnen schon da war — sonst tönt es beim Betreten. */
     private readonly incomingWatcher = new ArrivalWatcher();
-    private readonly reportWatcher = new ArrivalWatcher();
+    /**
+     * Der neueste Bericht, der schon gemeldet ist. Eine ID statt einer Menge:
+     * Die Liste ist geblättert und gefiltert (18-4), ihre Einträge wechseln
+     * beim Umblättern, ohne dass etwas Neues eingetroffen wäre.
+     * `undefined` heißt: Der Ausgangsstand steht noch nicht fest.
+     */
+    private lastReportId: number | null | undefined = undefined;
 
     /** Injizierbar, damit die Stores ohne Browser-APIs testbar bleiben. */
     constructor(
@@ -108,7 +114,7 @@ export class RootStore {
         this.incomingWatcher.countNew(
             this.movements.incoming.map((m) => m.id),
         );
-        this.reportWatcher.countNew(this.reports.list.map((r) => r.id));
+        this.lastReportId = this.reports.newestId;
 
         /*
          * Ohne ausdrückliche Wahl das erste eigene Dorf zeigen — aber nur
@@ -137,7 +143,7 @@ export class RootStore {
 
     closeWorld(): void {
         this.incomingWatcher.reset();
-        this.reportWatcher.reset();
+        this.lastReportId = undefined;
         this.socket.disconnect();
         this.movements.stop();
         this.reports.stop();
@@ -167,13 +173,14 @@ export class RootStore {
 
     /** Ein Rascheln nur für Berichte, die gerade erst eingetroffen sind. */
     announceReports(): void {
-        if (
-            this.reportWatcher.countNew(
-                this.reports.list.map((r) => r.id),
-            ) > 0
-        ) {
-            this.sound.play('report.arrived');
-        }
+        const newest = this.reports.newestId;
+        const known = this.lastReportId;
+        // Vor dem Ausgangsstand ist nichts „neu", und nach dem Löschen des
+        // neuesten Berichts sinkt die ID, ohne dass etwas eingetroffen wäre.
+        if (known === undefined || newest === null) return;
+        if (known !== null && newest <= known) return;
+        this.lastReportId = newest;
+        this.sound.play('report.arrived');
     }
 
     /** Eine Nachricht, ein gezielter Reload. */

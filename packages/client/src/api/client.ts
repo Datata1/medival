@@ -1,6 +1,7 @@
 import {
     AccountSchema,
     type BuildingType,
+    DeletedCountResponseSchema,
     DeletedResponseSchema,
     DiplomacyViewSchema,
     MapTilesResponseSchema,
@@ -11,6 +12,9 @@ import {
     PlayerProfileSchema,
     RANKING_PAGE_SIZE,
     RankingResponseSchema,
+    REPORTS_PAGE_SIZE,
+    ReportDetailSchema,
+    type ReportFilter,
     ReportListSchema,
     type Resources,
     ScoutIntelResponseSchema,
@@ -237,8 +241,37 @@ export const api = {
             `/api/worlds/${worldId}/movements`,
             MovementsResponseSchema,
         ),
-    getReports: (worldId: number) =>
-        request(`/api/worlds/${worldId}/reports`, ReportListSchema),
+    getReports: (
+        worldId: number,
+        query: { offset: number; filter: ReportFilter },
+    ) =>
+        request(
+            `/api/worlds/${worldId}/reports?offset=${query.offset}&limit=${REPORTS_PAGE_SIZE}&filter=${query.filter}`,
+            ReportListSchema,
+        ),
+    getReport: (worldId: number, reportId: number) =>
+        request(
+            `/api/worlds/${worldId}/reports/${reportId}`,
+            ReportDetailSchema,
+        ),
+    markReportRead: (worldId: number, reportId: number) =>
+        request(
+            `/api/worlds/${worldId}/reports/${reportId}/read`,
+            OkResponseSchema,
+            { method: 'POST' },
+        ),
+    deleteReport: (worldId: number, reportId: number) =>
+        request(
+            `/api/worlds/${worldId}/reports/${reportId}`,
+            DeletedResponseSchema,
+            { method: 'DELETE' },
+        ),
+    deleteReports: (worldId: number, ids: readonly number[]) =>
+        request(
+            `/api/worlds/${worldId}/reports/delete`,
+            DeletedCountResponseSchema,
+            postJson({ ids }),
+        ),
     markReportsRead: (worldId: number) =>
         request(
             `/api/worlds/${worldId}/reports/read`,

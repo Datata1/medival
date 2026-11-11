@@ -1,6 +1,6 @@
 # Plan 18: UX-Überarbeitung
 
-**Status:** 📋 offen · **Voraussetzung:** [Plan 11](../11-mittelalterliches-design.md),
+**Status:** 🔄 laufend (18-1 bis 18-5 erledigt, 18-6 offen) · **Voraussetzung:** [Plan 11](../11-mittelalterliches-design.md),
 [Plan 12](../12-assets-und-sprites.md)
 
 Die Pläne 01–17 haben das Spiel vollständig gemacht: Es läuft, es rechnet, die Karte
@@ -18,7 +18,7 @@ der Schale, die es aufspannt), danach ist die Reihenfolge frei.
 | 18-1 | [Rahmen & Kopfzeile](18-1-rahmen-und-kopfzeile.md) | client | ✅ erledigt |
 | 18-2 | [Dorfübersicht, Gebäudeseiten & Dorfgrafik](18-2-dorfuebersicht.md) | client | ✅ erledigt |
 | 18-3 | [Karte: Nahansicht, Übersicht & Gelände](18-3-karte.md) | client + shared + server | ✅ erledigt |
-| 18-4 | [Berichte als eigene Seiten](18-4-berichte.md) | client + server | 📋 offen |
+| 18-4 | [Berichte als eigene Seiten](18-4-berichte.md) | client + server | ✅ erledigt |
 | 18-5 | [Rangliste, Profil & Einstellungen](18-5-rangliste-profil-einstellungen.md) | client + server | ✅ erledigt |
 | 18-6 | [Nachrichten: Postfach mit Bot-Absendern](18-6-nachrichten.md) | server + shared + client | 📋 offen |
 

@@ -24,7 +24,7 @@ empfohlene Reihenfolge:
 | 15 | [Bot-Grundgerüst: Wahrnehmung → Entscheidung → Ausführung](15-bot-grundgeruest.md) | server + shared | ✅ erledigt |
 | 16 | [Ansehen & Handel](16-ansehen-und-handel.md) | server + shared + client | ✅ erledigt |
 | 17 | [Stämme & Krieg](17-staemme-und-krieg.md) | server + shared + client | ✅ erledigt |
-| 18 | [UX-Überarbeitung (6 Tickets)](18-ux/README.md) | client (+shared, +server) | 📋 offen |
+| 18 | [UX-Überarbeitung (6 Tickets)](18-ux/README.md) | client (+shared, +server) | 🔄 5 von 6 erledigt, 18-6 offen |
 | 19 | [Vom Singleplayer zum Mehrspieler-Prototyp (15 Tickets)](19-prototyp/README.md) | server + shared + client | ✅ erledigt |
 | 20 | [Nacharbeiten aus dem Prototyp (5 Tickets)](20-nacharbeiten/README.md) | server + client | ✅ erledigt |
 | 21 | [Audit durch den Nutzer](21-audit/README.md) | alle | 🔄 laufend |

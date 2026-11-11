@@ -5,6 +5,7 @@ import {
     BattleReportPayloadSchema,
     BuildRequestSchema,
     CreateWorldRequestSchema,
+    DeleteReportsRequestSchema,
     DevSkipRequestSchema,
     Duration,
     distance,
@@ -16,6 +17,8 @@ import {
     NumericIdSchema,
     RankingQuerySchema,
     RecruitRequestSchema,
+    type ReportFilter,
+    ReportListQuerySchema,
     ResearchRequestSchema,
     type ScoutIntel,
     ScoutReportPayloadSchema,
@@ -26,7 +29,19 @@ import {
     tileOf,
     UnitsSchema,
 } from '@medival/shared';
-import { and, asc, between, desc, eq, inArray, or } from 'drizzle-orm';
+import {
+    and,
+    asc,
+    between,
+    count,
+    desc,
+    eq,
+    gt,
+    inArray,
+    lt,
+    or,
+    type SQL,
+} from 'drizzle-orm';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAccount, requireAdmin } from '../auth/plugin.js';
@@ -815,48 +830,215 @@ export function registerRoutes(
         },
     );
 
+    /*
+     * Berichte (plans/18-ux/18-4-berichte.md). Alles gilt für den Spieler,
+     * der fragt: Ein fremder Bericht ist „nicht gefunden", nicht „verboten",
+     * damit sich aus der Antwort nicht ablesen lässt, welche IDs es gibt.
+     */
+    type ReportRow = typeof reports.$inferSelect;
+
+    /** Die Nutzlast je nach Art lesen (19-10: Spähberichte). */
+    const describeReport = (r: ReportRow) => {
+        const base = {
+            id: r.id,
+            createdGameTime: r.createdGameTime,
+            read: r.read,
+        };
+        return r.type === 'scout' || r.type === 'scout_defense'
+            ? {
+                  ...base,
+                  type: r.type,
+                  payload: parseJsonColumn(
+                      ScoutReportPayloadSchema,
+                      r.payload,
+                      'report.payload',
+                  ),
+              }
+            : {
+                  ...base,
+                  type: r.type === 'defense' ? 'defense' : 'attack',
+                  payload: parseJsonColumn(
+                      BattleReportPayloadSchema,
+                      r.payload,
+                      'report.payload',
+                  ),
+              };
+    };
+
+    const reportFilter = (
+        me: number,
+        filter: ReportFilter,
+    ): SQL | undefined => {
+        const mine = eq(reports.playerId, me);
+        switch (filter) {
+            case 'attack':
+            case 'defense':
+                return and(mine, eq(reports.type, filter));
+            case 'scout':
+                return and(
+                    mine,
+                    inArray(reports.type, ['scout', 'scout_defense']),
+                );
+            case 'unread':
+                return and(mine, eq(reports.read, false));
+            default:
+                return mine;
+        }
+    };
+
+    const ownReport = (
+        world: World,
+        me: number,
+        reportId: string,
+    ): ReportRow =>
+        firstOrThrow(
+            world.db
+                .select()
+                .from(reports)
+                .where(
+                    and(
+                        eq(
+                            reports.id,
+                            parseInput(NumericIdSchema, reportId),
+                        ),
+                        eq(reports.playerId, me),
+                    ),
+                )
+                .all(),
+            'report_not_found',
+        );
+
     app.get<{ Params: { id: string } }>(
         '/api/worlds/:id/reports',
         (req) => {
             const world = worldOf(req, req.params.id);
             const me = playerOf(world, req);
+            const { offset, limit, filter } = parseInput(
+                ReportListQuerySchema,
+                req.query,
+            );
+            const where = reportFilter(me, filter);
+            const mine = eq(reports.playerId, me);
+            const countWhere = (condition: SQL | undefined) =>
+                world.db
+                    .select({ n: count() })
+                    .from(reports)
+                    .where(condition)
+                    .all()[0]?.n ?? 0;
+            // Vorher ein hartes `.limit(50)`: Der 51. Bericht war einfach
+            // fort. Jetzt wird geblättert.
             const rows = world.db
                 .select()
                 .from(reports)
-                .where(eq(reports.playerId, me))
+                .where(where)
                 .orderBy(desc(reports.id))
-                .limit(50)
+                .limit(limit)
+                .offset(offset)
                 .all();
-            // Die Nutzlast je nach Art lesen (19-10: Spähberichte).
-            return rows.map((r) => {
-                const base = {
-                    id: r.id,
-                    createdGameTime: r.createdGameTime,
-                    read: r.read,
-                };
-                return r.type === 'scout' || r.type === 'scout_defense'
-                    ? {
-                          ...base,
-                          type: r.type,
-                          payload: parseJsonColumn(
-                              ScoutReportPayloadSchema,
-                              r.payload,
-                              'report.payload',
-                          ),
-                      }
-                    : {
-                          ...base,
-                          type:
-                              r.type === 'defense'
-                                  ? 'defense'
-                                  : 'attack',
-                          payload: parseJsonColumn(
-                              BattleReportPayloadSchema,
-                              r.payload,
-                              'report.payload',
-                          ),
-                      };
-            });
+            return {
+                reports: rows.map(describeReport),
+                total: countWhere(where),
+                unread: countWhere(and(mine, eq(reports.read, false))),
+                newestId:
+                    world.db
+                        .select({ id: reports.id })
+                        .from(reports)
+                        .where(mine)
+                        .orderBy(desc(reports.id))
+                        .limit(1)
+                        .all()[0]?.id ?? null,
+            };
+        },
+    );
+
+    app.get<{ Params: { id: string; reportId: string } }>(
+        '/api/worlds/:id/reports/:reportId',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            const row = ownReport(world, me, req.params.reportId);
+            const neighbour = (newer: boolean) =>
+                world.db
+                    .select({ id: reports.id })
+                    .from(reports)
+                    .where(
+                        and(
+                            eq(reports.playerId, me),
+                            newer
+                                ? gt(reports.id, row.id)
+                                : lt(reports.id, row.id),
+                        ),
+                    )
+                    .orderBy(newer ? asc(reports.id) : desc(reports.id))
+                    .limit(1)
+                    .all()[0]?.id ?? null;
+            return {
+                report: describeReport(row),
+                newerId: neighbour(true),
+                olderId: neighbour(false),
+            };
+        },
+    );
+
+    /** Gelesen ist ein Bericht, wenn *er* geöffnet wurde, nicht die Liste. */
+    app.post<{ Params: { id: string; reportId: string } }>(
+        '/api/worlds/:id/reports/:reportId/read',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            const row = ownReport(world, me, req.params.reportId);
+            world.db
+                .update(reports)
+                .set({ read: true })
+                .where(eq(reports.id, row.id))
+                .run();
+            return { ok: true };
+        },
+    );
+
+    /** Idempotent: Was schon fort ist, meldet `deleted: false`. */
+    app.delete<{ Params: { id: string; reportId: string } }>(
+        '/api/worlds/:id/reports/:reportId',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            const reportId = parseInput(
+                NumericIdSchema,
+                req.params.reportId,
+            );
+            const result = world.db
+                .delete(reports)
+                .where(
+                    and(
+                        eq(reports.id, reportId),
+                        eq(reports.playerId, me),
+                    ),
+                )
+                .run();
+            return { deleted: result.changes > 0 };
+        },
+    );
+
+    /** „Ausgewählte löschen": mehrere auf einmal, nur eigene. */
+    app.post<{ Params: { id: string } }>(
+        '/api/worlds/:id/reports/delete',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const me = playerOf(world, req);
+            const { ids } = parseInput(
+                DeleteReportsRequestSchema,
+                req.body,
+            );
+            const result = world.db
+                .delete(reports)
+                .where(
+                    and(
+                        inArray(reports.id, ids),
+                        eq(reports.playerId, me),
+                    ),
+                )
+                .run();
+            return { deleted: result.changes };
         },
     );
 

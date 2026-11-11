@@ -83,6 +83,7 @@ export const MainNav = observer(function MainNav() {
             <Link
                 to="/worlds/$worldId/map"
                 params={params}
+                search={{}}
                 onClick={() => sound.click()}
                 className={NAV_LINK_CLASS}
             >
@@ -92,6 +93,7 @@ export const MainNav = observer(function MainNav() {
             <Link
                 to="/worlds/$worldId/reports"
                 params={params}
+                search={{ filter: 'all', page: 1 }}
                 onClick={() => sound.click()}
                 className={`${NAV_LINK_CLASS} relative`}
             >

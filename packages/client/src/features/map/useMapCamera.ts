@@ -55,11 +55,13 @@ export function useMapCamera(
     villages: MapVillage[] | undefined,
     mapSize: number,
     onSelect: (village: MapVillage | null) => void,
+    /** Wo die Karte öffnet, wenn die Adresse ein Ziel nennt (18-4). */
+    initial: Camera | null = null,
 ): MapCamera {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     // Erst die eigene Wahl, sonst folgt die Kamera dem aktiven Dorf (abgeleitet
     // beim Rendern, ohne Effect).
-    const [override, setOverride] = useState<Camera | null>(null);
+    const [override, setOverride] = useState<Camera | null>(initial);
     const camera = override ?? (home ? { x: home.x, y: home.y } : null);
 
     /*

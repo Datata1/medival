@@ -1,6 +1,7 @@
 import {
     type BuildingType,
     DEFAULT_CATAPULT_TARGET,
+    entriesOf,
     type MapVillage,
     travelTime,
     UNIT_ORDER,
@@ -27,7 +28,20 @@ export const SendUnitsForm = observer(function SendUnitsForm({
 }) {
     const { t } = useTranslation();
     const { map, village, world } = useStores();
-    const [counts, setCounts] = useState<Record<string, string>>({});
+    /*
+     * Vorbelegt aus „erneut angreifen" im Bericht (18-4), gedeckelt auf das,
+     * was zu Hause steht. Mehr einzutragen, als da ist, hieße einen Angriff
+     * anzubieten, den der Server ablehnt.
+     */
+    const [counts, setCounts] = useState<Record<string, string>>(() => {
+        const start: Record<string, string> = {};
+        const home = village.view?.units ?? {};
+        for (const [type, wanted] of entriesOf(map.presetUnits ?? {})) {
+            const n = Math.min(wanted, home[type] ?? 0);
+            if (n > 0) start[type] = String(n);
+        }
+        return start;
+    });
     const [catapultTarget, setCatapultTarget] = useState<BuildingType>(
         DEFAULT_CATAPULT_TARGET,
     );

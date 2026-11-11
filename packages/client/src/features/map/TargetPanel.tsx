@@ -139,6 +139,7 @@ const IntelNote = observer(function IntelNote({
                 : t('map.intel.noTroops')}{' '}
             <Link
                 to="/worlds/$worldId/reports"
+                search={{ filter: 'all', page: 1 }}
                 params={{ worldId: String(worldId) }}
                 className="text-seal underline"
             >
