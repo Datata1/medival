@@ -42,7 +42,7 @@ function Badge({ count, label }: { count: number; label: string }) {
  */
 export const MainNav = observer(function MainNav() {
     const { t } = useTranslation();
-    const { world, reports, village, sound } = useStores();
+    const { world, reports, village, sound, ranking } = useStores();
     const summary = world.summary;
     if (!summary) return null;
 
@@ -118,12 +118,14 @@ export const MainNav = observer(function MainNav() {
 
             {/*
              * Der Anker in der Mitte: wie in der Vorlage breiter und
-             * zweizeilig. Die Punkte lassen sich aus den eigenen Dörfern
-             * summieren; der Rang braucht den Endpunkt aus Ticket 18-5.
+             * zweizeilig. Die Punkte kommen aus den eigenen Dörfern und
+             * sind damit sofort aktuell; den Rang liefert die Rangliste
+             * (18-5).
              */}
             <Link
                 to="/worlds/$worldId/ranking"
                 params={params}
+                search={{ tab: 'players', page: 1 }}
                 onClick={() => sound.click()}
                 className={`${NAV_LINK_CLASS} flex-col gap-0 leading-tight`}
             >
@@ -131,6 +133,8 @@ export const MainNav = observer(function MainNav() {
                     <Icon name="icon.ranking" /> {t('nav.ranking')}
                 </span>
                 <span className="font-body text-parchment-dark text-xs tabular-nums">
+                    {ranking.own &&
+                        `${t('nav.rank', { rank: ranking.own.rank })} · `}
                     {t('nav.points', {
                         points: formatNumber(ownPoints),
                     })}

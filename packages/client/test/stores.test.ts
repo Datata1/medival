@@ -38,6 +38,7 @@ vi.mock('../src/api/client.js', () => ({
         getMovements: vi.fn(),
         getReports: vi.fn(),
         markReportsRead: vi.fn(),
+        getRanking: vi.fn(),
         send: vi.fn(),
     },
 }));
@@ -55,6 +56,7 @@ const { ReportsStore } = await import('../src/stores/ReportsStore.js');
 const { MapStore } = await import('../src/stores/MapStore.js');
 const { AuthStore } = await import('../src/stores/AuthStore.js');
 const { RootStore } = await import('../src/stores/RootStore.js');
+const { RankingStore } = await import('../src/stores/RankingStore.js');
 type WorldSocket =
     import('../src/stores/SocketConnection.js').WorldSocket;
 
@@ -791,5 +793,62 @@ describe('Audit A2: Welt holt nach', () => {
         expect(store.world.error).not.toBeNull();
         expect(store.catchingUp).toBe(false);
         store.close();
+    });
+});
+
+describe('RankingStore', () => {
+    const row = (id: number, rank: number) => ({
+        rank,
+        id,
+        name: `Spieler ${id}`,
+        isBot: false,
+        tribeTag: null,
+        points: 100 - rank,
+        villageCount: 1,
+    });
+
+    it('lädt die Seite aus der Adresse als Ausschnitt', async () => {
+        mocked.getRanking.mockResolvedValue({
+            players: [row(7, 201)],
+            totalPlayers: 250,
+            tribes: [],
+            own: row(3, 12),
+        });
+        const ranking = new RankingStore();
+
+        await ranking.load(4, 3);
+
+        // Seite 3 beginnt bei Zeile 200, gezählt ab null.
+        expect(mocked.getRanking).toHaveBeenCalledWith(4, 200);
+        expect(ranking.pageCount).toBe(3);
+        // Die eigene Zeile liegt nicht im Ausschnitt und ist trotzdem da.
+        expect(ranking.own?.rank).toBe(12);
+        expect(ranking.players.map((p) => p.id)).toEqual([7]);
+    });
+
+    it('lädt denselben Ausschnitt neu', async () => {
+        mocked.getRanking.mockResolvedValue({
+            players: [],
+            totalPlayers: 0,
+            tribes: [],
+            own: null,
+        });
+        const ranking = new RankingStore();
+        await ranking.load(4, 2);
+
+        await ranking.reload();
+
+        expect(mocked.getRanking).toHaveBeenLastCalledWith(4, 100);
+        expect(ranking.pageCount).toBe(1);
+    });
+
+    it('lädt nach dem Schließen nichts mehr', async () => {
+        const ranking = new RankingStore();
+        ranking.clear();
+
+        await ranking.reload();
+
+        expect(mocked.getRanking).not.toHaveBeenCalled();
+        expect(ranking.own).toBeNull();
     });
 });

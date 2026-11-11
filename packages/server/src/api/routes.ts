@@ -14,6 +14,7 @@ import {
     MapPointQuerySchema,
     MapTilesQuerySchema,
     NumericIdSchema,
+    RankingQuerySchema,
     RecruitRequestSchema,
     ResearchRequestSchema,
     type ScoutIntel,
@@ -44,6 +45,7 @@ import {
     villages,
 } from '../db/schema.js';
 import { recruitUnits, sendUnits } from '../engine/military.js';
+import { ranking } from '../engine/ranking.js';
 import { researchUnit } from '../engine/research.js';
 import { settleNewPlayer } from '../engine/settle.js';
 import { sendResources } from '../engine/trade.js';
@@ -513,6 +515,8 @@ export function registerRoutes(
                 'player_not_found',
             );
 
+            const me = playerIdOf(world, req);
+            const own = me !== null && playerId === me;
             const owned = world.db
                 .select({
                     id: villages.id,
@@ -523,37 +527,38 @@ export function registerRoutes(
                 })
                 .from(villages)
                 .where(eq(villages.playerId, playerId))
-                .all();
-            const totalPoints = owned.reduce(
-                (sum, v) => sum + v.points,
-                0,
-            );
+                .all()
+                .map((village) => {
+                    // Bauernhof und Truppen nur im eigenen Profil (18-5).
+                    if (!own)
+                        return {
+                            ...village,
+                            popUsed: null,
+                            popMax: null,
+                            troops: null,
+                        };
+                    const view = world.villageView(village.id);
+                    return {
+                        ...village,
+                        popUsed: view.popUsed,
+                        popMax: view.popMax,
+                        troops: Object.values(view.units).reduce(
+                            (sum, n) => sum + (n ?? 0),
+                            0,
+                        ),
+                    };
+                });
 
-            // Rang: wie viele Spieler mehr Punkte haben, plus eins.
-            const pointsByPlayer = new Map<number, number>();
-            for (const row of world.db
-                .select({
-                    playerId: villages.playerId,
-                    points: villages.points,
-                })
-                .from(villages)
-                .all()) {
-                if (row.playerId === null) continue; // Barbaren zählen nicht mit
-                pointsByPlayer.set(
-                    row.playerId,
-                    (pointsByPlayer.get(row.playerId) ?? 0) +
-                        row.points,
-                );
-            }
-            const ahead = [...pointsByPlayer.values()].filter(
-                (points) => points > totalPoints,
-            ).length;
+            // Derselbe Rang wie in der Rangliste: eine Rechnung für beide.
+            const ranked = firstOrThrow(
+                ranking(world).players.filter((p) => p.id === playerId),
+                'player_not_found',
+            );
 
             // Asymmetrisch: die Sicht *dieses* Spielers auf uns, nicht
             // umgekehrt (plans/16-ansehen-und-handel.md).
-            const me = playerIdOf(world, req);
             const standing =
-                me === null || playerId === me
+                me === null || own
                     ? null
                     : world.effectiveStanding(playerId, me);
 
@@ -562,14 +567,46 @@ export function registerRoutes(
                 name: player.name,
                 isBot: player.isBot,
                 personality: player.isBot ? player.personality : null,
-                villageCount: owned.length,
-                totalPoints,
-                rank: ahead + 1,
+                villageCount: ranked.villageCount,
+                totalPoints: ranked.points,
+                rank: ranked.rank,
                 villages: owned,
                 standing,
                 attitude:
                     standing === null ? null : attitudeOf(standing),
-                tribeTag: tribeTags(world).get(playerId) ?? null,
+                tribeTag: ranked.tribeTag,
+            };
+        },
+    );
+
+    /*
+     * Rangliste (18-5). Geblättert, weil eine Welt hunderte Spieler und
+     * mehr Bots hat. Die eigene Zeile kommt immer mit: Die Kopfzeile zeigt
+     * den Rang, ohne die ganze Liste zu laden.
+     */
+    app.get<{ Params: { id: string } }>(
+        '/api/worlds/:id/ranking',
+        (req) => {
+            const world = worldOf(req, req.params.id);
+            const { offset, limit } = parseInput(
+                RankingQuerySchema,
+                req.query,
+            );
+            const me = playerIdOf(world, req);
+            const all = ranking(world);
+            // Ohne Dörfer ist ein Spieler aus dem Spiel.
+            const active = all.players.filter(
+                (p) => p.villageCount > 0,
+            );
+            return {
+                players: active.slice(offset, offset + limit),
+                totalPlayers: active.length,
+                tribes: all.tribes,
+                own:
+                    me === null
+                        ? null
+                        : (all.players.find((p) => p.id === me) ??
+                          null),
             };
         },
     );

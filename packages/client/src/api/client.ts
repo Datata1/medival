@@ -9,6 +9,8 @@ import {
     MovementsResponseSchema,
     OkResponseSchema,
     PlayerProfileSchema,
+    RANKING_PAGE_SIZE,
+    RankingResponseSchema,
     ReportListSchema,
     type Resources,
     ScoutIntelResponseSchema,
@@ -214,6 +216,11 @@ export const api = {
         request(
             `/api/worlds/${worldId}/players/${playerId}`,
             PlayerProfileSchema,
+        ),
+    getRanking: (worldId: number, offset = 0) =>
+        request(
+            `/api/worlds/${worldId}/ranking?offset=${offset}&limit=${RANKING_PAGE_SIZE}`,
+            RankingResponseSchema,
         ),
     getMapTiles: (worldId: number, range: TileRange) =>
         request(

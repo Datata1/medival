@@ -93,6 +93,11 @@ const COMBINATIONS = [
         bg: 'parchment',
         what: 'Warnung/Akzent auf Pergament',
     },
+    {
+        fg: 'seal',
+        bg: 'parchment-dark',
+        what: 'Link in der eigenen Ranglistenzeile (18-5)',
+    },
     { fg: 'moss', bg: 'parchment', what: 'Erfolg auf Pergament' },
     { fg: 'parchment', bg: 'seal', what: 'Knopfschrift auf Siegelrot' },
     { fg: 'parchment', bg: 'oak', what: 'Knopfschrift auf Eiche' },
