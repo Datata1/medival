@@ -73,7 +73,10 @@ export function ResizableCanvas({
                 width: size.width,
                 height: size.height,
                 maxWidth: '100%',
-                maxHeight: 'calc(100vh - 12rem)',
+                // Kopfzeile, Dorfleiste, Pfeilknöpfe, Legende und Seitenrand:
+                // mit 12rem ragte ein ganz aufgezogener Rahmen 35 px über
+                // das Fenster hinaus (Abnahme 18-3).
+                maxHeight: 'calc(100vh - 14.5rem)',
             }}
             className={`resize overflow-hidden rounded-xs border-2 border-oak ${className}`}
         >
