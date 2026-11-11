@@ -16,10 +16,10 @@ der Schale, die es aufspannt), danach ist die Reihenfolge frei.
 | # | Ticket | Bereich | Status |
 |---|---|---|---|
 | 18-1 | [Rahmen & Kopfzeile](18-1-rahmen-und-kopfzeile.md) | client | ✅ erledigt |
-| 18-2 | [Dorfübersicht, Gebäudeseiten & Dorfgrafik](18-2-dorfuebersicht.md) | client | 📋 offen |
-| 18-3 | [Karte: Nahansicht, Übersicht & Gelände](18-3-karte.md) | client + shared + server | 📋 offen |
+| 18-2 | [Dorfübersicht, Gebäudeseiten & Dorfgrafik](18-2-dorfuebersicht.md) | client | ✅ erledigt |
+| 18-3 | [Karte: Nahansicht, Übersicht & Gelände](18-3-karte.md) | client + shared + server | ✅ erledigt |
 | 18-4 | [Berichte als eigene Seiten](18-4-berichte.md) | client + server | 📋 offen |
-| 18-5 | [Rangliste, Profil & Einstellungen](18-5-rangliste-profil-einstellungen.md) | client + server | 📋 offen |
+| 18-5 | [Rangliste, Profil & Einstellungen](18-5-rangliste-profil-einstellungen.md) | client + server | ✅ erledigt |
 | 18-6 | [Nachrichten: Postfach mit Bot-Absendern](18-6-nachrichten.md) | server + shared + client | 📋 offen |
 
 **Warum diese Reihenfolge?**
@@ -105,10 +105,9 @@ scheitern die Store-Tests mit einem irreführenden Fehler.
 
 **Formatierung.** Biome: vier Leerzeichen, Zeilenbreite 72, einfache Anführungszeichen.
 
-## Nebenbefund
+## Nebenbefund (erledigt)
 
 `scripts/generate-placeholder-sounds.mjs:9` und
-`packages/client/src/assets/sounds/CREDITS.md:23` verweisen beide auf
-`pnpm sounds:generate`. Dieses Skript steht nicht in der `package.json`; der
-Generator lässt sich derzeit nur als `node scripts/generate-placeholder-sounds.mjs`
-aufrufen. Wer als Erstes einen Klang ergänzt (18-1 oder 18-6), räumt das mit auf.
+`packages/client/src/assets/sounds/CREDITS.md:23` verwiesen auf
+`pnpm sounds:generate`, das in der `package.json` fehlte. Das Skript ist seit
+2026-11-11 eingetragen.

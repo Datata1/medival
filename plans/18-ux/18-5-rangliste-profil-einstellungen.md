@@ -1,6 +1,52 @@
 # Ticket 18-5: Rangliste, Profil & Einstellungen
 
-**Status:** 📋 offen · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md)
+**Status:** ✅ erledigt (2026-11-11) · **Voraussetzung:** [18-1](18-1-rahmen-und-kopfzeile.md) ·
+**Ergebnis:** `ideas/assets/Rangliste-umsetzung.png`
+
+> **Ergebnis:** Die Rangliste ist eine eigene Seite mit Spielern und Stämmen, die
+> Kopfzeile zeigt den Rang, das eigene Profil ist die Übersicht über alle eigenen
+> Dörfer, und die Einstellungen zeigen alle Weltparameter samt „Welt löschen".
+>
+> **Abweichungen vom Ticket** (es stammt aus der Zeit vor dem Mehrspieler-Umbau):
+> - **Die Rangliste wird geblättert** (100 je Seite, `?page=`). Eine Welt hat jetzt
+>   hunderte Spieler und mehr Bots. Die eigene Zeile kommt mit jeder Seite mit
+>   (`own`), daraus liest die Kopfzeile den Rang.
+> - **Rangfolge als eine SQL-Abfrage** (`GROUP BY` in `engine/ranking.ts`), nicht als
+>   Schleife über alle Dörfer. Der Profil-Handler benutzt dieselbe Funktion.
+> - **Kein eigener Pfad `/profile`.** Der Reiter „Profil" führt wie bisher auf
+>   `players/$playerId` mit der eigenen ID. Die Ansicht erkennt das eigene Profil und
+>   zeigt dann Links ins Dorf, Bauernhof und Truppen. Ein zweites `AsyncValue` im
+>   `PlayerStore` war damit unnötig: Die Kopfzeile lädt kein Profil, sondern liest
+>   aus dem `RankingStore`.
+> - **Bauernhof und Truppen nur im eigenen Profil.** Der Server liefert sie für
+>   Fremde als `null`, sonst ersetzte jedes Profil den Späher.
+> - **„Welt löschen" sehen nur Verwalter.** `DELETE /api/worlds/:id` verlangt seit
+>   19-8 Admin-Rechte.
+> - **Stammeskürzel verlinken auf den Reiter „Stamm".** Eine Seite je fremdem Stamm
+>   gibt es nicht.
+> - **Zusätzliche Weltparameter** aus Plan 19/20: Besiedlungsdichte, Barbarendörfer je
+>   neuem Spieler, Bogenschützen, Paladin.
+> - `nav.comingSoon` bleibt, weil der Reiter „Nachrichten" (18-6) ihn noch braucht.
+>
+> **Tests:** `server/test/integration/ranking.test.ts` (7 Tests über die HTTP-App:
+> Barbaren und Spieler ohne Dorf fehlen, Gleichstand 1-2-2 in stabiler Reihenfolge,
+> Rang wie im Profil, eigene Zeile außerhalb des Ausschnitts, Blättern
+> überlappungsfrei, Stammespunkte als Summe, fremdes Profil ohne Truppen).
+> `client/test/stores.test.ts`: drei Tests für den `RankingStore`.
+>
+> **Im Browser geprüft** (Testwelt mit 30 Bots):
+>
+> | # | Punkt | Ergebnis |
+> |---|---|---|
+> | 1 | Kopfzeile und eigene Zeile zeigen dasselbe | ✅ „Rang 31 · 38 P" und Zeile 31 mit 38 Punkten |
+> | 2 | Absteigend sortiert, eigene Zeile hervorgehoben und sichtbar | ✅ Spieler und Stämme |
+> | 3 | Spielername → Profil, Kürzel → Stammesseite | ✅ |
+> | 4 | Eigenes Profil listet Dörfer, Klick wechselt | ✅ mit einem Dorf geprüft |
+> | 5 | Lautstärke und Stummschaltung | nicht erneut geprüft, unverändert seit 18-1 |
+> | 6 | „Welt löschen" fragt nach, führt in die Lobby | ✅ Abbrechen lässt die Welt stehen |
+> | 7 | Nach einer Eroberung ändert sich die Rangliste | nicht im Browser geprüft. Der Store lädt auf `map_changed` neu |
+>
+> Dass Nicht-Verwalter den Löschknopf nicht sehen, ist nur über den Code belegt.
 
 ## Kontext
 

@@ -8,6 +8,7 @@ import { LobbyStore } from './LobbyStore.js';
 import { MapStore } from './MapStore.js';
 import { MovementsStore } from './MovementsStore.js';
 import { PlayerStore } from './PlayerStore.js';
+import { RankingStore } from './RankingStore.js';
 import { ReportsStore } from './ReportsStore.js';
 import {
     SocketConnection,
@@ -34,6 +35,7 @@ export class RootStore {
     readonly movements = new MovementsStore();
     readonly reports = new ReportsStore();
     readonly player = new PlayerStore();
+    readonly ranking = new RankingStore();
     readonly tribe = new TribeStore();
     readonly sound: SoundStore;
 
@@ -99,6 +101,9 @@ export class RootStore {
             this.movements.start(worldId),
             this.reports.start(worldId),
         ]);
+        // Für den Rang in der Kopfzeile (18-5). Nicht abgewartet: Die Welt
+        // soll auch dann aufgehen, wenn die Rangliste gerade nicht lädt.
+        void this.ranking.load(worldId);
         // Ausgangsstand festhalten: Was jetzt schon da ist, ist nicht „neu".
         this.incomingWatcher.countNew(
             this.movements.incoming.map((m) => m.id),
@@ -137,6 +142,7 @@ export class RootStore {
         this.movements.stop();
         this.reports.stop();
         this.player.clear();
+        this.ranking.clear();
         this.tribe.clear();
         this.map.clear();
         this.village.clear();
@@ -210,6 +216,8 @@ export class RootStore {
             case 'map_changed':
                 // Öffentlich (19-9): neues Dorf oder Besitzerwechsel irgendwo.
                 this.map.reload();
+                // Beides verschiebt Ränge (18-5).
+                void this.ranking.reload();
                 break;
             case 'world_status':
                 void this.world.reload();

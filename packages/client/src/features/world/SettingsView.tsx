@@ -23,7 +23,7 @@ export const SettingsView = observer(function SettingsView({
     onLogout?: () => void;
 }) {
     const { t } = useTranslation();
-    const { world, sound } = useStores();
+    const { world, sound, auth, lobby } = useStores();
     const summary = world.summary;
 
     return (
@@ -159,6 +159,63 @@ export const SettingsView = observer(function SettingsView({
                                 </Td>
                             </tr>
                             <tr>
+                                <Th>{t('settings.density')}</Th>
+                                <Td className="tabular-nums">
+                                    {summary.settings.settlementDensity}
+                                </Td>
+                            </tr>
+                            <tr>
+                                <Th>
+                                    {t('settings.barbariansPerSettler')}
+                                </Th>
+                                <Td className="tabular-nums">
+                                    {
+                                        summary.settings
+                                            .barbariansPerSettler
+                                    }
+                                </Td>
+                            </tr>
+                            <tr>
+                                <Th>{t('settings.barbarianRate')}</Th>
+                                <Td className="tabular-nums">
+                                    {t('settings.perHour', {
+                                        count: summary.settings
+                                            .barbarianAttemptsPerHour,
+                                    })}
+                                </Td>
+                            </tr>
+                            <tr>
+                                <Th>{t('settings.archers')}</Th>
+                                <Td>
+                                    {summary.settings.archers
+                                        ? t('settings.on')
+                                        : t('settings.off')}
+                                </Td>
+                            </tr>
+                            <tr>
+                                <Th>{t('settings.paladin')}</Th>
+                                <Td>
+                                    {summary.settings.paladin
+                                        ? t('settings.on')
+                                        : t('settings.off')}
+                                </Td>
+                            </tr>
+                            <tr>
+                                <Th>{t('settings.victory')}</Th>
+                                <Td className="tabular-nums">
+                                    {t('settings.victoryShare', {
+                                        percent: Math.round(
+                                            summary.settings
+                                                .victoryVillageShare *
+                                                100,
+                                        ),
+                                    })}
+                                </Td>
+                            </tr>
+                            {/* Aus dem Startwert entsteht das Gelände
+                                (18-3): Mit ihm lässt sich eine Welt
+                                nachbauen. */}
+                            <tr>
                                 <Th>{t('settings.seed')}</Th>
                                 <Td className="tabular-nums">
                                     {summary.settings.seed}
@@ -166,6 +223,38 @@ export const SettingsView = observer(function SettingsView({
                             </tr>
                         </tbody>
                     </Table>
+                </Card>
+            )}
+
+            {/* Löschen darf nur der Verwalter, der Server prüft das auch
+                (19-8). Anderen den Knopf zu zeigen hieße, ihnen einen
+                Fehler anzubieten. */}
+            {summary && auth.isAdmin && (
+                <Card>
+                    <h2 className="text-seal!">
+                        {t('settings.dangerZone')}
+                    </h2>
+                    <p className="text-ink-light">
+                        {t('settings.deleteHint')}
+                    </p>
+                    <Button
+                        variant="danger"
+                        onClick={() => {
+                            if (
+                                !confirm(
+                                    t('lobby.confirmDelete', {
+                                        name: summary.name,
+                                    }),
+                                )
+                            )
+                                return;
+                            void lobby
+                                .deleteWorld(summary.id)
+                                .then(onExit);
+                        }}
+                    >
+                        {t('settings.deleteWorld')}
+                    </Button>
                 </Card>
             )}
         </div>

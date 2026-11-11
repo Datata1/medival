@@ -12,8 +12,14 @@ export const PlayerProfileView = observer(function PlayerProfileView({
     worldId: string;
 }) {
     const { t } = useTranslation();
-    const { player } = useStores();
+    const { player, world } = useStores();
     const profile = player.view;
+    /*
+     * Das eigene Profil ist zugleich die Übersicht über alle eigenen Dörfer
+     * (18-5): Jede Zeile führt ins Dorf, dazu Bauernhof und Truppen. Bei
+     * Fremden bleiben diese Spalten weg, der Server liefert sie nicht.
+     */
+    const own = profile !== null && profile.id === world.playerId;
 
     if (player.profile.error)
         return (
@@ -29,9 +35,12 @@ export const PlayerProfileView = observer(function PlayerProfileView({
             <Card>
                 <h2>{profile.name}</h2>
                 <p className="text-ink-light">
-                    {profile.isBot
-                        ? t('player.bot')
-                        : t('player.human')}
+                    {own
+                        ? t('player.you')
+                        : profile.isBot
+                          ? t('player.bot')
+                          : t('player.human')}
+                    {profile.tribeTag && ` · [${profile.tribeTag}]`}
                     {profile.personality &&
                         ` · ${t(
                             `player.personality.${profile.personality}`,
@@ -92,18 +101,52 @@ export const PlayerProfileView = observer(function PlayerProfileView({
                                 <Th>{t('player.colVillage')}</Th>
                                 <Th>{t('player.colCoords')}</Th>
                                 <Th>{t('player.colPoints')}</Th>
+                                {own && <Th>{t('player.colFarm')}</Th>}
+                                {own && (
+                                    <Th>{t('player.colTroops')}</Th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
                             {profile.villages.map((village) => (
                                 <tr key={village.id}>
-                                    <Td>{village.name}</Td>
+                                    <Td>
+                                        {own ? (
+                                            <Link
+                                                to="/worlds/$worldId/village/$villageId"
+                                                params={{
+                                                    worldId,
+                                                    villageId: String(
+                                                        village.id,
+                                                    ),
+                                                }}
+                                                className="text-seal underline"
+                                            >
+                                                {village.name}
+                                            </Link>
+                                        ) : (
+                                            village.name
+                                        )}
+                                    </Td>
                                     <Td>
                                         {village.x}|{village.y}
                                     </Td>
                                     <Td>
                                         {formatNumber(village.points)}
                                     </Td>
+                                    {own && (
+                                        <Td className="tabular-nums">
+                                            {village.popUsed ?? 0}/
+                                            {village.popMax ?? 0}
+                                        </Td>
+                                    )}
+                                    {own && (
+                                        <Td className="tabular-nums">
+                                            {formatNumber(
+                                                village.troops ?? 0,
+                                            )}
+                                        </Td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
